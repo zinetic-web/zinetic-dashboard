@@ -5,6 +5,8 @@ import { createSslcommerzSession } from "@/lib/sslcommerz";
 import { quote } from "@/lib/checkout";
 import { studioService } from "@/lib/studio/services";
 import { TOOLS } from "@/lib/studio/tools";
+import { grantEntitlement } from "@/lib/studio/entitlements";
+import { TRIALS, TRIAL_PLAN } from "@/lib/studio/services";
 
 export const runtime = "nodejs";
 
@@ -17,6 +19,14 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => null)) as { service?: string; plan?: string; agreed?: boolean } | null;
   if (!body?.agreed) return fail("You must agree to the Terms, Privacy Policy and Refund Policy to continue.");
+  // the free trial needs no payment: grant it now, once per service
+  if (body.plan === TRIAL_PLAN && (body.service ?? "") in TRIALS) {
+    const trialTool = TOOLS.find((t) => t.id === studioService(body.service!)?.tool);
+    const res = await grantEntitlement({ userId: user.id, service: body.service!, plan: TRIAL_PLAN, source: "trial", amount: TRIALS[body.service!], days: null });
+    if (res.error) return fail("You have already used the free trial of this service.");
+    await createAdminClient().from("user_products").upsert({ user_id: user.id, product: "studio" }, { onConflict: "user_id,product" });
+    return NextResponse.json({ redirect: `${trialTool?.href ?? "/studio"}?trial=1` });
+  }
   const q = quote(body.service ?? "", body.plan ?? "");
   if (!q || q.product !== "studio") return fail("That plan is not available.");
 

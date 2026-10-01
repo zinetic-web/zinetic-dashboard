@@ -6,7 +6,7 @@ import { PlanPicker } from "@/components/studio/plans";
 import type { PlanOption } from "@/lib/studio/plans";
 
 /** Opens the plans for one service right under its row. */
-export function ServicePlans({ option, label }: { option: PlanOption; label: string }) {
+export function ServicePlans({ option, label, takenTrials = [] }: { option: PlanOption; label: string; takenTrials?: string[] }) {
   const [open, setOpen] = React.useState(false);
   return (
     <>
@@ -15,7 +15,7 @@ export function ServicePlans({ option, label }: { option: PlanOption; label: str
       </Button>
       {open && (
         <div className="mt-2 w-full basis-full">
-          <PlanPicker options={[option]} />
+          <PlanPicker options={[option]} takenTrials={takenTrials} />
         </div>
       )}
     </>

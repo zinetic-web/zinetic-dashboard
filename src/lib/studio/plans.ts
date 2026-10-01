@@ -1,6 +1,6 @@
 import { SERVICES } from "@/lib/landing-services";
 import { USD_TO_BDT_RATE } from "@/lib/currency";
-import { formatUnits, parseQuota, servicesForTool, validityDays } from "@/lib/studio/services";
+import { TRIAL_PLAN, formatUnits, parseQuota, servicesForTool, trialTier, validityDays } from "@/lib/studio/services";
 
 export type PlanTier = {
   name: string;
@@ -10,6 +10,8 @@ export type PlanTier = {
   amount: string;
   /** "30 days", "1 year" or null when it never expires */
   validity: string | null;
+  /** the free trial: no payment, once per account */
+  trial?: boolean;
 };
 
 export type PlanOption = { service: string; serviceName: string; tiers: PlanTier[] };
@@ -19,6 +21,10 @@ export function planOption(serviceId: string): PlanOption | null {
   const svc = SERVICES.find((s) => s.id === serviceId);
   if (!svc) return null;
   const tiers: PlanTier[] = [];
+  const trial = trialTier(serviceId);
+  if (trial) {
+    tiers.push({ name: TRIAL_PLAN, usd: 0, bdt: 0, amount: trial.quota, validity: null, trial: true });
+  }
   for (const t of svc.tiers) {
     const q = parseQuota(serviceId, t);
     if (!q) continue;
