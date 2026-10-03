@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { LuArrowLeft, LuArrowRight, LuArrowUpRight, LuAudioLines, LuClapperboard, LuClock, LuDisc3 } from "react-icons/lu";
-import Aurora from "@/components/aurora";
+import { LuArrowLeft, LuArrowRight, LuAudioLines, LuClapperboard, LuClock, LuDisc3 } from "react-icons/lu";
+import { AuthPanel } from "@/components/auth-panel";
 import { Reveal } from "@/components/landing/primitives";
 import { displayFont, serifFont } from "@/components/landing/fonts";
 import { TicketStatus } from "@/components/landing/ticket-status";
@@ -55,27 +55,11 @@ const DASHBOARDS: Dashboard[] = [
 function HelpDesk({ id, className }: { id: string; className?: string }) {
   return (
     <section aria-labelledby={id} className={className}>
-      <h2 id={id} className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-white/55">
-        Help Desk
+      <h2 id={id} className="text-base font-semibold">
+        Check Support Status
       </h2>
-      <a
-        href="mailto:support@zineticmusic.com"
-        className="group mt-3 flex flex-wrap items-center gap-x-3 font-heading text-xl leading-tight font-semibold sm:text-3xl"
-      >
-        <span className="break-all underline decoration-white/25 decoration-1 underline-offset-[6px] transition-colors group-hover:decoration-[#ff3d86]">
-          support@zineticmusic.com
-        </span>
-        <LuArrowUpRight className="size-6 shrink-0 text-[#ff3d86] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-      </a>
-      <p className="mt-3 max-w-md text-sm leading-relaxed text-white/60">
-        Questions about a dashboard, your account or an order? Write to us.
-      </p>
-
-      <div className="mt-10 max-w-md">
-        <h3 className="text-base font-semibold">Check Support Status</h3>
-        <p className="mt-1.5 mb-6 text-sm text-white/55">Enter the ticket ID from your submission confirmation.</p>
-        <TicketStatus />
-      </div>
+      <p className="mt-1.5 mb-6 text-sm text-white/55">Enter the ticket ID from your submission confirmation.</p>
+      <TicketStatus />
     </section>
   );
 }
@@ -128,29 +112,7 @@ function Row({ d }: { d: Dashboard }) {
 export default function ClientLoginPage() {
   return (
     <div className={`zl dark ${displayFont.variable} ${serifFont.variable} grid min-h-screen grid-cols-1 md:grid-cols-2`}>
-      <div className="relative hidden flex-col justify-between overflow-hidden bg-[#0f0f0f] p-10 text-white md:sticky md:top-0 md:flex md:h-screen">
-        <div aria-hidden className="pointer-events-none absolute inset-0 z-0 opacity-90">
-          <Aurora colorStops={["#3d8bff", "#9b4dff", "#ff3d86"]} amplitude={1.2} blend={0.6} speed={0.8} />
-        </div>
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-3/5 bg-gradient-to-t from-[#0f0f0f] via-[#0f0f0f]/80 to-transparent"
-        />
-
-        <Link href="/" className="relative z-10 flex items-center gap-2.5">
-          <Image src="/brand/logo.png" alt="" width={899} height={1140} style={{ height: 40, width: "auto" }} />
-          <span className="font-heading text-lg font-semibold">Zinetic Music</span>
-        </Link>
-
-        <div className="relative z-10 flex flex-col gap-10">
-          <h2 className="font-heading text-4xl leading-[1.1] font-bold text-balance">
-            Music, AI and creator tools, <span className="zl-serif zl-grad-text">all in one place</span>
-          </h2>
-          <HelpDesk id="help-desk" />
-        </div>
-
-        <p className="relative z-10 text-xs text-white/40">© {new Date().getFullYear()} Zinetic Music. All rights reserved.</p>
-      </div>
+      <AuthPanel variant="client" className="hidden md:sticky md:top-0 md:flex md:h-screen" />
 
       <div className="flex min-w-0 flex-col bg-zinc-950 text-white">
         <header className="flex items-center gap-3 px-6 py-5">
@@ -201,7 +163,7 @@ export default function ClientLoginPage() {
             </Reveal>
 
             <Reveal delay={0.4}>
-              <HelpDesk id="help-desk-mobile" className="mt-14 border-t border-white/10 pt-10 md:hidden" />
+              <HelpDesk id="help-desk" className="mt-14 max-w-md border-t border-white/10 pt-10" />
             </Reveal>
           </div>
         </main>
