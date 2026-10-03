@@ -1,39 +1,178 @@
 "use client";
 
 import * as React from "react";
+import { LuChevronDown, LuRotateCcw, LuSparkles } from "react-icons/lu";
 import type { Voice } from "@/lib/studio/elevenlabs";
 import { useJob } from "@/components/studio/use-job";
-import { AudioResult, Field, Output, SubmitButton, TextArea, VoicePicker, Workspace, EnginePicker, useEngine } from "@/components/studio/ui";
+import { VoiceLibrary, type VoiceChoice } from "@/components/studio/voice-library";
+import { AudioResult, EnginePicker, Field, Output, SelectField, SubmitButton, TextArea, Workspace, useEngine } from "@/components/studio/ui";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
+
+const DEFAULTS = { stability: 0.5, similarity: 0.75, style: 0, speed: 1, speakerBoost: true };
+
+// speech in these is set with a language code instead of being guessed from the text
+const LANGUAGES: [string, string][] = [
+  ["", "Detect from the text"], ["en", "English"], ["bn", "Bangla"], ["hi", "Hindi"], ["ur", "Urdu"], ["ar", "Arabic"], ["es", "Spanish"], ["fr", "French"],
+  ["de", "German"], ["pt", "Portuguese"], ["it", "Italian"], ["tr", "Turkish"], ["ru", "Russian"], ["ja", "Japanese"], ["ko", "Korean"], ["zh", "Chinese"],
+  ["id", "Indonesian"], ["ta", "Tamil"], ["nl", "Dutch"], ["pl", "Polish"],
+];
+
+const TAGS = ["[laughs]", "[whispers]", "[sighs]", "[excited]", "[sarcastic]", "[curious]", "[crying]", "[shouting]", "[calm]", "[pauses]"];
+
+function Slider({
+  label,
+  hint,
+  value,
+  onChange,
+  min = 0,
+  max = 1,
+  step = 0.01,
+  left,
+  right,
+}: {
+  label: string;
+  hint?: string;
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  left?: string;
+  right?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-sm font-medium">{label}</span>
+        <span className="text-xs tabular-nums text-muted-foreground">{Math.round(value * 100) / 100}</span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        aria-label={label}
+        className="h-1.5 w-full cursor-pointer accent-foreground"
+      />
+      {(left || right) && (
+        <div className="flex justify-between text-[0.7rem] text-muted-foreground">
+          <span>{left}</span>
+          <span>{right}</span>
+        </div>
+      )}
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
 
 export function VoiceForm({ voices }: { voices: Voice[] }) {
+  const defaults: VoiceChoice[] = React.useMemo(() => voices.map((v) => ({ id: v.id, name: v.name, meta: v.labels ?? v.category, previewUrl: v.previewUrl })), [voices]);
   const [text, setText] = React.useState("");
-  const [voiceId, setVoiceId] = React.useState(voices[0]?.id ?? "");
+  const [voice, setVoice] = React.useState<VoiceChoice | null>(defaults[0] ?? null);
+  const [language, setLanguage] = React.useState("");
+  const [settings, setSettings] = React.useState(DEFAULTS);
+  const [touched, setTouched] = React.useState(false);
+  const [showSettings, setShowSettings] = React.useState(false);
   const { state, run } = useJob();
   const eng = useEngine();
 
-  const items = voices.map((v) => ({ id: v.id, name: v.name, meta: v.labels ?? v.category, preview: v.previewUrl }));
+  const set = <K extends keyof typeof DEFAULTS>(k: K, v: (typeof DEFAULTS)[K]) => {
+    setSettings((s) => ({ ...s, [k]: v }));
+    setTouched(true);
+  };
+  const tagged = eng.has("audio-tags") || eng.has("expressive");
+  const max = eng.engine?.max_chars ?? 5000;
 
   return (
     <Workspace
       form={
         <>
           <EnginePicker />
-          <Field label="Script">
-            <TextArea value={text} onChange={setText} max={5000} rows={9} placeholder="Type or paste what the voice should say." />
-          </Field>
+
           <Field label="Voice">
-            <VoicePicker items={items} value={voiceId} onChange={setVoiceId} />
+            <VoiceLibrary value={voice} onChange={setVoice} defaults={defaults} />
           </Field>
+
+          <Field label="Script">
+            <TextArea value={text} onChange={setText} max={max} rows={9} placeholder="Type or paste what the voice should say." />
+            {tagged && (
+              <div className="flex flex-col gap-2">
+                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <LuSparkles className="size-3.5" /> Add feeling with audio tags. Click one to add it to the script.
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {TAGS.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setText((s) => (s ? `${s}${/\s$/.test(s) ? "" : " "}${t} ` : `${t} `).slice(0, max))}
+                      className="cursor-pointer rounded-full border px-2.5 py-1 text-xs transition-colors hover:bg-muted"
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Field>
+
+          <Field label="Language">
+            <SelectField value={language} onChange={setLanguage} options={LANGUAGES.map(([value, label]) => ({ value, label }))} />
+          </Field>
+
+          <div className="rounded-xl border">
+            <button type="button" onClick={() => setShowSettings((v) => !v)} aria-expanded={showSettings} className="flex w-full cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium">
+              Voice settings
+              <LuChevronDown className={cn("size-4 text-muted-foreground transition-transform", showSettings && "rotate-180")} />
+            </button>
+            {showSettings && (
+              <div className="flex flex-col gap-5 border-t p-4">
+                <Slider label="Stability" value={settings.stability} onChange={(v) => set("stability", v)} left="More expressive" right="More steady" />
+                <Slider label="Similarity" value={settings.similarity} onChange={(v) => set("similarity", v)} left="More freedom" right="Closer to the voice" />
+                <Slider label="Style" value={settings.style} onChange={(v) => set("style", v)} left="Neutral" right="Exaggerated" />
+                <Slider label="Speed" value={settings.speed} min={0.7} max={1.2} step={0.05} onChange={(v) => set("speed", v)} left="Slower" right="Faster" />
+                <label className="flex items-center justify-between gap-3 text-sm">
+                  <span>
+                    <span className="font-medium">Speaker boost</span>
+                    <span className="block text-xs text-muted-foreground">Makes the voice sound a little more like the original.</span>
+                  </span>
+                  <Switch checked={settings.speakerBoost} onCheckedChange={(c) => set("speakerBoost", c)} />
+                </label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-fit"
+                  onClick={() => {
+                    setSettings(DEFAULTS);
+                    setTouched(false);
+                  }}
+                >
+                  <LuRotateCcw /> Reset to default
+                </Button>
+              </div>
+            )}
+          </div>
+
           <SubmitButton
             busy={state.phase === "working"}
-            disabled={!text.trim() || !voiceId}
+            disabled={!text.trim() || !voice}
             busyLabel="Generating"
             onClick={() =>
               run(() =>
                 fetch("/api/studio/voice", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ engine: eng.key, text, voiceId }),
+                  body: JSON.stringify({
+                    engine: eng.key,
+                    text,
+                    voiceId: voice?.id,
+                    language: language || undefined,
+                    settings: touched ? settings : undefined,
+                  }),
                 })
               )
             }
