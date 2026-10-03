@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getTrialConfig } from "@/lib/studio/trial";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { signInLink } from "@/lib/checkout";
+import { activateTrialIfRequested, getTrialConfig } from "@/lib/studio/trial";
 import { studioService } from "@/lib/studio/services";
 import { TOOLS } from "@/lib/studio/tools";
 
@@ -9,9 +11,10 @@ export const runtime = "nodejs";
 const fail = (error: string, status = 400) => NextResponse.json({ error }, { status });
 
 /**
- * Starts a free-trial sign-up. No payment, but the email must be confirmed: the account is
- * created and a confirmation email is sent, and the trial only starts when the link is opened
- * (see app/auth/confirm). Until then the account cannot sign in or be used.
+ * Free-trial sign-up. Until email sending is set up the account is approved and the trial started
+ * on the spot, and the customer is signed in straight away. Set TRIAL_EMAIL_VERIFICATION=on to
+ * require a confirmed email first: the account is then created unconfirmed, a link is emailed, and
+ * the trial only starts when that link is opened (see app/auth/confirm).
  */
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as { fullName?: string; email?: string; password?: string; service?: string; agreed?: boolean } | null;
@@ -29,13 +32,30 @@ export async function POST(request: Request) {
 
   const tool = TOOLS.find((t) => t.id === studioService(service)?.tool);
   const studio = (process.env.NEXT_PUBLIC_STUDIO_URL ?? "").replace(/\/$/, "");
-  const next = encodeURIComponent(`${tool?.href ?? "/studio"}?trial=1`);
+  const landing = `${tool?.href ?? "/studio"}?trial=1`;
+
+  if (process.env.TRIAL_EMAIL_VERIFICATION !== "on") {
+    const admin = createAdminClient();
+    const created = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: fullName, trial_service: service },
+    });
+    if (!created.data?.user) {
+      const exists = /already|registered|exists/i.test(created.error?.message ?? "");
+      return fail(exists ? "An account with this email already exists. Log in to your account instead." : (created.error?.message ?? "Could not create your account."), exists ? 400 : 500);
+    }
+    if (!(await activateTrialIfRequested(created.data.user.id))) return fail("Your account was created, but the trial could not start. Please log in, or contact support.", 500);
+    const url = await signInLink(email, studio, landing);
+    return NextResponse.json({ ready: true, url: url ?? `${studio}/login` });
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName, trial_service: service }, emailRedirectTo: `${studio}/auth/confirm?next=${next}` },
+    options: { data: { full_name: fullName, trial_service: service }, emailRedirectTo: `${studio}/auth/confirm?next=${encodeURIComponent(landing)}` },
   });
   if (error) return fail(error.message.includes("rate") ? "Too many emails were sent just now. Please wait a few minutes and try again." : error.message);
   // Supabase answers a repeat sign-up with a user that has no identities, instead of an error

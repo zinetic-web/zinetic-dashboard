@@ -134,9 +134,13 @@ export function CheckoutForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...d, service: service.id, agreed }),
       });
-      const json = (await res.json().catch(() => ({}))) as { sent?: boolean; error?: string };
-      if (!res.ok || !json.sent) {
+      const json = (await res.json().catch(() => ({}))) as { sent?: boolean; ready?: boolean; url?: string; error?: string };
+      if (!res.ok || (!json.sent && !json.ready)) {
         setError(json.error ?? "Could not start your free trial.");
+      } else if (json.ready && json.url) {
+        // the account is approved and the trial started: go straight in, already signed in
+        window.location.assign(json.url);
+        return;
       } else {
         setSentTo(d.email);
       }

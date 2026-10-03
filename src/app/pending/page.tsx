@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/actions/auth";
+import { activateTrialIfRequested } from "@/lib/studio/trial";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,9 @@ export default async function PendingPage() {
 
   if (profile?.role === "admin") redirect("/admin");
   if (profile?.status === "approved") redirect("/dashboard");
+  // A free-trial sign-up whose email is confirmed is approved here, whichever link they used to get in.
+  // Ordinary accounts have no trial sign-up on record and are left waiting for an admin.
+  if (profile?.status === "pending" && (await activateTrialIfRequested(user.id))) redirect("/studio");
 
   const isRejected = profile?.status === "rejected";
   const isBlocked = profile?.status === "blocked";
