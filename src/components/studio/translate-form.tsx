@@ -65,7 +65,7 @@ export function TranslateForm({
       fd.append("mode", quality);
       if (speakers !== "0") fd.append("speakers", speakers);
     }
-    return run(() => postForm(endpoint, fd), { async: true, message: busyMessage });
+    return run(() => postForm(endpoint, fd), { async: true, message: busyMessage, eta: "Usually a few minutes for every minute of video." });
   }
 
   return (

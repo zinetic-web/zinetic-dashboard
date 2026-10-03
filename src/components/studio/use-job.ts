@@ -2,24 +2,42 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useJobPublisher } from "@/components/studio/job-context";
 
 export type JobState<T = unknown> =
+  | {
+      phase: "working";
+      message?: string;
+      /** a long job that is finished by the provider, so the page polls for it */
+      async?: boolean;
+      startedAt: number;
+      /** 0 to 100, when the provider says how far along it is */
+      progress?: number;
+      stage?: string;
+      /** how long this usually takes, in words */
+      eta?: string;
+    }
   | { phase: "idle" }
-  | { phase: "working"; message?: string }
   | { phase: "done"; id: string; data?: T }
   | { phase: "error"; error: string };
 
 const POLL_MS = 5000;
-const GIVE_UP_MS = 45 * 60 * 1000;
+const GIVE_UP_MS = 3 * 60 * 60 * 1000;
+
+type Poll = { status?: string; error?: string; progress?: number; stage?: string };
 
 /**
- * Runs one generation. `async` tools (video, dubbing) answer immediately with a
- * processing row, which is then polled until the provider has finished.
+ * Runs one generation. `async` tools (video, dubbing) answer immediately with a processing
+ * row, which is then polled until the provider has finished. The progress window and the
+ * "Stop waiting" button come from the page this runs in, which listens to the state.
  */
 export function useJob<T = unknown>() {
   const router = useRouter();
+  const publish = useJobPublisher();
   const [state, setState] = React.useState<JobState<T>>({ phase: "idle" });
   const alive = React.useRef(true);
+  const runId = React.useRef(0);
   React.useEffect(() => {
     alive.current = true;
     return () => {
@@ -28,11 +46,15 @@ export function useJob<T = unknown>() {
   }, []);
 
   const run = React.useCallback(
-    async (request: () => Promise<Response>, opts: { async?: boolean; message?: string } = {}) => {
-      setState({ phase: "working", message: opts.message });
+    async (request: () => Promise<Response>, opts: { async?: boolean; message?: string; eta?: string } = {}) => {
+      const my = ++runId.current;
+      const current = () => alive.current && runId.current === my;
+      const startedAt = Date.now();
+      setState({ phase: "working", message: opts.message, async: opts.async, startedAt, eta: opts.eta });
       try {
         const res = await request();
         const json = (await res.json().catch(() => ({}))) as { id?: string; error?: string } & T;
+        if (!current()) return;
         if (!res.ok || !json.id) {
           setState({ phase: "error", error: json.error ?? "Something went wrong." });
           return;
@@ -42,30 +64,43 @@ export function useJob<T = unknown>() {
           router.refresh();
           return;
         }
-        const started = Date.now();
-        while (alive.current && Date.now() - started < GIVE_UP_MS) {
+        while (current() && Date.now() - startedAt < GIVE_UP_MS) {
           await new Promise((r) => setTimeout(r, POLL_MS));
-          const poll = await fetch(`/api/studio/jobs/${json.id}`, { cache: "no-store" });
-          const s = (await poll.json().catch(() => ({}))) as { status?: string; error?: string };
-          if (s.status === "done") {
-            if (alive.current) setState({ phase: "done", id: json.id });
+          if (!current()) return;
+          const poll = await fetch(`/api/studio/jobs/${json.id}`, { cache: "no-store" }).catch(() => null);
+          const s = (await poll?.json().catch(() => ({}))) as Poll | undefined;
+          if (!current()) return;
+          if (s?.status === "done") {
+            setState({ phase: "done", id: json.id });
+            toast.success("Finished. Your result is ready.");
             router.refresh();
             return;
           }
-          if (s.status === "failed") {
-            if (alive.current) setState({ phase: "error", error: s.error ?? "The provider could not finish this." });
+          if (s?.status === "failed") {
+            setState({ phase: "error", error: s.error ?? "The provider could not finish this." });
             router.refresh();
             return;
           }
+          if (s) setState({ phase: "working", message: opts.message, async: true, startedAt, eta: opts.eta, progress: s.progress, stage: s.stage });
         }
-        if (alive.current) setState({ phase: "error", error: "This is taking longer than expected. Check the Library later." });
+        if (current()) setState({ phase: "error", error: "This is taking longer than expected. It will keep going in the background, check the Library in a while." });
       } catch {
-        setState({ phase: "error", error: "Could not reach the server." });
+        if (current()) setState({ phase: "error", error: "Could not reach the server." });
       }
     },
     [router]
   );
 
-  const reset = React.useCallback(() => setState({ phase: "idle" }), []);
+  // stop watching: the job itself carries on and lands in the Library when it is ready
+  const reset = React.useCallback(() => {
+    runId.current++;
+    setState({ phase: "idle" });
+  }, []);
+
+  React.useEffect(() => {
+    publish({ state: state as JobState, stop: reset });
+  }, [state, publish, reset]);
+  React.useEffect(() => () => publish(null), [publish]);
+
   return { state, run, reset };
 }

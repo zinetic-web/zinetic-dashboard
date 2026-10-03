@@ -78,7 +78,7 @@ export function PromptVideoForm() {
                       voiceId: voice?.id,
                     }),
                   }),
-                { async: true, message: "Your video is being made" }
+                { async: true, message: "Your video is being made", eta: "Prompt videos usually take 5 to 10 minutes." }
               )
             }
           >

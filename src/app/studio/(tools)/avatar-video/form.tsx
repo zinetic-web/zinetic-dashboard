@@ -54,7 +54,7 @@ export function AvatarVideoForm({ mine }: { mine: MyAvatar[] }) {
             ...(avatar?.mine ? { expressiveness, motion: motion || undefined } : {}),
           }),
         }),
-      { async: true, message: "Your video is being made" }
+      { async: true, message: "Your video is being made", eta: "Avatar videos usually take 2 to 6 minutes." }
     );
   }
 

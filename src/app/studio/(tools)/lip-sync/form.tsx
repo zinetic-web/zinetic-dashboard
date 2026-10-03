@@ -21,7 +21,7 @@ export function LipSyncForm() {
     fd.append("audio", audio!);
     fd.append("mode", mode);
     fd.append("enhance", enhance ? "true" : "false");
-    return run(() => postForm("/api/studio/video/lipsync", fd), { async: true, message: "Matching the lips to your audio" });
+    return run(() => postForm("/api/studio/video/lipsync", fd), { async: true, message: "Matching the lips to your audio", eta: "Usually a few minutes for every minute of video." });
   }
 
   return (

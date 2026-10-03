@@ -184,7 +184,7 @@ export function VoiceRow({
         )}
       </button>
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 overflow-hidden">
         <p className="flex items-center gap-1.5 truncate font-medium">
           <span className="truncate">{row.name}</span>
           {row.category === "professional" && (
@@ -485,14 +485,14 @@ export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice
         </DialogTrigger>
       </div>
 
-      <DialogContent className="flex h-[min(46rem,92vh)] w-[calc(100vw-1.5rem)] max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl" showCloseButton>
+      <DialogContent className="flex! h-[min(46rem,92vh)] w-[calc(100vw-1.5rem)] max-w-none grid-cols-[minmax(0,1fr)] flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl" showCloseButton>
         <DialogTitle className="sr-only">Voice library</DialogTitle>
         <DialogDescription className="sr-only">Search, preview and choose a voice.</DialogDescription>
 
-        <div className="grid min-h-0 flex-1 md:grid-cols-[17.5rem_1fr]">
+        <div className="grid min-h-0 min-w-0 flex-1 md:grid-cols-[17.5rem_minmax(0,1fr)]">
           <aside className="hidden overflow-y-auto border-r bg-muted/20 p-5 md:block">{filters}</aside>
 
-          <div className="flex min-h-0 flex-col">
+          <div className="flex min-h-0 min-w-0 flex-col">
             <div className="flex flex-col gap-3 border-b p-4 pr-12">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="inline-flex rounded-lg bg-muted p-1">
@@ -539,7 +539,7 @@ export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice
               {tab === "explore" && !loading && total > 0 && <p className="text-xs text-muted-foreground">{total.toLocaleString()} voices</p>}
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto p-2">
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-2">
               {error && <p className="m-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">{error}</p>}
 
               {tab === "explore" && (

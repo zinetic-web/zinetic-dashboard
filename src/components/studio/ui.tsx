@@ -31,6 +31,7 @@ import type { JobState } from "@/components/studio/use-job";
 import { AudioPlayer } from "@/components/studio/audio-player";
 import { VideoPlayer } from "@/components/studio/video-player";
 import { useUploadProgress } from "@/components/studio/upload";
+import { JobHost } from "@/components/studio/job-context";
 
 /* ------------------------------------------------------------------ context */
 
@@ -41,7 +42,11 @@ const ToolContext = React.createContext<ToolCtx | null>(null);
 export function ToolProvider({ toolId, engines, children }: { toolId: string; engines: PublicEngine[]; children: React.ReactNode }) {
   const [key, setKey] = React.useState(engines[0]?.key ?? "");
   const value = React.useMemo(() => ({ id: toolId, engines, key, setKey }), [toolId, engines, key]);
-  return <ToolContext.Provider value={value}>{children}</ToolContext.Provider>;
+  return (
+    <ToolContext.Provider value={value}>
+      <JobHost>{children}</JobHost>
+    </ToolContext.Provider>
+  );
 }
 
 const useTool = () => {
@@ -96,7 +101,8 @@ export function Workspace({ form, output }: { form: React.ReactNode; output: Rea
         </CardHeader>
         <CardContent className="flex flex-col gap-5">{form}</CardContent>
       </Card>
-      {output}
+      {/* the result stays in view beside the settings while the page scrolls */}
+      <div className="min-w-0 lg:sticky lg:top-20">{output}</div>
     </div>
   );
 }
@@ -476,8 +482,11 @@ export function Output({
           <>
             {state.phase === "working" && (
               <div className="flex flex-col gap-2">
-                <Progress value={null} />
-                <p className="text-xs text-muted-foreground">{state.message ?? "Working on it"}</p>
+                <Progress value={typeof state.progress === "number" ? state.progress : null} />
+                <p className="text-xs text-muted-foreground">
+                  {state.stage ?? state.message ?? "Working on it"}
+                  {typeof state.progress === "number" ? ` · ${Math.round(state.progress)}%` : ""}
+                </p>
               </div>
             )}
             {state.phase === "error" && (

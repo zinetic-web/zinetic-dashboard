@@ -152,7 +152,7 @@ export function AvatarLibrary({ value, onChange, mine, required = true }: { valu
         </DialogTrigger>
       </div>
 
-      <DialogContent className="flex h-[min(46rem,92vh)] w-[calc(100vw-1.5rem)] max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl">
+      <DialogContent className="flex! h-[min(46rem,92vh)] w-[calc(100vw-1.5rem)] max-w-none grid-cols-[minmax(0,1fr)] flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl">
         <DialogTitle className="sr-only">Avatar gallery</DialogTitle>
         <DialogDescription className="sr-only">Choose the presenter for your video.</DialogDescription>
 
@@ -204,7 +204,7 @@ export function AvatarLibrary({ value, onChange, mine, required = true }: { valu
           )}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-4">
           {stock.error && tab === "stock" && <p className="mb-3 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">{stock.error}</p>}
 
           {tab === "stock" && (
@@ -301,7 +301,7 @@ export function HeyGenVoiceLibrary({ value, onChange }: { value: VoiceChoice | n
         </DialogTrigger>
       </div>
 
-      <DialogContent className="flex h-[min(44rem,92vh)] w-[calc(100vw-1.5rem)] max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+      <DialogContent className="flex! h-[min(44rem,92vh)] w-[calc(100vw-1.5rem)] max-w-none grid-cols-[minmax(0,1fr)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
         <DialogTitle className="sr-only">Voices</DialogTitle>
         <DialogDescription className="sr-only">Choose the narrator.</DialogDescription>
 
@@ -335,7 +335,7 @@ export function HeyGenVoiceLibrary({ value, onChange }: { value: VoiceChoice | n
           </FilterGroup>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-2">
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-2">
           {list.error && <p className="m-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">{list.error}</p>}
           <ul className="flex flex-col">
             {rows.map((r) => (

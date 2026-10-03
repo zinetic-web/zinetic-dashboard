@@ -290,26 +290,27 @@ export async function generateFromPrompt(opts: { prompt: string; orientation?: "
   return { ok: true, videoId: r.data.video_id || `agent:${r.data.session_id}` };
 }
 
-export type JobState = { status: "processing" | "done" | "failed"; url?: string; error?: string };
+export type JobState = { status: "processing" | "done" | "failed"; url?: string; error?: string; progress?: number; stage?: string };
 
 async function plainVideoStatus(videoId: string): Promise<JobState> {
   const r = await call<{ status: string; video_url?: string | null; failure_message?: string | null }>(`/v3/videos/${encodeURIComponent(videoId)}`);
   if (!r.ok) return { status: "processing" };
   if (r.data.status === "completed" && r.data.video_url) return { status: "done", url: r.data.video_url };
   if (r.data.status === "failed") return { status: "failed", error: r.data.failure_message || "HeyGen could not make this video." };
-  return { status: "processing" };
+  return { status: "processing", stage: r.data.status === "processing" ? "Rendering your video" : "Waiting in line" };
 }
 
 export async function videoStatus(id: string): Promise<JobState> {
   if (!id.startsWith("agent:")) return plainVideoStatus(id);
-  const r = await call<{ status: string; video_id?: string | null; error?: { message?: string } | string | null }>(`/v3/video-agents/${encodeURIComponent(id.slice(6))}`);
+  const r = await call<{ status: string; video_id?: string | null; progress?: number | null; error?: { message?: string } | string | null }>(`/v3/video-agents/${encodeURIComponent(id.slice(6))}`);
   if (!r.ok) return { status: "processing" };
   if (r.data.video_id) return plainVideoStatus(r.data.video_id);
   if (r.data.status === "failed") {
     const e = r.data.error;
     return { status: "failed", error: (typeof e === "string" ? e : e?.message) || "HeyGen could not make this video." };
   }
-  return { status: "processing" };
+  const stage = r.data.status === "generating" ? "Creating the scenes" : r.data.status === "completed" ? "Finishing up" : "Planning your video";
+  return { status: "processing", stage, progress: typeof r.data.progress === "number" ? r.data.progress : undefined };
 }
 
 /* ----------------------------------------------------------- translation */
@@ -346,7 +347,7 @@ export async function translateStatus(id: string): Promise<JobState> {
   const url = r.data.video_url || r.data.audio_url;
   if (r.data.status === "completed" && url) return { status: "done", url };
   if (r.data.status === "failed") return { status: "failed", error: r.data.failure_message || "Translation failed." };
-  return { status: "processing" };
+  return { status: "processing", stage: r.data.status === "running" ? "Translating and matching the lips" : "Waiting in line" };
 }
 
 /* --------------------------------------------------------------- lip sync */
@@ -371,5 +372,5 @@ export async function lipsyncStatus(id: string): Promise<JobState> {
   if (!r.ok) return { status: "processing" };
   if (r.data.status === "completed" && r.data.video_url) return { status: "done", url: r.data.video_url };
   if (r.data.status === "failed") return { status: "failed", error: r.data.failure_message || "Lip sync failed." };
-  return { status: "processing" };
+  return { status: "processing", stage: r.data.status === "running" ? "Matching the lips" : "Waiting in line" };
 }
