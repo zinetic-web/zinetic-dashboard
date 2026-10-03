@@ -27,7 +27,13 @@ import { CommandMenu } from "@/components/admin-panel/command-menu";
 
 type Links = { cms?: string | null; studio?: string | null };
 
-const isActive = (pathname: string, href: string) => (href === "/admin" ? pathname === "/admin" : pathname === href || pathname.startsWith(href + "/"));
+const matches = (pathname: string, href: string) => (href === "/admin" ? pathname === "/admin" : pathname === href || pathname.startsWith(href + "/"));
+
+// the most specific entry wins, so /admin/studio/trial does not also light up /admin/studio
+const isActive = (pathname: string, href: string) => {
+  if (!matches(pathname, href)) return false;
+  return !ALL_ENTRIES.some((e) => e.href.length > href.length && matches(pathname, e.href));
+};
 
 function Entry({ entry, pathname, collapsed, onNavigate, badge }: { entry: NavEntry; pathname: string; collapsed: boolean; onNavigate: () => void; badge?: number }) {
   const active = isActive(pathname, entry.href);
