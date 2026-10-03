@@ -563,3 +563,12 @@
     transform: translateX(320%);
   }
 }
+
+@keyframes lib-sheen {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}

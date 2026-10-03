@@ -10,9 +10,9 @@ import type { JobView } from "@/components/studio/job-context";
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 /**
- * The window that opens while something is being made: how long it has been, what it is doing now,
- * how far along it is when that is known, and what the customer can do meanwhile. It opens for
- * long jobs at once, and for quick ones only if they run longer than a few seconds.
+ * The window that opens while something is being made: the progress, what it is doing now and how
+ * long it has been. It opens for long jobs at once, and for quick ones only if they run longer
+ * than a few seconds. Closing it never stops the job.
  */
 export function JobModal({ view }: { view: JobView }) {
   const state = view?.state;
@@ -30,12 +30,13 @@ export function JobModal({ view }: { view: JobView }) {
 
   const elapsed = working ? Math.max(0, Math.floor((now - working.startedAt) / 1000)) : 0;
   const show = Boolean(working) && hiddenFor !== working?.startedAt && (working?.async || elapsed >= 6);
+  const close = () => working && setHiddenFor(working.startedAt);
 
   return (
-    <Dialog open={show} onOpenChange={(o) => !o && working && setHiddenFor(working.startedAt)}>
-      <DialogContent className="sm:max-w-md" showCloseButton={false}>
-        <DialogTitle className="flex items-center gap-2.5 text-lg font-semibold">
-          <LuLoaderCircle className="size-5 animate-spin" />
+    <Dialog open={show} onOpenChange={(o) => !o && close()}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogTitle className="flex items-center gap-2.5 pr-8 text-lg font-semibold">
+          <LuLoaderCircle className="size-5 shrink-0 animate-spin" />
           {working?.message ?? "Working on it"}
         </DialogTitle>
         <DialogDescription className="sr-only">Progress of your request.</DialogDescription>
@@ -43,34 +44,28 @@ export function JobModal({ view }: { view: JobView }) {
         <div className="flex flex-col gap-3">
           <div className="h-2 overflow-hidden rounded-full bg-muted">
             {typeof working?.progress === "number" ? (
-              <div className="h-full rounded-full bg-foreground transition-all duration-700" style={{ width: `${Math.max(4, Math.min(100, working.progress))}%` }} />
+              <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-700" style={{ width: `${Math.max(4, Math.min(100, working.progress))}%` }} />
             ) : (
-              <div className="h-full w-1/3 animate-[zl-slide_1.6s_ease-in-out_infinite] rounded-full bg-foreground/80" />
+              <div className="h-full w-2/5 animate-[zl-slide_1.8s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500" />
             )}
           </div>
           <div className="flex items-center justify-between gap-3 text-sm">
-            <span className="text-muted-foreground">{working?.stage ?? (elapsed < 8 ? "Getting started" : "Working")}</span>
-            <span className="flex items-center gap-1.5 tabular-nums text-muted-foreground">
+            <span className="min-w-0 truncate text-muted-foreground">{working?.stage ?? (elapsed < 8 ? "Getting started" : "Working")}</span>
+            <span className="flex shrink-0 items-center gap-1.5 tabular-nums text-muted-foreground">
               <LuClock className="size-3.5" />
               {clock(elapsed)}
               {typeof working?.progress === "number" && <span className="ml-1 font-medium text-foreground">{Math.round(working.progress)}%</span>}
             </span>
           </div>
-          {working?.eta && <p className="text-xs text-muted-foreground">{working.eta}</p>}
         </div>
 
-        <p className="rounded-lg bg-muted/50 px-3 py-2.5 text-sm text-muted-foreground">
-          You do not need to wait here. Close this window, or even leave the page, and the result will be in your Library when it is ready.
-        </p>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-          <Button variant="ghost" className="text-muted-foreground" onClick={() => view?.stop()}>
-            Stop watching
+        <div className="flex gap-2">
+          <Button variant="outline" className="flex-1" onClick={close}>
+            Close
           </Button>
-          <Button variant="outline" nativeButton={false} render={<Link href="/studio/library" />}>
-            <LuLibrary /> Open Library
+          <Button className="flex-1" nativeButton={false} render={<Link href="/studio/library" />}>
+            <LuLibrary /> Library
           </Button>
-          <Button onClick={() => working && setHiddenFor(working.startedAt)}>Keep working</Button>
         </div>
       </DialogContent>
     </Dialog>

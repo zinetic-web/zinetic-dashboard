@@ -1,30 +1,30 @@
 "use client";
 
 import * as React from "react";
-import { LuDownload, LuPause, LuPlay, LuRotateCcw, LuRotateCw, LuVolume2, LuVolumeX } from "react-icons/lu";
-import { Button } from "@/components/ui/button";
+import { LuDownload, LuPause, LuPlay, LuVolume2, LuVolumeX } from "react-icons/lu";
 import { cn } from "@/lib/utils";
 
-const BARS = 72;
+const BARS = 64;
 
-/** Deterministic pseudo-waveform so the same file always looks the same. */
-function barsFor(seed: string) {
+/** Deterministic pseudo-waveform, shown until the real one has been read from the file. */
+function barsFor(seed: string, count = BARS) {
   let h = 2166136261;
   for (const c of seed) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
-  return Array.from({ length: BARS }, (_, i) => {
+  return Array.from({ length: count }, (_, i) => {
     h = Math.imul(h ^ (h >>> 15), 2246822507) + i;
     const r = ((h >>> 0) % 1000) / 1000;
-    const env = 0.35 + 0.65 * Math.sin((i / BARS) * Math.PI);
+    const env = 0.35 + 0.65 * Math.sin((i / count) * Math.PI);
     return 0.16 + r * 0.84 * env;
   });
 }
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 const SPEEDS = [1, 1.25, 1.5, 2, 0.75];
+const MAX_DECODE_BYTES = 25 * 1024 * 1024;
 
 /** Plain bars, used as quiet decoration. */
 export function WaveArt({ animate = false, className }: { animate?: boolean; className?: string; accent?: string }) {
-  const bars = React.useMemo(() => barsFor("wave-art"), []);
+  const bars = React.useMemo(() => barsFor("wave-art", 72), []);
   return (
     <div aria-hidden className={cn("flex h-full items-center justify-center gap-[3px]", className)}>
       {bars.map((h, i) => (
@@ -36,6 +36,59 @@ export function WaveArt({ animate = false, className }: { animate?: boolean; cla
       ))}
     </div>
   );
+}
+
+/**
+ * The real shape of the sound: the file is read once when it comes into view and boiled down to a
+ * bar per slice of time. Until then (or if it cannot be read) the placeholder shape is used.
+ */
+function usePeaks(src: string | undefined, enabled: boolean, count: number) {
+  const box = React.useRef<HTMLDivElement>(null);
+  const [peaks, setPeaks] = React.useState<number[] | null>(null);
+
+  React.useEffect(() => {
+    const el = box.current;
+    if (!enabled || !src || !el || typeof IntersectionObserver === "undefined") return;
+    let cancelled = false;
+    const seen = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        seen.disconnect();
+        void (async () => {
+          try {
+            const res = await fetch(src);
+            const size = Number(res.headers.get("content-length") ?? 0);
+            if (!res.ok || size > MAX_DECODE_BYTES) return;
+            const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+            const ctx = new Ctx();
+            const audio = await ctx.decodeAudioData(await res.arrayBuffer());
+            void ctx.close();
+            const data = audio.getChannelData(0);
+            const step = Math.max(1, Math.floor(data.length / count));
+            const raw = Array.from({ length: count }, (_, i) => {
+              let sum = 0;
+              const from = i * step;
+              const to = Math.min(data.length, from + step);
+              for (let j = from; j < to; j += 8) sum += data[j] * data[j];
+              return Math.sqrt(sum / Math.max(1, (to - from) / 8));
+            });
+            const top = Math.max(...raw, 0.0001);
+            if (!cancelled) setPeaks(raw.map((v) => 0.1 + 0.9 * Math.pow(v / top, 0.7)));
+          } catch {
+            // keep the placeholder shape
+          }
+        })();
+      },
+      { rootMargin: "200px" }
+    );
+    seen.observe(el);
+    return () => {
+      cancelled = true;
+      seen.disconnect();
+    };
+  }, [src, enabled, count]);
+
+  return { box, peaks };
 }
 
 /**
@@ -66,8 +119,11 @@ export function AudioPlayer({
   const [duration, setDuration] = React.useState(0);
   const [muted, setMuted] = React.useState(false);
   const [speed, setSpeed] = React.useState(0);
+  const [hover, setHover] = React.useState<number | null>(null);
+  const dragging = React.useRef(false);
   const off = disabled || !src;
-  const bars = React.useMemo(() => barsFor(seed), [seed]);
+  const { box, peaks } = usePeaks(src, !off, BARS);
+  const bars = React.useMemo(() => peaks ?? barsFor(seed), [peaks, seed]);
   const progress = duration ? time / duration : 0;
 
   const toggle = () => {
@@ -76,15 +132,13 @@ export function AudioPlayer({
     if (a.paused) void a.play();
     else a.pause();
   };
-  const skip = (by: number) => {
+  const seekTo = (frac: number) => {
     const a = ref.current;
-    if (a) a.currentTime = Math.max(0, Math.min(duration || 0, a.currentTime + by));
+    if (a && duration) a.currentTime = Math.max(0, Math.min(1, frac)) * duration;
   };
-  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const a = ref.current;
-    if (!a || !duration) return;
+  const fracOf = (e: React.PointerEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
-    a.currentTime = ((e.clientX - r.left) / r.width) * duration;
+    return (e.clientX - r.left) / r.width;
   };
   const cycleSpeed = () => {
     const n = (speed + 1) % SPEEDS.length;
@@ -93,7 +147,7 @@ export function AudioPlayer({
   };
 
   return (
-    <div className={cn("rounded-xl border bg-card", compact ? "p-3" : "p-4", off && "select-none")}>
+    <div className={cn("rounded-2xl border bg-gradient-to-b from-card to-muted/20", compact ? "p-3" : "p-4", off && "select-none")}>
       {!off && (
         <audio
           ref={ref}
@@ -110,46 +164,94 @@ export function AudioPlayer({
       {title && <p className="mb-3 line-clamp-1 text-sm font-medium">{title}</p>}
 
       <div
-        onClick={off ? undefined : seek}
-        className={cn("flex items-center gap-[2px]", compact ? "h-12" : "h-20", off ? "cursor-default" : "cursor-pointer", busy && "animate-pulse")}
+        ref={box}
+        onPointerDown={
+          off
+            ? undefined
+            : (e) => {
+                dragging.current = true;
+                e.currentTarget.setPointerCapture(e.pointerId);
+                seekTo(fracOf(e));
+              }
+        }
+        onPointerMove={
+          off
+            ? undefined
+            : (e) => {
+                const f = fracOf(e);
+                setHover(Math.max(0, Math.min(1, f)));
+                if (dragging.current) seekTo(f);
+              }
+        }
+        onPointerUp={() => (dragging.current = false)}
+        onPointerLeave={() => setHover(null)}
+        className={cn("relative flex touch-none items-center gap-[3px]", compact ? "h-14" : "h-20", off ? "cursor-default" : "cursor-pointer", busy && "animate-pulse")}
       >
-        {bars.map((h, i) => (
-          <span
-            key={i}
-            className={cn("flex-1 rounded-full", off ? "bg-muted-foreground/20" : i / BARS < progress ? "bg-foreground" : "bg-muted-foreground/35")}
-            style={{ height: `${h * 100}%` }}
-          />
-        ))}
+        {bars.map((h, i) => {
+          const done = !off && (i + 0.5) / bars.length <= progress;
+          return (
+            <span
+              key={i}
+              className={cn(
+                "flex-1 rounded-full transition-[height,background-color] duration-300",
+                off ? "bg-muted-foreground/15" : done ? "bg-gradient-to-t from-violet-500 to-fuchsia-400" : "bg-muted-foreground/25"
+              )}
+              style={{ height: `${h * 100}%` }}
+            />
+          );
+        })}
+        {!off && hover !== null && (
+          <>
+            <span aria-hidden className="pointer-events-none absolute inset-y-0 w-px bg-foreground/40" style={{ left: `${hover * 100}%` }} />
+            {duration > 0 && (
+              <span className="pointer-events-none absolute -top-5 -translate-x-1/2 rounded bg-foreground px-1.5 py-0.5 text-[0.65rem] tabular-nums text-background" style={{ left: `${hover * 100}%` }}>
+                {fmt(hover * duration)}
+              </span>
+            )}
+          </>
+        )}
       </div>
 
-      <div className="mt-3 flex items-center gap-2">
-        <Button size="icon" onClick={toggle} disabled={off} aria-label={playing ? "Pause" : "Play"}>
-          {playing ? <LuPause /> : <LuPlay className="translate-x-px" />}
-        </Button>
-        <Button variant="ghost" size="icon-sm" onClick={() => skip(-10)} disabled={off} aria-label="Back 10 seconds">
-          <LuRotateCcw />
-        </Button>
-        <Button variant="ghost" size="icon-sm" onClick={() => skip(10)} disabled={off} aria-label="Forward 10 seconds">
-          <LuRotateCw />
-        </Button>
-        <span className="ml-1 text-xs tabular-nums text-muted-foreground">
-          {off ? "0:00" : fmt(time)} / {off || !duration ? "0:00" : fmt(duration)}
+      <div className="mt-3 flex items-center gap-2.5">
+        <button
+          type="button"
+          onClick={toggle}
+          disabled={off}
+          aria-label={playing ? "Pause" : "Play"}
+          className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20 transition-transform hover:scale-105 active:scale-95 disabled:cursor-default disabled:from-muted disabled:to-muted disabled:text-muted-foreground disabled:shadow-none disabled:hover:scale-100"
+        >
+          {playing ? <LuPause className="size-4" /> : <LuPlay className="size-4 translate-x-px" />}
+        </button>
+        <span className="text-xs tabular-nums text-muted-foreground">
+          <span className="font-medium text-foreground">{off ? "0:00" : fmt(time)}</span> / {off || !duration ? "0:00" : fmt(duration)}
         </span>
         <div className="ml-auto flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={cycleSpeed} disabled={off} aria-label="Playback speed" className="w-12 tabular-nums">
+          <button
+            type="button"
+            onClick={cycleSpeed}
+            disabled={off}
+            aria-label="Playback speed"
+            className="h-7 min-w-10 cursor-pointer rounded-full border px-2 text-xs font-medium tabular-nums transition-colors hover:bg-muted disabled:cursor-default disabled:opacity-50"
+          >
             {SPEEDS[speed]}x
-          </Button>
-          <Button variant="ghost" size="icon-sm" onClick={() => setMuted((m) => !m)} disabled={off} aria-label={muted ? "Unmute" : "Mute"}>
-            {muted ? <LuVolumeX /> : <LuVolume2 />}
-          </Button>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMuted((m) => !m)}
+            disabled={off}
+            aria-label={muted ? "Unmute" : "Mute"}
+            className="flex size-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-default disabled:opacity-50"
+          >
+            {muted ? <LuVolumeX className="size-4" /> : <LuVolume2 className="size-4" />}
+          </button>
           {off ? (
-            <Button variant="ghost" size="icon-sm" disabled aria-label="Download">
-              <LuDownload />
-            </Button>
+            <span aria-hidden className="flex size-7 items-center justify-center rounded-full text-muted-foreground opacity-50">
+              <LuDownload className="size-4" />
+            </span>
           ) : (
-            <Button variant="ghost" size="icon-sm" render={<a href={src} download={name} />} aria-label="Download">
-              <LuDownload />
-            </Button>
+            <a href={src} download={name} aria-label="Download" className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+              <LuDownload className="size-4" />
+            </a>
           )}
         </div>
       </div>

@@ -33,6 +33,7 @@ import { VideoPlayer } from "@/components/studio/video-player";
 import { useUploadProgress } from "@/components/studio/upload";
 import { JobHost } from "@/components/studio/job-context";
 import { LocalTime } from "@/components/local-time";
+import { RunMeter } from "@/components/studio/processing";
 
 /* ------------------------------------------------------------------ context */
 
@@ -561,10 +562,11 @@ export function History({ rows }: { rows: HistoryRow[] }) {
                     <CardTitle className="line-clamp-1 text-sm">{r.title ?? "Untitled"}</CardTitle>
                     <CardDescription><LocalTime iso={r.created_at} /></CardDescription>
                   </div>
-                  {r.status !== "done" && <Badge variant={r.status === "failed" ? "destructive" : "secondary"}>{r.status === "failed" ? "Failed" : "Processing"}</Badge>}
+                  {r.status === "failed" && <Badge variant="destructive">Failed</Badge>}
                 </div>
               </CardHeader>
               <CardContent>
+                {r.status === "processing" && <RunMeter id={r.id} createdAt={r.created_at} />}
                 {r.status === "done" && r.mime_type?.startsWith("audio") && <AudioPlayer compact src={`/api/studio/files/${r.id}`} seed={r.id} name="audio.mp3" />}
                 {r.status === "done" && r.mime_type?.startsWith("video") && <VideoPlayer compact src={`/api/studio/files/${r.id}`} name="video.mp4" />}
                 {r.status === "failed" && <p className="text-xs text-destructive">{r.error ?? "Failed"}</p>}

@@ -153,16 +153,11 @@ export function UsageBar({ usage, compact = false }: { usage: PlanUsage; compact
   const low = pct <= 15;
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
-        <span className="font-medium">
-          {!compact && `${usage.serviceName} · `}
-          {usage.plan ? `${usage.plan} plan` : "Plan"}
-        </span>
-        <span className={low ? "text-destructive" : "text-muted-foreground"}>
-          {formatUnits(usage.remaining, usage.unit)} left of {formatUnits(usage.total, usage.unit)}
-          {usage.expiresAt ? ` · until ${when(usage.expiresAt)}` : ""}
-        </span>
-      </div>
+      <p className={low ? "text-sm text-destructive" : "text-sm text-muted-foreground"}>
+        {!compact && <span className="font-medium text-foreground">{usage.serviceName}: </span>}
+        {formatUnits(usage.remaining, usage.unit)} left of {formatUnits(usage.total, usage.unit)}
+        {usage.expiresAt ? ` · until ${when(usage.expiresAt)}` : ""}
+      </p>
       <div className="h-1.5 overflow-hidden rounded-full bg-muted">
         <div className={low ? "h-full rounded-full bg-destructive" : "h-full rounded-full bg-foreground"} style={{ width: `${pct}%` }} />
       </div>
