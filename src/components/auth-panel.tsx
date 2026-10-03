@@ -1,72 +1,96 @@
 import Link from "next/link";
-import Image from "next/image";
-import { LuAudioLines, LuClapperboard, LuDisc3 } from "react-icons/lu";
+import {
+  LuAudioLines,
+  LuChartBar,
+  LuLanguages,
+  LuLayoutGrid,
+  LuLock,
+  LuSearch,
+  LuShieldCheck,
+  LuSparkles,
+  LuUserRound,
+  LuWallet,
+} from "react-icons/lu";
 import { AuthBackdrop, type AuthVariant } from "@/components/auth-backdrop";
+import { AUTH_BRANDS } from "@/components/brand-marks";
+import { displayFont, serifFont } from "@/components/landing/fonts";
 
-const SERVICES = [
-  {
-    name: "Music Distribution",
-    text: "Releases, royalties and analytics.",
-    logo: (
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#7c3aed] to-[#ec4899]">
-        <LuDisc3 className="size-6 text-white" />
-      </span>
-    ),
-  },
-  {
-    name: "AI Studio",
-    text: "Voice, audio and video made with AI.",
-    logo: (
-      <span className="relative flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#2563eb] via-[#7c3aed] to-[#f97316]">
-        <LuAudioLines className="size-5 -translate-x-1 -translate-y-0.5 text-white" />
-        <LuClapperboard className="absolute size-4 translate-x-2.5 translate-y-2 text-white/90" />
-      </span>
-    ),
-  },
-  {
-    name: "Channel Checker",
-    text: "YouTube MCN checks and copyright management.",
-    logo: (
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-[#c2185b]">
-        <Image src="/brand/logo-slideBar.png" alt="" width={28} height={28} className="size-7" />
-      </span>
-    ),
-  },
-];
+type Content = {
+  eyebrow: string;
+  title: [string, string];
+  body: string;
+  points: { icon: React.ComponentType<{ className?: string }>; title: string; text: string }[];
+};
 
-/** The left side of every sign-in page: the same words and logos, a different moving background per dashboard. */
+// each sign-in speaks about its own product, in its own words
+const CONTENT: Record<AuthVariant, Content> = {
+  client: {
+    eyebrow: "Welcome to Zinetic Music",
+    title: ["Everything you create, ", "in one place."],
+    body: "Music, AI and creator tools under a single account. Pick the dashboard you need and you are straight in.",
+    points: [
+      { icon: LuLayoutGrid, title: "One account, every tool", text: "Switch dashboards without signing in again." },
+      { icon: LuSparkles, title: "Made for creators", text: "Tools that take a day of work down to minutes." },
+      { icon: LuLock, title: "Safe by default", text: "Your account and your payments stay protected." },
+    ],
+  },
+  cms: {
+    eyebrow: "Channel Checker",
+    title: ["Know a channel's network, ", "instantly."],
+    body: "Check a YouTube channel in seconds and keep your copyright claims in order, all from one clean workspace.",
+    points: [
+      { icon: LuSearch, title: "Instant network lookup", text: "See which network a channel belongs to the moment you search." },
+      { icon: LuShieldCheck, title: "Claims under control", text: "Follow every copyright claim from first notice to resolution." },
+      { icon: LuChartBar, title: "A full history", text: "Every check and claim stays on record, easy to find later." },
+      { icon: LuWallet, title: "Simple wallet", text: "Top up once and see exactly what each check costs." },
+    ],
+  },
+  studio: {
+    eyebrow: "AI Studio",
+    title: ["Create with voice, audio and video ", "AI."],
+    body: "Dubbing, avatars, translation, music and more. Write it, upload it or describe it, and the studio does the rest.",
+    points: [
+      { icon: LuLanguages, title: "Dub and translate", text: "Take any video into a new language, in a natural voice." },
+      { icon: LuAudioLines, title: "Voices, sound and music", text: "Lifelike speech, sound effects and original tracks on demand." },
+      { icon: LuUserRound, title: "Avatars and clips", text: "Talking presenters and short clips from a script or a prompt." },
+      { icon: LuSparkles, title: "Pay for what you use", text: "Start with a free trial, then choose a plan per tool." },
+    ],
+  },
+};
+
+/** The left side of every sign-in page: its own words and logo, and its own moving background. */
 export function AuthPanel({ variant, className = "" }: { variant: AuthVariant; className?: string }) {
+  const brand = AUTH_BRANDS[variant];
+  const c = CONTENT[variant];
   return (
-    <div className={`relative flex-col justify-between overflow-hidden bg-[#0f0f0f] p-10 text-white ${className}`}>
+    <div className={`zl dark ${displayFont.variable} ${serifFont.variable} relative flex-col justify-between overflow-hidden p-10 xl:p-14 ${className}`}>
       <AuthBackdrop variant={variant} />
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-3/5 bg-gradient-to-t from-[#0f0f0f] via-[#0f0f0f]/70 to-transparent" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-t from-[#08070a] via-[#08070a]/55 to-[#08070a]/25" />
 
-      <Link href="/" className="relative z-10 flex items-center gap-2.5">
-        <Image src="/brand/logo.png" alt="" width={899} height={1140} style={{ height: 40, width: "auto" }} />
-        <span className="font-heading text-lg font-semibold">Zinetic Music</span>
+      <Link href="/" className="relative z-10 flex w-fit items-center gap-3">
+        <brand.Mark size={40} />
+        <span className="font-heading text-lg font-semibold">{brand.name}</span>
       </Link>
 
-      <div className="relative z-10 flex flex-col gap-9">
-        <div className="flex w-fit items-center gap-2 rounded-md bg-white/10 px-3 py-1.5 text-sm text-white/80 backdrop-blur">
-          <svg className="size-5 shrink-0" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"
-              fill="#FF0000"
-            />
-            <polygon points="9.545,15.568 15.818,12 9.545,8.432" fill="#FFFFFF" />
-          </svg>
-          Built for YouTube
-        </div>
-        <h2 className="font-heading text-4xl leading-[1.1] font-bold text-balance">
-          Music, AI and creator tools, <span className="zl-serif zl-grad-text">all in one place</span>
+      <div className="relative z-10 flex max-w-xl flex-col gap-7">
+        <p className="w-fit rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 text-[0.7rem] font-semibold tracking-[0.2em] text-white/75 uppercase backdrop-blur">
+          {c.eyebrow}
+        </p>
+        <h2 className="zl-display text-[clamp(2.4rem,3.6vw,3.6rem)] font-bold text-balance">
+          {c.title[0]}
+          <span className="zl-serif zl-grad-text">{c.title[1]}</span>
         </h2>
-        <ul className="flex flex-col gap-4">
-          {SERVICES.map((s) => (
-            <li key={s.name} className="flex items-center gap-4">
-              {s.logo}
+        <p className="max-w-md text-base leading-relaxed text-white/65">{c.body}</p>
+
+        <ul className="mt-2 flex flex-col gap-4">
+          {c.points.map((p) => (
+            <li key={p.title} className="flex items-start gap-4">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/12 bg-white/[0.07] backdrop-blur">
+                <p.icon className="size-[1.15rem] text-white/90" />
+              </span>
               <div>
-                <p className="font-heading text-base font-semibold">{s.name}</p>
-                <p className="text-sm text-white/60">{s.text}</p>
+                <p className="font-heading text-[0.95rem] font-semibold">{p.title}</p>
+                <p className="mt-0.5 text-sm leading-relaxed text-white/55">{p.text}</p>
               </div>
             </li>
           ))}
