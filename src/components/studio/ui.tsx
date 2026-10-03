@@ -32,6 +32,7 @@ import { AudioPlayer } from "@/components/studio/audio-player";
 import { VideoPlayer } from "@/components/studio/video-player";
 import { useUploadProgress } from "@/components/studio/upload";
 import { JobHost } from "@/components/studio/job-context";
+import { LocalTime } from "@/components/local-time";
 
 /* ------------------------------------------------------------------ context */
 
@@ -558,7 +559,7 @@ export function History({ rows }: { rows: HistoryRow[] }) {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <CardTitle className="line-clamp-1 text-sm">{r.title ?? "Untitled"}</CardTitle>
-                    <CardDescription>{new Date(r.created_at).toLocaleString()}</CardDescription>
+                    <CardDescription><LocalTime iso={r.created_at} /></CardDescription>
                   </div>
                   {r.status !== "done" && <Badge variant={r.status === "failed" ? "destructive" : "secondary"}>{r.status === "failed" ? "Failed" : "Processing"}</Badge>}
                 </div>

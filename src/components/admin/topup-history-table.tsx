@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { LocalTime } from "@/components/local-time";
 import {
   Table,
   TableBody,
@@ -96,7 +97,7 @@ export function TopupHistoryTable({ rows }: { rows: TopupRow[] }) {
                     {formatSignedCredits(Number(r.amount))}
                   </TableCell>
                   <TableCell className="text-right text-muted-foreground">
-                    {new Date(r.created_at).toLocaleString()}
+                    <LocalTime iso={r.created_at} />
                   </TableCell>
                 </TableRow>
               ))}

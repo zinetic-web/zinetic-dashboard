@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { LocalTime } from "@/components/local-time";
 import Link from "next/link";
 import { LuSearch } from "react-icons/lu";
 import { usePagination } from "@/hooks/use-pagination";
@@ -26,7 +27,6 @@ export type OrderRow = {
 };
 
 const PAGE = 25;
-const when = (iso: string) => new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
 function StatusBadge({ s }: { s: OrderRow["status"] }) {
   if (s === "paid") return <Badge className="bg-emerald-600/10 text-emerald-700 dark:text-emerald-400">Paid</Badge>;
@@ -109,7 +109,7 @@ export function OrdersTable({ rows, initialStatus }: { rows: OrderRow[]; initial
             <TableBody>
               {pageItems.map((r) => (
                 <TableRow key={r.id}>
-                  <TableCell className="whitespace-nowrap text-muted-foreground">{when(r.at)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-muted-foreground"><LocalTime iso={r.at} /></TableCell>
                   <TableCell>
                     {r.userId ? (
                       <Link href={`/admin/customers/${r.userId}`} className="hover:underline">

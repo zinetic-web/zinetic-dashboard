@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LocalTime } from "@/components/local-time";
 import { notFound } from "next/navigation";
 import { LuArrowLeft } from "react-icons/lu";
 import { loadCustomer } from "@/lib/admin/customers";
@@ -14,7 +15,6 @@ import { AccessPanel } from "@/components/admin-panel/access-panel";
 import { CustomerActions, CustomerNotes } from "@/components/admin-panel/customer-actions";
 import { StatCard } from "@/components/admin-panel/stat-card";
 
-const when = (iso: string) => new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
 const STATUS: Record<string, string> = {
   approved: "bg-emerald-600/10 text-emerald-700 dark:text-emerald-400",
@@ -147,7 +147,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
                   <TableBody>
                     {orders.map((o) => (
                       <TableRow key={o.id}>
-                        <TableCell className="whitespace-nowrap text-muted-foreground">{when(o.at)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-muted-foreground"><LocalTime iso={o.at} /></TableCell>
                         <TableCell className="font-medium">{o.what}</TableCell>
                         <TableCell className="text-right tabular-nums">{fmtBdt(o.bdt)}</TableCell>
                         <TableCell>
@@ -180,7 +180,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
                         <p className="text-sm font-medium">{t.label}</p>
                         {t.sub && <p className="truncate text-xs text-muted-foreground">{t.sub}</p>}
                       </div>
-                      <span className="shrink-0 text-xs text-muted-foreground">{when(t.at)}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground"><LocalTime iso={t.at} /></span>
                     </li>
                   ))}
                 </ul>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LocalTime } from "@/components/local-time";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,7 +62,7 @@ export default async function AuditPage() {
               <TableBody>
                 {rows.map((r) => (
                   <TableRow key={r.id}>
-                    <TableCell className="whitespace-nowrap text-muted-foreground">{new Date(r.created_at).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground"><LocalTime iso={r.created_at} mode="short" /></TableCell>
                     <TableCell>{r.admin_email ?? "-"}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">{LABEL[r.action] ?? r.action}</Badge>

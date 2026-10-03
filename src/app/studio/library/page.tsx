@@ -1,4 +1,5 @@
 import { getDashboardSession } from "@/lib/supabase/dashboard-session";
+import { LocalTime } from "@/components/local-time";
 import { createClient } from "@/lib/supabase/server";
 import { TOOLS } from "@/lib/studio/tools";
 import { AudioPlayer } from "@/components/studio/audio-player";
@@ -58,7 +59,7 @@ export default async function LibraryPage() {
                     <div className="min-w-0">
                       <CardTitle className="line-clamp-1 text-sm">{r.title ?? "Untitled"}</CardTitle>
                       <CardDescription>
-                        {toolName(r.kind)} · {new Date(r.created_at).toLocaleString()}
+                        {toolName(r.kind)} · <LocalTime iso={r.created_at} />
                       </CardDescription>
                     </div>
                     {r.status !== "done" && <Badge variant={r.status === "failed" ? "destructive" : "secondary"}>{r.status === "failed" ? "Failed" : "Processing"}</Badge>}

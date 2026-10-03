@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LocalTime } from "@/components/local-time";
 import { LuAudioLines } from "react-icons/lu";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { seriesByDay, fmtNum } from "@/lib/admin/stats";
@@ -138,7 +139,7 @@ export default async function AdminStudioPage({ searchParams }: { searchParams: 
                   const svc = r.service ? servicesForTool(toolOf(r.kind)?.id ?? "").find((s) => s.id === r.service) : null;
                   return (
                     <TableRow key={r.id}>
-                      <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</TableCell>
+                      <TableCell className="whitespace-nowrap text-xs text-muted-foreground"><LocalTime iso={r.created_at} mode="short" /></TableCell>
                       <TableCell>
                         <Link href={`/admin/customers/${r.user_id}`} className="hover:underline">
                           {r.profiles?.full_name || r.profiles?.email}
