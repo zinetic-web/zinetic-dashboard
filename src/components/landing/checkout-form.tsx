@@ -204,7 +204,7 @@ export function CheckoutForm({
 
   return (
     <form onSubmit={onSubmit} className="grid items-start gap-14 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-20">
-      <div className="min-w-0">
+      <div className="min-w-0 rounded-[28px] border border-white/10 bg-black p-5 sm:p-8 lg:p-10">
         <section>
           <StepHeading n="1" title="Choose what you need" hint="Pick a service, then a plan." />
 
