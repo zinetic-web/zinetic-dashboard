@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { postForm } from "@/components/studio/upload";
 import { useJob } from "@/components/studio/use-job";
 import { EnginePicker, Field, FileDrop, Output, Segmented, SubmitButton, VideoResult, Workspace, useEngine } from "@/components/studio/ui";
 import { Switch } from "@/components/ui/switch";
@@ -20,7 +21,7 @@ export function LipSyncForm() {
     fd.append("audio", audio!);
     fd.append("mode", mode);
     fd.append("enhance", enhance ? "true" : "false");
-    return run(() => fetch("/api/studio/video/lipsync", { method: "POST", body: fd }), { async: true, message: "Matching the lips to your audio" });
+    return run(() => postForm("/api/studio/video/lipsync", fd), { async: true, message: "Matching the lips to your audio" });
   }
 
   return (

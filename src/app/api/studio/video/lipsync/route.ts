@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readForm } from "@/lib/studio/uploads";
 import { startLipsync } from "@/lib/studio/heygen";
 import { hostForHeyGen } from "@/lib/studio/translate";
 import { authorize, begin, fail, mb, mediaSeconds, minutesOf, refundAuthz, requireStudioUser, tooBig, uploadedFile } from "@/lib/studio/run";
@@ -10,7 +11,7 @@ export async function POST(request: Request) {
   const auth = await requireStudioUser();
   if ("error" in auth) return auth.error;
 
-  const form = await request.formData();
+  const form = await readForm(request, auth.userId);
   const video = uploadedFile(form, "video");
   const audio = uploadedFile(form, "audio");
   if (!video || !audio) return fail("Upload a video and the audio to match it to.");

@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { JobState } from "@/components/studio/use-job";
 import { AudioPlayer } from "@/components/studio/audio-player";
 import { VideoPlayer } from "@/components/studio/video-player";
+import { useUploadProgress } from "@/components/studio/upload";
 
 /* ------------------------------------------------------------------ context */
 
@@ -338,10 +339,11 @@ export function SubmitButton({
   busyLabel?: string;
   onClick: () => void;
 }) {
+  const uploading = useUploadProgress();
   return (
     <Button size="lg" onClick={onClick} disabled={busy || disabled} className="w-full">
       {busy && <LuLoaderCircle className="animate-spin" />}
-      {busy ? busyLabel : children}
+      {busy ? (uploading !== null ? `Uploading ${uploading}%` : busyLabel) : children}
     </Button>
   );
 }

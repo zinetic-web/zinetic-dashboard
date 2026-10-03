@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { postForm } from "@/components/studio/upload";
 import { LuDownload } from "react-icons/lu";
 import type { Transcript } from "@/lib/studio/elevenlabs";
 import { Button } from "@/components/ui/button";
@@ -58,7 +59,7 @@ export function TranscribeForm() {
     fd.append("engine", eng.key);
     fd.append("file", file!);
     fd.append("diarize", speakers === "yes" ? "true" : "false");
-    return run(() => fetch("/api/studio/transcribe", { method: "POST", body: fd }));
+    return run(() => postForm("/api/studio/transcribe", fd));
   }
 
   const transcript = state.phase === "done" ? state.data?.transcript : undefined;

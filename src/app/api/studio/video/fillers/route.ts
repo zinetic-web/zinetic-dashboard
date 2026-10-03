@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readForm } from "@/lib/studio/uploads";
 import { promises as fs } from "fs";
 import path from "path";
 import { transcribe } from "@/lib/studio/elevenlabs";
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   const auth = await requireStudioUser();
   if ("error" in auth) return auth.error;
 
-  const form = await request.formData();
+  const form = await readForm(request, auth.userId);
   const video = uploadedFile(form, "video");
   if (!video) return fail("Upload a video.");
   if (tooBig(video)) return fail("That file is too large.");

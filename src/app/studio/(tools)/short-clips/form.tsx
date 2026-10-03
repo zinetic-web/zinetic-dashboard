@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { postForm } from "@/components/studio/upload";
 import { VideoPlayer } from "@/components/studio/video-player";
 import { useJob } from "@/components/studio/use-job";
 import { Field, FileDrop, Output, Segmented, SubmitButton, Workspace, EnginePicker, useEngine } from "@/components/studio/ui";
@@ -20,7 +21,7 @@ export function ClipsForm() {
     fd.append("count", count);
     fd.append("length", length);
     fd.append("format", format);
-    return run(() => fetch("/api/studio/video/clips", { method: "POST", body: fd }), { message: "Finding your best moments" });
+    return run(() => postForm("/api/studio/video/clips", fd), { message: "Finding your best moments" });
   }
 
   const ids = state.phase === "done" ? (state.data?.ids ?? [state.id]) : [];

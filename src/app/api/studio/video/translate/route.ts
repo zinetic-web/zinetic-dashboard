@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readForm } from "@/lib/studio/uploads";
 import { startTranslation } from "@/lib/studio/translate";
 import { authorize, begin, fail, mb, mediaSeconds, minutesOf, refundAuthz, requireStudioUser, tooBig, uploadedFile } from "@/lib/studio/run";
 
@@ -9,7 +10,7 @@ export async function POST(request: Request) {
   const auth = await requireStudioUser();
   if ("error" in auth) return auth.error;
 
-  const form = await request.formData();
+  const form = await readForm(request, auth.userId);
   const file = uploadedFile(form, "video");
   const language = String(form.get("language") ?? "");
   if (!file || !language) return fail("Upload a file and choose a language.");

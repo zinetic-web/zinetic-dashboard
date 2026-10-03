@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { postForm } from "@/components/studio/upload";
 import { AudioPlayer } from "@/components/studio/audio-player";
 import { useJob } from "@/components/studio/use-job";
 import { AudioResult, Field, FileDrop, Output, SubmitButton, useObjectUrl, Workspace, EnginePicker, useEngine } from "@/components/studio/ui";
@@ -15,7 +16,7 @@ export function CleanerForm() {
     const fd = new FormData();
     fd.append("engine", eng.key);
     fd.append("audio", file!);
-    return run(() => fetch("/api/studio/isolate", { method: "POST", body: fd }));
+    return run(() => postForm("/api/studio/isolate", fd));
   }
 
   return (

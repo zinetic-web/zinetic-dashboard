@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { postForm } from "@/components/studio/upload";
 import { useJob } from "@/components/studio/use-job";
 import {
   AudioResult,
@@ -64,7 +65,7 @@ export function TranslateForm({
       fd.append("mode", quality);
       if (speakers !== "0") fd.append("speakers", speakers);
     }
-    return run(() => fetch(endpoint, { method: "POST", body: fd }), { async: true, message: busyMessage });
+    return run(() => postForm(endpoint, fd), { async: true, message: busyMessage });
   }
 
   return (

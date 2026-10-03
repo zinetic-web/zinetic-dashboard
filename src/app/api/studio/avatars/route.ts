@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readForm } from "@/lib/studio/uploads";
 import { randomUUID } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { uploadAsset } from "@/lib/studio/heygen";
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   const auth = await requireStudioUser();
   if ("error" in auth) return auth.error;
 
-  const form = await request.formData();
+  const form = await readForm(request, auth.userId);
   const photo = uploadedFile(form, "photo");
   const name = String(form.get("name") ?? "").trim();
   if (!photo || !name) return fail("Add a name and a clear front-facing photo.");

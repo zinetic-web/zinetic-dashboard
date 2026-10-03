@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { postForm } from "@/components/studio/upload";
 import type { Voice } from "@/lib/studio/elevenlabs";
 import { useJob } from "@/components/studio/use-job";
 import { AudioResult, Field, FileDrop, Output, SubmitButton, VoicePicker, Workspace, EnginePicker, useEngine } from "@/components/studio/ui";
@@ -17,7 +18,7 @@ export function VoiceChangerForm({ voices }: { voices: Voice[] }) {
     fd.append("engine", eng.key);
     fd.append("audio", file!);
     fd.append("voiceId", voiceId);
-    return run(() => fetch("/api/studio/voice-changer", { method: "POST", body: fd }));
+    return run(() => postForm("/api/studio/voice-changer", fd));
   }
 
   return (

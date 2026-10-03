@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readForm } from "@/lib/studio/uploads";
 import { isolateAudio } from "@/lib/studio/elevenlabs";
 import { authorize, begin, fail, failGeneration, finishWithFile, mb, mediaSeconds, minutesOf, requireStudioUser, tooBig, uploadedFile } from "@/lib/studio/run";
 
@@ -9,7 +10,7 @@ export async function POST(request: Request) {
   const auth = await requireStudioUser();
   if ("error" in auth) return auth.error;
 
-  const form = await request.formData();
+  const form = await readForm(request, auth.userId);
   const file = uploadedFile(form, "audio");
   if (!file) return fail("Upload the audio you want cleaned.");
   if (tooBig(file)) return fail("That file is too large.");

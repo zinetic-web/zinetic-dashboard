@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { postForm } from "@/components/studio/upload";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +27,7 @@ export function CreatorForm() {
     fd.append("name", name);
     fd.append("photo", photo!);
     try {
-      const res = await fetch("/api/studio/avatars", { method: "POST", body: fd });
+      const res = await postForm("/api/studio/avatars", fd);
       const json = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) setError(json.error ?? "Something went wrong.");
       else {

@@ -23,6 +23,9 @@ const s3 = () =>
   (client ??= new S3Client({
     region: "auto",
     endpoint: R2.endpoint,
+    // R2 does not take the newer automatic checksums, and they would break browser uploads
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
     credentials: { accessKeyId: R2.accessKeyId, secretAccessKey: R2.secretAccessKey },
   }));
 
@@ -67,6 +70,17 @@ export async function signedUrl(key: string, opts: { contentType?: string; secon
   if (!usesR2) return null;
   return getSignedUrl(s3(), new GetObjectCommand({ Bucket: R2.bucket, Key: safeKey(key), ResponseContentType: opts.contentType }), {
     expiresIn: opts.seconds ?? 600,
+  });
+}
+
+/**
+ * A short-lived private link a browser can upload one file to, straight into the bucket.
+ * The size and type are part of the signature, so the browser cannot send anything else.
+ */
+export async function signedUploadUrl(key: string, opts: { contentType: string; size: number; seconds?: number }) {
+  if (!usesR2) return null;
+  return getSignedUrl(s3(), new PutObjectCommand({ Bucket: R2.bucket, Key: safeKey(key), ContentType: opts.contentType, ContentLength: opts.size }), {
+    expiresIn: opts.seconds ?? 900,
   });
 }
 

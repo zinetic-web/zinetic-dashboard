@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { postForm } from "@/components/studio/upload";
 import { useJob } from "@/components/studio/use-job";
 import { Field, FileDrop, Output, Segmented, SubmitButton, VideoResult, Workspace, EnginePicker, useEngine } from "@/components/studio/ui";
 
@@ -19,7 +20,7 @@ export function FillerForm() {
     fd.append("video", file!);
     fd.append("fillers", fillers === "yes" ? "true" : "false");
     fd.append("pauses", pauses === "off" ? "0" : pauses);
-    return run(() => fetch("/api/studio/video/fillers", { method: "POST", body: fd }), { message: "Cleaning up your video" });
+    return run(() => postForm("/api/studio/video/fillers", fd), { message: "Cleaning up your video" });
   }
 
   const report = state.phase === "done" ? state.data : undefined;
