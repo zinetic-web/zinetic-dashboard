@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
 import { Logo } from "@/components/logo";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { LuArrowUpRight, LuChevronDown, LuMail, LuMenu } from "react-icons/lu";
+import { LuArrowUpRight, LuAudioLines, LuChevronDown, LuClapperboard, LuGift, LuMail, LuMenu, LuMusic, LuSearch } from "react-icons/lu";
 import { cn } from "@/lib/utils";
 import { ZButton } from "@/components/landing/button";
 import { displayFont, serifFont } from "@/components/landing/fonts";
@@ -25,13 +25,6 @@ const LINKS = [
 const linkClass =
   "rounded-full px-4 py-2 text-[1.02rem] font-medium text-white/90 transition-colors hover:bg-white/10 hover:text-white";
 
-const CATEGORY_NOTES: Record<string, string> = {
-  music: "Release your music worldwide, or generate something new from a prompt.",
-  voice: "Generate and change voices, design sound, transcribe, clean and dub.",
-  video: "Avatars, translation, lip sync, short clips and video from a prompt.",
-  creator: "Find the network behind any YouTube channel.",
-};
-
 const CATEGORY_ANCHORS: Record<string, string> = {
   music: "music",
   voice: "voice",
@@ -39,72 +32,73 @@ const CATEGORY_ANCHORS: Record<string, string> = {
   creator: "creator-tools",
 };
 
-function MegaMenu({ onNavigate }: { onNavigate: () => void }) {
-  const [active, setActive] = React.useState<ServiceCategory>("music");
-  const current = CATEGORIES.find((c) => c.id === active) ?? CATEGORIES[0];
-  const items = servicesIn(active);
+const CATEGORY_STYLE: Record<ServiceCategory, { icon: React.ComponentType<{ className?: string }>; tile: string }> = {
+  music: { icon: LuMusic, tile: "from-[#7c3aed] to-[#ec4899]" },
+  voice: { icon: LuAudioLines, tile: "from-[#2563eb] to-[#7c3aed]" },
+  video: { icon: LuClapperboard, tile: "from-[#f97316] to-[#ec4899]" },
+  creator: { icon: LuSearch, tile: "from-[#c2185b] to-[#ff3d86]" },
+};
 
+function Group({ id, onNavigate }: { id: ServiceCategory; onNavigate: () => void }) {
+  const c = CATEGORIES.find((x) => x.id === id)!;
+  const { icon: Icon, tile } = CATEGORY_STYLE[id];
+  return (
+    <div>
+      <Link href={`/services#${CATEGORY_ANCHORS[id]}`} onClick={onNavigate} className="group/head flex items-center gap-3 px-3">
+        <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white", tile)}>
+          <Icon className="size-[1.1rem]" />
+        </span>
+        <span className="font-heading text-[1.02rem] font-semibold text-white">{c.label}</span>
+      </Link>
+      <ul className="mt-3 flex flex-col gap-0.5">
+        {servicesIn(id).map((s) => (
+          <li key={s.id}>
+            <Link
+              href={serviceHref(s.id)}
+              onClick={onNavigate}
+              className="group flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-[0.95rem] text-[#c9c3d1] transition-colors hover:bg-[#1c1826] hover:text-white"
+            >
+              <span>{s.name}</span>
+              <LuArrowUpRight className="size-4 shrink-0 -translate-x-1 text-[#ff5b8a] opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function MegaMenu({ onNavigate }: { onNavigate: () => void }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10, scale: 0.985 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 8, scale: 0.99 }}
-      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-      className="absolute top-full left-1/2 mt-3 w-[min(940px,calc(100vw-2rem))] -translate-x-1/2"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
+      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+      className="absolute top-full left-1/2 mt-3 w-[min(920px,calc(100vw-2rem))] -translate-x-1/2"
     >
-      <div className="grid overflow-hidden rounded-[26px] border border-white/10 bg-[#0b0910]/95 text-white shadow-[0_40px_100px_-30px_rgb(0_0_0/0.85)] backdrop-blur-2xl md:grid-cols-[260px_1fr]">
-        <div className="flex flex-col border-r border-white/10 bg-white/[0.03] p-3">
-          <ul className="flex flex-col gap-0.5">
-            {CATEGORIES.map((c) => {
-              const isActive = c.id === active;
-              return (
-                <li key={c.id}>
-                  <Link
-                    href={`/services#${CATEGORY_ANCHORS[c.id]}`}
-                    onClick={onNavigate}
-                    onMouseEnter={() => setActive(c.id)}
-                    onFocus={() => setActive(c.id)}
-                    className={cn(
-                      "relative flex items-center justify-between gap-3 rounded-xl px-4 py-3 transition-colors",
-                      isActive ? "bg-white/[0.07] text-white" : "text-white/60 hover:text-white"
-                    )}
-                  >
-                    {isActive && <span aria-hidden className="zl-grad-bg absolute top-1/2 left-0 h-5 w-0.5 -translate-y-1/2 rounded-full" />}
-                    <span className="font-medium">{c.label}</span>
-                    <span className="text-xs tabular-nums text-white/35">{servicesIn(c.id).length}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-          <Link
-            href="/services"
-            onClick={onNavigate}
-            className="zl-link mt-auto px-4 pt-6 pb-2 text-white"
-          >
-            Browse all services
-          </Link>
+      <div className="overflow-hidden rounded-[24px] border border-[#2a2533] bg-[#0b0910] text-white shadow-[0_40px_100px_-30px_#000]">
+        <div className="grid gap-x-6 gap-y-8 p-6 md:grid-cols-3">
+          <div className="flex flex-col gap-8">
+            <Group id="music" onNavigate={onNavigate} />
+            <Group id="creator" onNavigate={onNavigate} />
+          </div>
+          <Group id="voice" onNavigate={onNavigate} />
+          <Group id="video" onNavigate={onNavigate} />
         </div>
 
-        <div className="p-7">
-          <p className="text-sm text-white/50">{CATEGORY_NOTES[current.id]}</p>
-          <ul className="mt-5 grid gap-x-8 sm:grid-cols-2">
-            {items.map((s) => (
-              <li key={s.id} className="border-t border-white/[0.07]">
-                <Link
-                  href={serviceHref(s.id)}
-                  onClick={onNavigate}
-                  className="group flex items-start justify-between gap-3 py-3.5"
-                >
-                  <span className="min-w-0">
-                    <span className="block font-medium text-white/90 transition-colors group-hover:text-white">{s.name}</span>
-                    <span className="mt-0.5 line-clamp-1 block text-xs text-white/40">{s.blurb}</span>
-                  </span>
-                  <LuArrowUpRight className="mt-1 size-4 shrink-0 text-white/0 transition-all duration-300 group-hover:text-[#ff5b8a]" />
-                </Link>
-              </li>
-            ))}
-          </ul>
+        <div className="flex items-center justify-between gap-4 border-t border-[#2a2533] bg-[#13101a] px-6 py-4">
+          <Link href="/services" onClick={onNavigate} className="zl-link text-sm font-medium text-white">
+            Browse all services
+          </Link>
+          <Link
+            href="/#pricing"
+            onClick={onNavigate}
+            className="flex items-center gap-2 rounded-full bg-[#1f1a29] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2a2336]"
+          >
+            <LuGift className="size-4 text-[#ff5b8a]" />
+            Try AI Studio free
+          </Link>
         </div>
       </div>
     </motion.div>
