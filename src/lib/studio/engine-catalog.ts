@@ -14,7 +14,7 @@ export const PROVIDERS: Record<ProviderId, { name: string; services: string[] }>
   },
   heygen: {
     name: "HeyGen",
-    services: ["dubbing", "video-translation", "avatar-video", "avatar-creator", "prompt-video"],
+    services: ["dubbing", "video-translation", "avatar-video", "avatar-creator", "prompt-video", "lip-sync"],
   },
   local: { name: "Built-in (ffmpeg)", services: ["short-clips", "filler-remover"] },
 };

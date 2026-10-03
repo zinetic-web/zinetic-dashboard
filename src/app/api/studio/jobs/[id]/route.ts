@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getDashboardSession } from "@/lib/supabase/dashboard-session";
 import { dubbingStatus, downloadDub } from "@/lib/studio/elevenlabs";
-import { translateStatus, videoStatus, type JobState } from "@/lib/studio/heygen";
+import { lipsyncStatus, translateStatus, videoStatus, type JobState } from "@/lib/studio/heygen";
 import { failGeneration, finishWithFile } from "@/lib/studio/run";
 
 export const runtime = "nodejs";
@@ -58,7 +58,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   }
 
   const isTranslation = row.kind === "dubbing" || row.kind === "video-translation" || row.kind === "translation-lipsync";
-  const s: JobState = isTranslation ? await translateStatus(row.provider_job_id) : await videoStatus(row.provider_job_id);
+  const s: JobState = isTranslation ? await translateStatus(row.provider_job_id) : row.kind === "lip-sync" ? await lipsyncStatus(row.provider_job_id) : await videoStatus(row.provider_job_id);
 
   if (s.status === "failed") {
     await failGeneration(g, s.error ?? "Failed");

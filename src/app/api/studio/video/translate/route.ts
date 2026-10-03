@@ -30,7 +30,9 @@ export async function POST(request: Request) {
 
   // lip sync only applies when the engine offers it
   const lipsync = form.get("lipsync") !== "false" && z.authz.engine.features.includes("lipsync");
-  const job = await startTranslation({ provider: z.authz.engine.provider, file, language, lipsync });
+  const mode = form.get("mode") === "precision" ? "precision" : "speed";
+  const speakers = Number(form.get("speakers")) || undefined;
+  const job = await startTranslation({ provider: z.authz.engine.provider, file, language, lipsync, mode, speakers: speakers && speakers >= 1 && speakers <= 10 ? Math.trunc(speakers) : undefined });
   if (!job.ok) {
     await refundAuthz(z.authz);
     return fail(job.error, 502);

@@ -44,6 +44,8 @@ export function TranslateForm({
   const [file, setFile] = React.useState<File | null>(null);
   const [picked, setPicked] = React.useState("");
   const [lipsync, setLipsync] = React.useState("yes");
+  const [quality, setQuality] = React.useState("speed");
+  const [speakers, setSpeakers] = React.useState("0");
   const { state, run } = useJob();
 
   const languages = languagesByEngine[eng.key] ?? [];
@@ -58,6 +60,10 @@ export function TranslateForm({
     fd.append(field, file!);
     fd.append("language", language);
     fd.append("lipsync", eng.has("lipsync") && lipsync === "yes" ? "true" : "false");
+    if (eng.has("lipsync")) {
+      fd.append("mode", quality);
+      if (speakers !== "0") fd.append("speakers", speakers);
+    }
     return run(() => fetch(endpoint, { method: "POST", body: fd }), { async: true, message: busyMessage });
   }
 
@@ -75,6 +81,20 @@ export function TranslateForm({
           {eng.has("lipsync") && (
             <Field label="Lip sync" hint="Match the mouth to the new language">
               <Segmented value={lipsync} onChange={setLipsync} options={[{ value: "yes", label: "On" }, { value: "no", label: "Off" }]} />
+            </Field>
+          )}
+          {eng.has("lipsync") && lipsync === "yes" && (
+            <Field label="Quality" hint="Best quality handles faces that turn or are partly covered, and takes longer">
+              <Segmented value={quality} onChange={setQuality} options={[{ value: "speed", label: "Fast" }, { value: "precision", label: "Best quality" }]} />
+            </Field>
+          )}
+          {eng.has("lipsync") && (
+            <Field label="People speaking" hint="Leave on automatic unless voices get mixed up">
+              <SelectField
+                value={speakers}
+                onChange={setSpeakers}
+                options={[{ value: "0", label: "Detect automatically" }, ...[1, 2, 3, 4, 5, 6].map((n) => ({ value: String(n), label: n === 1 ? "1 person" : `${n} people` }))]}
+              />
             </Field>
           )}
           <SubmitButton busy={state.phase === "working"} disabled={!file || !language} busyLabel="Working" onClick={submit}>

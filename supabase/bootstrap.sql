@@ -809,3 +809,12 @@ values
   ('voice', 'v3',       'Voice v3',       'Dramatic delivery with audio tags such as [whispers]. 74 languages.', 'elevenlabs', 'eleven_v3', 1,   'generation', '{multilingual,audio-tags}', 5000,  '{}', 3, 0.08, 'per_1k_chars', true),
   ('voice', 'flash',    'Flash v2.5',     'Real-time speed for long scripts, half the usage. 32 languages.', 'elevenlabs', 'eleven_flash_v2_5', 0.5, 'generation', '{multilingual}',          40000, '{}', 5, 0.04, 'per_1k_chars', true)
 on conflict (service, key) do nothing;
+
+-- ======================================================================
+-- HeyGen v3 and the Lip sync tool (add_heygen_v3.sql)
+-- ======================================================================
+insert into public.studio_engines
+  (service, key, label, description, provider, model, credit_cost, cost_unit, features, max_duration_seconds, max_file_mb, options, sort, provider_rate, rate_unit, trial_allowed)
+values
+  ('lip-sync', 'v1', 'Lip sync', 'Match any video to new speech, with the mouth redrawn to fit.', 'heygen', 'lipsyncs', 1, 'minute', '{video,lipsync}', 600, 200, '{}', 1, 2.00, 'per_minute', false)
+on conflict (service, key) do nothing;

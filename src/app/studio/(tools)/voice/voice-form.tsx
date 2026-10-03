@@ -5,6 +5,7 @@ import { LuChevronDown, LuRotateCcw, LuSparkles } from "react-icons/lu";
 import type { Voice } from "@/lib/studio/elevenlabs";
 import { useJob } from "@/components/studio/use-job";
 import { VoiceLibrary, type VoiceChoice } from "@/components/studio/voice-library";
+import { Slider } from "@/components/studio/slider";
 import { AudioResult, EnginePicker, Field, Output, SelectField, SubmitButton, TextArea, Workspace, useEngine } from "@/components/studio/ui";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -20,54 +21,6 @@ const LANGUAGES: [string, string][] = [
 ];
 
 const TAGS = ["[laughs]", "[whispers]", "[sighs]", "[excited]", "[sarcastic]", "[curious]", "[crying]", "[shouting]", "[calm]", "[pauses]"];
-
-function Slider({
-  label,
-  hint,
-  value,
-  onChange,
-  min = 0,
-  max = 1,
-  step = 0.01,
-  left,
-  right,
-}: {
-  label: string;
-  hint?: string;
-  value: number;
-  onChange: (v: number) => void;
-  min?: number;
-  max?: number;
-  step?: number;
-  left?: string;
-  right?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="text-sm font-medium">{label}</span>
-        <span className="text-xs tabular-nums text-muted-foreground">{Math.round(value * 100) / 100}</span>
-      </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        aria-label={label}
-        className="h-1.5 w-full cursor-pointer accent-foreground"
-      />
-      {(left || right) && (
-        <div className="flex justify-between text-[0.7rem] text-muted-foreground">
-          <span>{left}</span>
-          <span>{right}</span>
-        </div>
-      )}
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-    </div>
-  );
-}
 
 export function VoiceForm({ voices }: { voices: Voice[] }) {
   const defaults: VoiceChoice[] = React.useMemo(() => voices.map((v) => ({ id: v.id, name: v.name, meta: v.labels ?? v.category, previewUrl: v.previewUrl })), [voices]);

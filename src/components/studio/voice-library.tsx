@@ -70,7 +70,7 @@ const SORTS = [
   { id: "created_date", label: "Newest" },
 ];
 
-const cap = (s?: string | null) => (s ? s.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()) : "");
+export const cap = (s?: string | null) => (s ? s.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()) : "");
 const compact = (n: number) => (n >= 1e9 ? `${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : String(n));
 const langName = (code?: string | null) => LANGUAGES.find(([c]) => c === code)?.[1] ?? (code ? code.toUpperCase() : "");
 
@@ -81,9 +81,9 @@ function flag(locale?: string | null) {
   return String.fromCodePoint(...[...region.toUpperCase()].map((c) => 127397 + c.charCodeAt(0)));
 }
 
-const selectClass = "h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
+export const selectClass = "h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
 
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+export function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
@@ -99,7 +99,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   );
 }
 
-function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
+export function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-2.5">
       <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{title}</p>
@@ -109,7 +109,7 @@ function FilterGroup({ title, children }: { title: string; children: React.React
 }
 
 /** One preview player shared by every row, so only one voice speaks at a time. */
-function usePreview() {
+export function usePreview() {
   const [playing, setPlaying] = React.useState<string | null>(null);
   const audio = React.useRef<HTMLAudioElement | null>(null);
   React.useEffect(() => () => audio.current?.pause(), []);
@@ -133,7 +133,7 @@ function usePreview() {
   return { playing, toggle, stop };
 }
 
-type Row = {
+export type Row = {
   id: string;
   name: string;
   description?: string | null;
@@ -149,7 +149,7 @@ type Row = {
   usage?: number;
 };
 
-function VoiceRow({
+export function VoiceRow({
   row,
   active,
   busy,

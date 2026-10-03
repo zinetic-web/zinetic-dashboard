@@ -24,6 +24,7 @@ export const STUDIO_SERVICES: StudioService[] = [
   { id: "avatar-creator", tool: "avatar-creator", unit: "avatars" },
   { id: "video-translation", tool: "video-translation", unit: "minutes" },
   { id: "translation-lipsync", tool: "video-translation", unit: "minutes" },
+  { id: "lip-sync", tool: "lip-sync", unit: "minutes" },
   { id: "prompt-to-video", tool: "prompt-video", unit: "minutes" },
   { id: "short-clips", tool: "short-clips", unit: "minutes" },
   { id: "filler-remover", tool: "filler-remover", unit: "minutes" },

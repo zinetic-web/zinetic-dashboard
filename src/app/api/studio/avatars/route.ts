@@ -23,10 +23,10 @@ export async function POST(request: Request) {
   const z = await authorize(auth.userId, "avatar-creator", String(form.get("engine") ?? ""), { fileMb: mb(photo) }, "Avatar creator", 1);
   if ("error" in z) return z.error;
 
-  const up = await uploadAsset(photo, photo.type);
-  if (!up.ok || !up.imageKey) {
+  const up = await uploadAsset(photo, photo.name || "avatar.jpg");
+  if (!up.ok) {
     await refundAuthz(z.authz);
-    return fail(up.ok ? "That photo was not accepted. Try a clearer, front-facing image." : up.error, 502);
+    return fail(up.error, 502);
   }
 
   const id = randomUUID();
@@ -35,6 +35,6 @@ export async function POST(request: Request) {
   await saveFile(fileKey, Buffer.from(await photo.arrayBuffer()), photo.type || "image/jpeg");
   await createAdminClient()
     .from("studio_avatars")
-    .insert({ id, user_id: auth.userId, name, image_key: up.imageKey, preview_file_key: fileKey });
+    .insert({ id, user_id: auth.userId, name, image_key: up.assetId, preview_file_key: fileKey });
   return NextResponse.json({ id });
 }
