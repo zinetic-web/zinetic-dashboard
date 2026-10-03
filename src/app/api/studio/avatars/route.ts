@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   const id = randomUUID();
   const ext = extFor(photo.type);
   const fileKey = `${auth.userId}/avatars/${id}.${ext === "bin" ? "jpg" : ext}`;
-  await saveFile(fileKey, Buffer.from(await photo.arrayBuffer()));
+  await saveFile(fileKey, Buffer.from(await photo.arrayBuffer()), photo.type || "image/jpeg");
   await createAdminClient()
     .from("studio_avatars")
     .insert({ id, user_id: auth.userId, name, image_key: up.imageKey, preview_file_key: fileKey });

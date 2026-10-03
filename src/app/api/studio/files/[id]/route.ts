@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { readFile } from "@/lib/studio/storage";
+import { readFile, signedUrl } from "@/lib/studio/storage";
 
 export const runtime = "nodejs";
 
@@ -27,6 +27,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   }
   if (!key) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const fileKey: string = key;
+
+  // In R2 the browser fetches the file straight from the bucket with a short-lived private link: it
+  // supports seeking, and large videos never pass through this function. The checks above already
+  // proved the file belongs to the signed-in customer.
+  const link = await signedUrl(fileKey, { contentType: mime }).catch(() => null);
+  if (link) return NextResponse.redirect(link, { status: 302, headers: { "Cache-Control": "private, max-age=300" } });
 
   let data: Buffer;
   try {

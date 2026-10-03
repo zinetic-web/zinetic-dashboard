@@ -92,7 +92,7 @@ export async function begin(
 
 export async function finishWithFile(g: Generation, data: Buffer, mime: string, result?: unknown) {
   const key = `${g.userId}/${g.id}.${extFor(mime)}`;
-  await saveFile(key, data);
+  await saveFile(key, data, mime);
   await createAdminClient()
     .from("studio_generations")
     .update({ status: "done", file_key: key, mime_type: mime, result: result ?? null })
