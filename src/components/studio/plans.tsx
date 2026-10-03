@@ -214,7 +214,6 @@ export type TrialInfo = {
   enabled: boolean;
 };
 
-const money = (n: number) => `$${n.toFixed(2)}`;
 
 /** Where the shared free trial stands, shown above a tool the customer is using on it. */
 export function TrialBar({ trial }: { trial: TrialInfo }) {
@@ -224,7 +223,7 @@ export function TrialBar({ trial }: { trial: TrialInfo }) {
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
         <span className="font-medium">Free trial</span>
         <span className="text-muted-foreground">
-          {trial.generationsLeft} of {trial.generationsMax} generations left · {money(trial.spendLeft)} of {money(trial.spendMax)} allowance
+          {trial.generationsLeft} of {trial.generationsMax} generations left
           {trial.expiresAt ? ` · until ${when(trial.expiresAt)}` : ""}
         </span>
       </div>
@@ -270,7 +269,7 @@ export function TrialCard({ trial }: { trial: TrialInfo }) {
           Free trial <Badge variant="secondary">No card required</Badge>
         </CardTitle>
         <CardDescription>
-          A limited test of every service, not the full plan. {trial.generationsMax} generations and up to {money(trial.spendMax)} of usage in total, valid for {trial.days} days, shared across all services.
+          A limited test of every service, not the full plan. {trial.generationsMax} generations in total, valid for {trial.days} days, shared across all services.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">

@@ -39,7 +39,7 @@ function TrialBanner({ trial }: { trial: TrialRules }) {
                 {[
                   [String(trial.days), "days"],
                   [String(trial.generations), "generations"],
-                  [`$${trial.spend.toFixed(2)}`, "of usage"],
+                  ["$0", "to start"],
                 ].map(([n, l]) => (
                   <li key={l} className="rounded-2xl border border-(--zl-line) bg-white/[0.03] px-4 py-3">
                     <p className="zl-display text-2xl font-bold sm:text-3xl">{n}</p>
