@@ -42,11 +42,11 @@ export function JobModal({ view }: { view: JobView }) {
         <DialogDescription className="sr-only">Progress of your request.</DialogDescription>
 
         <div className="flex flex-col gap-3">
-          <div className="h-2 overflow-hidden rounded-full bg-muted">
+          <div className="h-1 overflow-hidden rounded-full bg-muted">
             {typeof working?.progress === "number" ? (
-              <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-700" style={{ width: `${Math.max(4, Math.min(100, working.progress))}%` }} />
+              <div className="h-full rounded-full bg-foreground transition-all duration-700" style={{ width: `${Math.max(4, Math.min(100, working.progress))}%` }} />
             ) : (
-              <div className="h-full w-2/5 animate-[zl-slide_1.8s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500" />
+              <div className="h-full w-1/3 animate-[zl-slide_1.8s_ease-in-out_infinite] rounded-full bg-foreground" />
             )}
           </div>
           <div className="flex items-center justify-between gap-3 text-sm">
