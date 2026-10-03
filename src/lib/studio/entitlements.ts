@@ -11,7 +11,7 @@ export type EntitlementRow = {
   quota: number;
   used: number;
   expires_at: string | null;
-  source: "purchase" | "admin" | "trial";
+  source: "purchase" | "admin";
   note: string | null;
   created_at: string;
 };
@@ -87,7 +87,7 @@ export async function grantEntitlement(opts: {
   userId: string;
   service: string;
   plan: string;
-  source: "purchase" | "admin" | "trial";
+  source: "purchase" | "admin";
   orderId?: string;
   /** override what the plan promises (admin grants) */
   amount?: number;
@@ -118,12 +118,4 @@ export async function grantEntitlement(opts: {
     note: opts.note ?? null,
   });
   return { error: error?.message ?? null };
-}
-
-/** Services whose free trial this customer has already taken (it is once per account). */
-export const trialsTaken = (rows: EntitlementRow[]) => rows.filter((r) => r.source === "trial").map((r) => r.service);
-
-/** True when the customer has a paid or granted plan for the service that can still be used. */
-export function hasPaidAccess(rows: EntitlementRow[], service: string, now = Date.now()) {
-  return rows.some((r) => r.service === service && r.source !== "trial" && r.quota - r.used > 0 && (!r.expires_at || new Date(r.expires_at).getTime() > now));
 }

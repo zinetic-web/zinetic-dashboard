@@ -58,37 +58,3 @@ export function formatUnits(amount: number, unit: Unit) {
   if (unit === "generations") return `${n} ${rounded === 1 ? "generation" : "generations"}`;
   return `${n} ${rounded === 1 ? "avatar" : "avatars"}`;
 }
-
-export const TRIAL_PLAN = "Free trial";
-
-/**
- * What the free trial of each service gives: a small fraction of its Starter plan. It is
- * taken once per account and never renews, so when it is used up the customer has to buy.
- */
-export const TRIALS: Record<string, number> = {
-  "voice-generator": 2000, // characters (Starter: 30,000)
-  "voice-changer": 2, // minutes (Starter: 30)
-  "sound-effects": 3, // generations (Starter: 25)
-  "music-generator": 1, // one generation of up to a minute (Starter: 20)
-  "speech-to-text": 10, // minutes (Starter: 5 hours)
-  "audio-cleaner": 2, // minutes (Starter: 30)
-  dubbing: 1, // minutes (Starter: 10)
-  "avatar-video": 0.3, // video minutes (Starter: 2)
-  "avatar-creator": 1, // avatars
-  "video-translation": 0.5, // video minutes (Starter: 3)
-  "translation-lipsync": 0.3, // video minutes (Starter: 3)
-  "prompt-to-video": 1, // one prompt-made video (Starter: 1 video minute)
-  "short-clips": 2, // source minutes (Starter: 10)
-  "filler-remover": 2, // video minutes (Starter: 10)
-};
-
-export const hasTrial = (serviceId: string) => serviceId in TRIALS;
-
-/** The trial as a plan card, the same shape as a paid plan. */
-export function trialTier(serviceId: string): Tier | null {
-  const svc = studioService(serviceId);
-  const amount = TRIALS[serviceId];
-  if (!svc || !amount) return null;
-  const quota = serviceId === "music-generator" ? "1 generation, up to 1 minute" : serviceId === "prompt-to-video" ? "1 short video" : formatUnits(amount, svc.unit);
-  return { name: TRIAL_PLAN, price: 0, period: null, quota, perks: ["No payment needed", "Used once, never resets", "Upgrade any time"] };
-}

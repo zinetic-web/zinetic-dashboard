@@ -8,7 +8,6 @@ import { LuArrowRight, LuCheck, LuEye, LuEyeOff, LuLoaderCircle, LuLock, LuX } f
 import { Checkbox } from "@/components/ui/checkbox";
 import { FromPrice, PriceBlock, useCurrency } from "@/components/landing/currency";
 import { CATEGORIES, SERVICES, isComingSoon, servicesIn, type ServiceCategory } from "@/lib/landing-services";
-import { TRIAL_PLAN, trialTier } from "@/lib/studio/services";
 import { USD_TO_BDT_RATE, formatBdt, formatMoney, formatUsd, periodSuffix } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
@@ -49,7 +48,7 @@ export function CheckoutForm({
   const startService = SERVICES.find((s) => s.id === initialService) ?? SERVICES[0];
   const [serviceId, setServiceId] = React.useState(startService.id);
   const [planName, setPlanName] = React.useState(
-    initialPlan === TRIAL_PLAN && trialTier(startService.id) ? TRIAL_PLAN : (startService.tiers.find((t) => t.name === initialPlan)?.name ?? startService.tiers[0].name)
+    startService.tiers.find((t) => t.name === initialPlan)?.name ?? startService.tiers[0].name
   );
   const [category, setCategory] = React.useState<ServiceCategory>(startService.category);
   const [agreed, setAgreed] = React.useState(false);
@@ -62,11 +61,7 @@ export function CheckoutForm({
   const { currency } = useCurrency();
 
   const service = SERVICES.find((s) => s.id === serviceId) ?? SERVICES[0];
-  // every AI Studio service also has a free trial, shown as one more plan
-  const trial = trialTier(service.id);
-  const tiers = trial ? [trial, ...service.tiers] : service.tiers;
-  const tier = tiers.find((t) => t.name === planName) ?? service.tiers[0];
-  const isTrial = tier.name === TRIAL_PLAN && tier.price === 0;
+  const tier = service.tiers.find((t) => t.name === planName) ?? service.tiers[0];
   const soon = isComingSoon(service.id);
   const amount = formatMoney(tier.price, currency);
   const suffix = periodSuffix(tier.period);
@@ -100,36 +95,9 @@ export function CheckoutForm({
     e.preventDefault();
     if (!agreed || soon) return;
     setError(null);
-    const f = new FormData(e.currentTarget);
-    if (isTrial) {
-      void startTrial({ fullName: String(f.get("fullName") ?? ""), email: String(f.get("email") ?? ""), password: String(f.get("password") ?? "") });
-      return;
-    }
     setHost(e.currentTarget.closest<HTMLElement>(".zl") ?? document.body);
+    const f = new FormData(e.currentTarget);
     setDraft({ fullName: String(f.get("fullName") ?? ""), email: String(f.get("email") ?? ""), password: String(f.get("password") ?? "") });
-  }
-
-  // the free trial has no payment: make the account, then arrive signed in on the tool
-  async function startTrial(d: Draft) {
-    setPaying(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/checkout/trial", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...d, service: service.id, agreed }),
-      });
-      const json = (await res.json().catch(() => ({}))) as { link?: string; error?: string };
-      if (!res.ok || !json.link) {
-        setError(json.error ?? "Could not start your free trial.");
-        setPaying(false);
-        return;
-      }
-      window.location.assign(json.link);
-    } catch {
-      setError("Could not reach the server. Check your connection and try again.");
-      setPaying(false);
-    }
   }
 
   async function pay() {
@@ -157,7 +125,7 @@ export function CheckoutForm({
     }
   }
 
-  const cols = tiers.length >= 5 ? "lg:grid-cols-5" : tiers.length === 4 ? "sm:grid-cols-4" : tiers.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
+  const cols = service.tiers.length >= 4 ? "lg:grid-cols-5" : service.tiers.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
 
   return (
     <form onSubmit={onSubmit} className="grid items-start gap-14 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-20">
@@ -216,7 +184,7 @@ export function CheckoutForm({
           <div className="mt-12">
             <p className={fieldLabel}>Plan for {service.name}</p>
             <div className={cn("mt-4 grid grid-cols-2 border-y border-white/10", cols)}>
-              {tiers.map((t, i) => {
+              {service.tiers.map((t, i) => {
                 const active = t.name === tier.name;
                 return (
                   <button
@@ -235,11 +203,7 @@ export function CheckoutForm({
                     <span className={cn("text-[0.7rem] font-semibold uppercase tracking-[0.2em]", active ? "text-[#ff6b8f]" : "text-white/45")}>
                       {t.name}
                     </span>
-                    {t.price === 0 ? (
-                      <span className="zl-display mt-2 text-3xl font-bold">Free</span>
-                    ) : (
-                      <PriceBlock usd={t.price} period={t.period} size={tiers.length >= 4 ? "lg" : "xl"} className="mt-2" />
-                    )}
+                    <PriceBlock usd={t.price} period={t.period} size={service.tiers.length >= 4 ? "lg" : "xl"} className="mt-2" />
                     <span className="mt-2 text-sm text-white/60">{t.quota}</span>
                   </button>
                 );
@@ -264,7 +228,7 @@ export function CheckoutForm({
         </section>
 
         <section className="mt-16 border-t border-white/10 pt-14">
-          <StepHeading n="2" title="Create your account" hint={isTrial ? "Free trial: no payment needed, your account is ready straight away." : "Your account is activated the moment your payment goes through."} />
+          <StepHeading n="2" title="Create your account" hint="Your account is activated the moment your payment goes through." />
           <div className="mt-10 grid gap-9 sm:grid-cols-2">
             {error && (
               <p className="rounded-sm border-l-2 border-[#ff3d86] bg-[#ff3d86]/10 px-4 py-3 text-sm text-[#ffb3c6] sm:col-span-2">{error}</p>
@@ -303,7 +267,7 @@ export function CheckoutForm({
         </section>
 
         <section className="mt-16 border-t border-white/10 pt-14">
-          <StepHeading n="3" title={isTrial ? "Start your trial" : "Review and pay"} />
+          <StepHeading n="3" title="Review and pay" />
           <label className="mt-8 flex cursor-pointer items-start gap-3.5 leading-relaxed">
             <Checkbox checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} className="mt-1" aria-required />
             <span className="text-[0.95rem] text-white/60">
@@ -324,17 +288,11 @@ export function CheckoutForm({
           </label>
           <button
             type="submit"
-            disabled={!agreed || soon || paying}
+            disabled={!agreed || soon}
             className="zl-btn zl-btn-primary zl-btn-lg mt-7 w-full disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 sm:w-auto sm:min-w-72"
           >
             {soon ? (
               "Coming soon"
-            ) : isTrial ? (
-              <>
-                {paying ? <LuLoaderCircle className="size-5 animate-spin" /> : null}
-                {paying ? "Setting up your account" : "Start free trial"}
-                {!paying && <LuArrowRight className="size-5" />}
-              </>
             ) : (
               <>
                 Continue to payment, {amount}
@@ -363,8 +321,8 @@ export function CheckoutForm({
             <span>{tier.name}</span>
             <span aria-hidden className="mb-1 flex-1 border-b border-dotted border-white/25" />
             <span className="text-white">
-              {isTrial ? "Free" : amount}
-              {isTrial ? "" : suffix}
+              {amount}
+              {suffix}
             </span>
           </div>
           <p className="mt-1 text-white/50">{tier.quota}</p>
@@ -385,9 +343,9 @@ export function CheckoutForm({
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-white/50">Total</p>
-              <p className="mt-1 text-white/45">{isTrial ? "No payment needed" : billing(tier.period)}</p>
+              <p className="mt-1 text-white/45">{billing(tier.period)}</p>
             </div>
-            {isTrial ? <span className="zl-display text-4xl font-bold text-white">Free</span> : <PriceBlock usd={tier.price} period={tier.period} size="xl" align="right" />}
+            <PriceBlock usd={tier.price} period={tier.period} size="xl" align="right" />
           </div>
 
           <p className="mt-7 border-t border-dashed border-white/20 pt-5 text-[0.72rem] leading-relaxed text-white/40">

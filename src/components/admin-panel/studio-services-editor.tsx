@@ -74,7 +74,7 @@ export function StudioServicesEditor({ userId, rows }: { userId: string; rows: E
                   <p className="flex flex-wrap items-center gap-2 font-medium">
                     {serviceName(r.service)}
                     <Badge variant={live(r) ? "default" : "outline"}>{live(r) ? "Active" : "Finished"}</Badge>
-                    <Badge variant="secondary">{r.source === "admin" ? "Granted" : r.source === "trial" ? "Free trial" : "Bought"}</Badge>
+                    <Badge variant="secondary">{r.source === "admin" ? "Granted" : "Bought"}</Badge>
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {r.plan} · {formatUnits(r.quota - r.used, r.unit)} left of {formatUnits(r.quota, r.unit)}

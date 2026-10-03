@@ -155,35 +155,3 @@ export async function signInLink(email: string, origin: string, path: string): P
   if (error || !token) return null;
   return `${origin}/auth/confirm?token_hash=${encodeURIComponent(token)}&type=magiclink&next=${encodeURIComponent(path)}`;
 }
-
-/**
- * Creates the account for a new sign-up (paid or free trial). If the email is already in use
- * the person is told to log in, except when it is a leftover from an abandoned attempt
- * (still waiting, nothing paid, no trial taken), which is reused with the new password.
- */
-export async function ensureAccount(input: { email: string; password: string; fullName: string }): Promise<{ userId: string } | { error: string }> {
-  const admin = createAdminClient();
-  const created = await admin.auth.admin.createUser({
-    email: input.email,
-    password: input.password,
-    email_confirm: true,
-    user_metadata: { full_name: input.fullName },
-  });
-  let userId = created.data?.user?.id ?? "";
-
-  if (!userId) {
-    const { data: existing } = await admin.from("profiles").select("id, status").eq("email", input.email).maybeSingle();
-    if (!existing) return { error: created.error?.message ?? "Could not create your account." };
-    const [{ count: paid }, { count: ents }] = await Promise.all([
-      admin.from("checkout_orders").select("id", { count: "exact", head: true }).eq("user_id", existing.id).eq("status", "paid"),
-      admin.from("studio_entitlements").select("id", { count: "exact", head: true }).eq("user_id", existing.id),
-    ]);
-    if (existing.status !== "pending" || (paid ?? 0) > 0 || (ents ?? 0) > 0) {
-      return { error: "An account with this email already exists. Log in to your account instead." };
-    }
-    await admin.auth.admin.updateUserById(existing.id, { password: input.password, user_metadata: { full_name: input.fullName } });
-    userId = existing.id;
-  }
-  await admin.from("profiles").update({ full_name: input.fullName }).eq("id", userId);
-  return { userId };
-}

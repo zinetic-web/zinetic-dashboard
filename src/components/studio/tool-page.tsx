@@ -3,7 +3,7 @@ import { getDashboardSession } from "@/lib/supabase/dashboard-session";
 import { TOOLS } from "@/lib/studio/tools";
 import { enabledEngines, toPublic } from "@/lib/studio/engines";
 import { recentGenerations } from "@/lib/studio/queries";
-import { entitlementRows, summarize, toolStatus, trialsTaken } from "@/lib/studio/entitlements";
+import { entitlementRows, summarize, toolStatus } from "@/lib/studio/entitlements";
 import { planOptionsForTool } from "@/lib/studio/plans";
 import { servicesForTool, serviceName } from "@/lib/studio/services";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -70,7 +70,7 @@ export async function ToolPage({
             )}
           </>
         ) : (
-          <LockedService toolName={tool.name} options={planOptionsForTool(toolId)} exhausted={status.services.length > 0} takenTrials={trialsTaken(rows)} />
+          <LockedService toolName={tool.name} options={planOptionsForTool(toolId)} exhausted={status.services.length > 0} />
         )}
       </div>
     </ToolProvider>

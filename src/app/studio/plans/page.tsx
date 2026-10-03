@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getDashboardSession } from "@/lib/supabase/dashboard-session";
 import { TOOLS } from "@/lib/studio/tools";
-import { entitlementRows, summarize, trialsTaken } from "@/lib/studio/entitlements";
+import { entitlementRows, summarize } from "@/lib/studio/entitlements";
 import { planOption } from "@/lib/studio/plans";
 import { STUDIO_SERVICES, serviceName } from "@/lib/studio/services";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,9 +11,7 @@ import { ServicePlans } from "./service-plans";
 
 export default async function MyPlansPage() {
   const { user } = await getDashboardSession();
-  const rowsAll = await entitlementRows(user!.id);
-  const summary = summarize(rowsAll);
-  const taken = trialsTaken(rowsAll);
+  const summary = summarize(await entitlementRows(user!.id));
 
   // one row per thing that can be bought: what is active first, then everything else
   const rows = STUDIO_SERVICES.map((s) => ({ s, st: summary[s.id], tool: TOOLS.find((t) => t.id === s.tool)! })).sort(
@@ -60,7 +58,7 @@ export default async function MyPlansPage() {
                         Open
                       </Button>
                     )}
-                    {option && <ServicePlans option={option} label={st ? "Add more" : "Get a plan"} takenTrials={taken} />}
+                    {option && <ServicePlans option={option} label={st ? "Add more" : "Get a plan"} />}
                   </div>
                 </CardContent>
               </Card>

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { composeMusic } from "@/lib/studio/elevenlabs";
-import { entitlementRows, hasPaidAccess } from "@/lib/studio/entitlements";
 import { authorize, begin, fail, failGeneration, finishWithFile, requireStudioUser } from "@/lib/studio/run";
 
 export const runtime = "nodejs";
@@ -13,9 +12,7 @@ export async function POST(request: Request) {
   const b = (await request.json().catch(() => null)) as { prompt?: string; seconds?: number; engine?: string } | null;
   const prompt = b?.prompt?.trim() ?? "";
   if (!prompt) return fail("Describe the song you want.");
-  // someone on the free trial gets one track of up to a minute
-  const trialOnly = !hasPaidAccess(await entitlementRows(auth.userId), "music-generator");
-  const seconds = Math.min(trialOnly ? 60 : 300, Math.max(10, Number(b?.seconds) || 30));
+  const seconds = Math.min(300, Math.max(10, Number(b?.seconds) || 30));
 
   const z = await authorize(auth.userId, "music", b?.engine, { chars: prompt.length, seconds }, "Music generator", 1);
   if ("error" in z) return z.error;

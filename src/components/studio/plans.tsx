@@ -15,7 +15,7 @@ import { formatUnits, type Unit } from "@/lib/studio/services";
 /* ----------------------------------------------------------- plan cards */
 
 /** The plans for one or more services, each with its own Buy button. Used on a locked tool and on My plans. */
-export function PlanPicker({ options, takenTrials = [] }: { options: PlanOption[]; takenTrials?: string[] }) {
+export function PlanPicker({ options }: { options: PlanOption[] }) {
   const [agreed, setAgreed] = React.useState(false);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -29,12 +29,7 @@ export function PlanPicker({ options, takenTrials = [] }: { options: PlanOption[
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ service, plan, agreed }),
       });
-      const json = (await res.json().catch(() => ({}))) as { gatewayPageUrl?: string; redirect?: string; error?: string };
-      // the free trial needs no payment, it is added at once
-      if (res.ok && json.redirect) {
-        window.location.assign(json.redirect);
-        return;
-      }
+      const json = (await res.json().catch(() => ({}))) as { gatewayPageUrl?: string; error?: string };
       if (!res.ok || !json.gatewayPageUrl) {
         setError(json.error ?? "Could not start the payment.");
         setBusy(null);
@@ -52,8 +47,8 @@ export function PlanPicker({ options, takenTrials = [] }: { options: PlanOption[
       {options.map((o) => (
         <div key={o.service} className="flex flex-col gap-3">
           {options.length > 1 && <p className="text-sm font-medium">{o.serviceName}</p>}
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {o.tiers.filter((t) => !(t.trial && takenTrials.includes(o.service))).map((t) => {
+          <div className="grid gap-3 sm:grid-cols-3">
+            {o.tiers.map((t) => {
               const id = `${o.service}:${t.name}`;
               return (
                 <Card key={t.name} size="sm">
@@ -63,14 +58,14 @@ export function PlanPicker({ options, takenTrials = [] }: { options: PlanOption[
                   </CardHeader>
                   <CardContent className="flex flex-col gap-3">
                     <div>
-                      <p className="font-heading text-2xl font-semibold">{t.trial ? "Free" : `$${t.usd}`}</p>
+                      <p className="font-heading text-2xl font-semibold">${t.usd}</p>
                       <p className="text-xs text-muted-foreground">
-                        {t.trial ? "No payment · used once, never resets" : `৳${t.bdt.toLocaleString("en-US")} · ${t.validity ? `valid ${t.validity}` : "never expires"}`}
+                        ৳{t.bdt.toLocaleString("en-US")} · {t.validity ? `valid ${t.validity}` : "never expires"}
                       </p>
                     </div>
-                    <Button onClick={() => buy(o.service, t.name)} disabled={!agreed || busy !== null} variant={t.trial ? "outline" : "default"} className="w-full">
+                    <Button onClick={() => buy(o.service, t.name)} disabled={!agreed || busy !== null} className="w-full">
                       {busy === id && <LuLoaderCircle className="animate-spin" />}
-                      {busy === id ? (t.trial ? "Starting" : "Opening payment") : t.trial ? "Start free trial" : "Buy"}
+                      {busy === id ? "Opening payment" : "Buy"}
                     </Button>
                   </CardContent>
                 </Card>
@@ -110,7 +105,7 @@ export function PlanPicker({ options, takenTrials = [] }: { options: PlanOption[
 /* ------------------------------------------------------ locked tool page */
 
 /** Shown in place of a tool the customer has not bought, or has used up. The menu stays open, only this page is locked. */
-export function LockedService({ toolName, options, exhausted, takenTrials = [] }: { toolName: string; options: PlanOption[]; exhausted: boolean; takenTrials?: string[] }) {
+export function LockedService({ toolName, options, exhausted }: { toolName: string; options: PlanOption[]; exhausted: boolean }) {
   return (
     <Card>
       <CardHeader>
@@ -129,7 +124,7 @@ export function LockedService({ toolName, options, exhausted, takenTrials = [] }
         </div>
       </CardHeader>
       <CardContent>
-        <PlanPicker options={options} takenTrials={takenTrials} />
+        <PlanPicker options={options} />
       </CardContent>
     </Card>
   );
@@ -175,15 +170,7 @@ export function UsageBar({ usage, compact = false }: { usage: PlanUsage; compact
 
 /** Result of a payment made from the dashboard, read from the page address. */
 export function PaymentNotice() {
-  const params = useSearchParams();
-  const payment = params.get("payment");
-  if (params.get("trial")) {
-    return (
-      <Alert>
-        <AlertDescription>Your free trial is ready. It is a small taste of this service, used once and it does not renew. Pick a plan when you want more.</AlertDescription>
-      </Alert>
-    );
-  }
+  const payment = useSearchParams().get("payment");
   if (!payment) return null;
   if (payment === "success")
     return (

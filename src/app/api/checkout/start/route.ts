@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createSslcommerzSession } from "@/lib/sslcommerz";
-import { ensureAccount, quote } from "@/lib/checkout";
+import { quote } from "@/lib/checkout";
 import { isComingSoon } from "@/lib/landing-services";
 
 export const runtime = "nodejs";
@@ -37,9 +37,30 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
 
   // create the account (pending until paid), or reuse one left behind by an unpaid attempt
-  const acct = await ensureAccount({ email, password, fullName });
-  if ("error" in acct) return fail(acct.error, acct.error.startsWith("An account") ? 400 : 500);
-  const userId = acct.userId;
+  let userId = "";
+  const created = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  });
+  if (created.data?.user) {
+    userId = created.data.user.id;
+  } else {
+    const { data: existing } = await admin.from("profiles").select("id, status").eq("email", email).maybeSingle();
+    if (!existing) return fail(created.error?.message ?? "Could not create your account.", 500);
+    const { count: paid } = await admin
+      .from("checkout_orders")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", existing.id)
+      .eq("status", "paid");
+    if (existing.status !== "pending" || (paid ?? 0) > 0) {
+      return fail("An account with this email already exists. Log in to your account instead.");
+    }
+    await admin.auth.admin.updateUserById(existing.id, { password, user_metadata: { full_name: fullName } });
+    userId = existing.id;
+  }
+  await admin.from("profiles").update({ full_name: fullName }).eq("id", userId);
 
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
   const tranId = `zo_${userId.slice(0, 8)}_${Date.now()}`;
