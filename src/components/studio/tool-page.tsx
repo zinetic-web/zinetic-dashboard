@@ -42,27 +42,29 @@ export async function ToolPage({
     .filter((s) => s && s.active)
     .map((s) => ({ ...s, serviceName: serviceName(s.service) }));
 
+  // what is left on the plan (or the trial), shown beside the page title
+  const limit =
+    status.active && usages.length > 0 ? (
+      <div className="flex flex-col gap-4 rounded-xl border bg-card p-4">
+        {usages.map((u) => (
+          <UsageBar key={u.service} usage={u} compact={usages.length === 1} />
+        ))}
+      </div>
+    ) : trial.active ? (
+      <div className="rounded-xl border bg-card p-4">
+        <TrialBar trial={trial} />
+      </div>
+    ) : null;
+
   return (
     <ToolProvider toolId={toolId} engines={engines}>
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
-        <ToolHeader />
+        <ToolHeader aside={limit} />
         <Suspense>
           <PaymentNotice />
         </Suspense>
         {status.active || trial.active ? (
           <>
-            {status.active && usages.length > 0 && (
-              <div className="flex flex-col gap-4 rounded-xl border bg-card p-4">
-                {usages.map((u) => (
-                  <UsageBar key={u.service} usage={u} compact={usages.length === 1} />
-                ))}
-              </div>
-            )}
-            {!status.active && trial.active && (
-              <div className="rounded-xl border bg-card p-4">
-                <TrialBar trial={trial} />
-              </div>
-            )}
             {notice && (
               <Alert>
                 <AlertDescription>{notice}</AlertDescription>

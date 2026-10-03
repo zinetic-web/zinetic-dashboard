@@ -4,20 +4,21 @@ import * as React from "react";
 import { postForm } from "@/components/studio/upload";
 import type { Voice } from "@/lib/studio/elevenlabs";
 import { useJob } from "@/components/studio/use-job";
-import { AudioResult, Field, FileDrop, Output, SubmitButton, VoicePicker, Workspace, EnginePicker, useEngine } from "@/components/studio/ui";
+import { VoiceLibrary, type VoiceChoice } from "@/components/studio/voice-library";
+import { AudioResult, Field, FileDrop, Output, SubmitButton, Workspace, EnginePicker, useEngine } from "@/components/studio/ui";
 
 export function VoiceChangerForm({ voices }: { voices: Voice[] }) {
   const [file, setFile] = React.useState<File | null>(null);
-  const [voiceId, setVoiceId] = React.useState(voices[0]?.id ?? "");
+  const defaults: VoiceChoice[] = React.useMemo(() => voices.map((v) => ({ id: v.id, name: v.name, meta: v.labels ?? v.category, previewUrl: v.previewUrl })), [voices]);
+  const [voice, setVoice] = React.useState<VoiceChoice | null>(defaults[0] ?? null);
   const { state, run } = useJob();
   const eng = useEngine();
-  const items = voices.map((v) => ({ id: v.id, name: v.name, meta: v.labels ?? v.category, preview: v.previewUrl }));
 
   function submit() {
     const fd = new FormData();
     fd.append("engine", eng.key);
     fd.append("audio", file!);
-    fd.append("voiceId", voiceId);
+    fd.append("voiceId", voice!.id);
     return run(() => postForm("/api/studio/voice-changer", fd));
   }
 
@@ -30,9 +31,9 @@ export function VoiceChangerForm({ voices }: { voices: Voice[] }) {
             <FileDrop accept="audio/*" file={file} onFile={setFile} hint="The voice in this file is replaced. Timing and emotion stay." />
           </Field>
           <Field label="Change into">
-            <VoicePicker items={items} value={voiceId} onChange={setVoiceId} />
+            <VoiceLibrary value={voice} onChange={setVoice} defaults={defaults} />
           </Field>
-          <SubmitButton busy={state.phase === "working"} disabled={!file || !voiceId} busyLabel="Converting" onClick={submit}>
+          <SubmitButton busy={state.phase === "working"} disabled={!file || !voice} busyLabel="Converting" onClick={submit}>
             Change voice
           </SubmitButton>
         </>

@@ -16,7 +16,6 @@ import {
 import { cn } from "@/lib/utils";
 import { TOOLS } from "@/lib/studio/tools";
 import type { PublicEngine } from "@/lib/studio/engines";
-import { FEATURE_LABELS } from "@/lib/studio/engine-catalog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -68,18 +67,21 @@ export function costLabel(e: PublicEngine) {
 
 /* ------------------------------------------------------------------- layout */
 
-export function ToolHeader() {
+export function ToolHeader({ aside }: { aside?: React.ReactNode }) {
   const tool = useTool();
   const Icon = tool.icon;
   return (
-    <div className="flex items-start gap-3">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-card [&_svg]:size-5">
-        <Icon />
-      </span>
-      <div>
-        <h1 className="font-heading text-2xl leading-tight font-semibold">{tool.name}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{tool.blurb}</p>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+      <div className="flex min-w-0 items-start gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-card [&_svg]:size-5">
+          <Icon />
+        </span>
+        <div>
+          <h1 className="font-heading text-2xl leading-tight font-semibold">{tool.name}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{tool.blurb}</p>
+        </div>
       </div>
+      {aside && <div className="w-full shrink-0 sm:w-80">{aside}</div>}
     </div>
   );
 }
@@ -348,7 +350,7 @@ export function SubmitButton({
   );
 }
 
-/** Engine choice. One engine: a quiet price line. Two or more: a selectable option each. */
+/** Engine choice: one engine is a quiet line, two or more are a dropdown. */
 export function EnginePicker() {
   const ctx = React.useContext(ToolContext);
   if (!ctx || ctx.engines.length === 0) return null;
@@ -357,49 +359,31 @@ export function EnginePicker() {
     const e = ctx.engines[0];
     return (
       <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 px-3 py-2 text-xs">
-        <span className="text-muted-foreground">
-          {e.label}
-          {e.description ? ` · ${e.description}` : ""}
-        </span>
+        <span className="text-muted-foreground">{e.label}</span>
         <span className="shrink-0 font-medium">{costLabel(e)}</span>
       </div>
     );
   }
 
+  const current = ctx.engines.find((e) => e.key === ctx.key) ?? ctx.engines[0];
   return (
     <Field label="Engine">
-      <div className="flex flex-col gap-2">
-        {ctx.engines.map((e) => {
-          const active = e.key === ctx.key;
-          return (
-            <button
-              key={e.key}
-              type="button"
-              onClick={() => ctx.setKey(e.key)}
-              aria-pressed={active}
-              className={cn(
-                "flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3 text-left transition-colors",
-                active ? "border-primary bg-primary/5" : "hover:bg-muted/50"
-              )}
-            >
-              <span className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium">{e.label}</span>
+      <Select value={current.key} onValueChange={(v) => v && ctx.setKey(v)}>
+        <SelectTrigger className="w-full">
+          <SelectValue>{current.label}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {ctx.engines.map((e) => (
+            <SelectItem key={e.key} value={e.key}>
+              <span className="flex w-full items-center justify-between gap-6">
+                <span>{e.label}</span>
                 <span className="text-xs text-muted-foreground">{costLabel(e)}</span>
               </span>
-              {e.description && <span className="text-xs text-muted-foreground">{e.description}</span>}
-              {e.features.length > 0 && (
-                <span className="flex flex-wrap gap-1">
-                  {e.features.map((f) => (
-                    <Badge key={f} variant="secondary" className="font-normal">
-                      {FEATURE_LABELS[f] ?? f}
-                    </Badge>
-                  ))}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {current.description && <p className="text-xs text-muted-foreground">{current.description}</p>}
     </Field>
   );
 }
