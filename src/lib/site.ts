@@ -5,3 +5,8 @@ const base = () => (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
 export function checkoutUrl(service?: string) {
   return `${base()}/checkout${service ? `?service=${encodeURIComponent(service)}` : ""}`;
 }
+
+/** The client login page, where a customer chooses which dashboard to open. */
+export function clientLoginUrl() {
+  return `${base()}/client-login`;
+}

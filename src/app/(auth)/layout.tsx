@@ -4,6 +4,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { AuthPanel } from "@/components/auth-panel";
 import { AuthBrandProvider } from "@/components/auth-brand";
 import { AUTH_BRANDS } from "@/components/brand-marks";
+import { clientLoginUrl } from "@/lib/site";
 import { LuArrowLeft } from "react-icons/lu";
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -24,13 +25,13 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         <div className="flex flex-col bg-background dark:bg-zinc-950">
           <header className="flex items-center justify-between px-6 py-5">
             <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                aria-label="Back to home"
+              <a
+                href={clientLoginUrl() || "/client-login"}
+                aria-label="Back to client login"
                 className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
                 <LuArrowLeft className="size-5" />
-              </Link>
+              </a>
               <Link href={studio ? "/studio" : "/dashboard"} className="flex items-center gap-2.5">
                 <brand.Mark size={36} />
                 <span className="font-heading text-base font-semibold">{brand.name}</span>
