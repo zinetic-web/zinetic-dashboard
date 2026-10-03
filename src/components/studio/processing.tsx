@@ -57,7 +57,7 @@ export function useElapsed(since: string) {
 }
 
 /** The clock, the bar and the stage of a run that is still being made. */
-export function RunMeter({ id, createdAt, className }: { id: string; createdAt: string; className?: string }) {
+export function RunMeter({ id, createdAt, hint, className }: { id: string; createdAt: string; hint?: string; className?: string }) {
   const { progress, stage } = useRunWatch(id);
   const elapsed = useElapsed(createdAt);
   const known = typeof progress === "number";
@@ -71,7 +71,7 @@ export function RunMeter({ id, createdAt, className }: { id: string; createdAt: 
         )}
       </div>
       <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-        <span className="min-w-0 truncate">{stage ?? "Working on it"}</span>
+        <span className="min-w-0 truncate">{stage ?? hint ?? "Working on it"}</span>
         <span className="shrink-0 tabular-nums">
           {elapsed === null ? "" : clock(elapsed)}
           {known && <span className="ml-1.5 text-foreground">{Math.round(progress)}%</span>}
@@ -82,7 +82,7 @@ export function RunMeter({ id, createdAt, className }: { id: string; createdAt: 
 }
 
 /** What a run in progress looks like: a quiet placeholder where the result will be, and the live meter under it. */
-export function ProcessingPanel({ id, createdAt, kind = "video" }: { id: string; createdAt: string; kind?: "audio" | "video" }) {
+export function ProcessingPanel({ id, createdAt, kind = "video", hint }: { id: string; createdAt: string; kind?: "audio" | "video"; hint?: string }) {
   return (
     <div className="flex flex-col gap-3">
       {kind === "audio" ? (
@@ -96,7 +96,7 @@ export function ProcessingPanel({ id, createdAt, kind = "video" }: { id: string;
           <div className="absolute inset-0 animate-[lib-sheen_2.4s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-foreground/[0.06] to-transparent" />
         </div>
       )}
-      <RunMeter id={id} createdAt={createdAt} />
+      <RunMeter id={id} createdAt={createdAt} hint={hint} />
     </div>
   );
 }

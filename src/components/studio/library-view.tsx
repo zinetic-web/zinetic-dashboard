@@ -39,6 +39,16 @@ function categoryOf(r: LibraryRow): Category {
   return toolOf(r.kind)?.group === "video" ? "video" : "audio";
 }
 
+// how long each kind of long run usually takes, shown until the provider reports a stage
+const USUALLY: Record<string, string> = {
+  "prompt-video": "Usually 6 to 13 minutes",
+  "avatar-video": "Usually 2 to 6 minutes",
+  "video-translation": "A few minutes per minute of video",
+  "translation-lipsync": "A few minutes per minute of video",
+  dubbing: "A few minutes per minute of media",
+  "lip-sync": "A few minutes per minute of video",
+};
+
 /** Prompts are saved as the title and can be full of markdown. Show them as one plain line. */
 const plain = (t: string | null) => (t ?? "").replace(/[#*_`>~|]+/g, " ").replace(/\s+/g, " ").trim() || "Untitled";
 
@@ -69,7 +79,7 @@ function Card({ r }: { r: LibraryRow }) {
     <li>
       <article className={cn("flex h-full flex-col gap-3 rounded-xl border bg-card p-3.5", r.status === "failed" && "border-destructive/25")}>
         <CardHead r={r} />
-        {r.status === "processing" && <ProcessingPanel id={r.id} createdAt={r.created_at} kind={cat === "audio" ? "audio" : "video"} />}
+        {r.status === "processing" && <ProcessingPanel id={r.id} createdAt={r.created_at} kind={cat === "audio" ? "audio" : "video"} hint={USUALLY[r.kind]} />}
         {r.status === "done" && r.mime_type?.startsWith("audio") && <AudioPlayer compact src={src} seed={r.id} name="audio.mp3" />}
         {r.status === "done" && r.mime_type?.startsWith("video") && <VideoPlayer compact src={src} name="video.mp4" />}
         {r.status === "done" && r.kind === "transcribe" && r.result?.text && (
