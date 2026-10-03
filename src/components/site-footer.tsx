@@ -147,7 +147,20 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-10 flex flex-col items-start justify-between gap-4 border-t border-(--zl-line) pt-6 text-xs text-(--zl-muted) md:flex-row md:items-center">
-          <p>&copy; {new Date().getFullYear()} Zinetic Music Limited. All rights reserved.</p>
+          <div className="flex flex-col gap-1.5">
+            <p>&copy; {new Date().getFullYear()} Zinetic Music Limited. All rights reserved.</p>
+            <p>
+              Developed by{" "}
+              <a
+                href="https://kamrulhasan.site"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-(--zl-text) underline decoration-white/25 underline-offset-4 transition-colors hover:decoration-[#ff3d86]"
+              >
+                Kamrul Hasan
+              </a>
+            </p>
+          </div>
           <ul className="flex flex-wrap gap-x-5 gap-y-2">
             {[...LEGAL, ...COMPANY].map((l) => (
               <li key={l.href}>
