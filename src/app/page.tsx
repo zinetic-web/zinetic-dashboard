@@ -12,6 +12,7 @@ import { VoiceSection } from "@/components/landing/voice-section";
 import { VideoSection } from "@/components/landing/video-section";
 import { CreatorSection } from "@/components/landing/creator-section";
 import { PricingSection } from "@/components/landing/pricing-section";
+import { getTrialConfig } from "@/lib/studio/trial";
 import { Faq, FinalCta, HowItWorks } from "@/components/landing/closing";
 import { displayFont, serifFont } from "@/components/landing/fonts";
 
@@ -29,6 +30,7 @@ export default async function Home() {
     data: { user },
   } = await supabase.auth.getUser();
   if (user) redirect("/dashboard");
+  const trialRules = await getTrialConfig();
 
   return (
     <div className={`zl dark ${displayFont.variable} ${serifFont.variable} relative min-h-screen overflow-x-clip`}>
@@ -43,7 +45,7 @@ export default async function Home() {
         <VoiceSection />
         <VideoSection />
         <CreatorSection />
-        <PricingSection />
+        <PricingSection trial={{ enabled: trialRules.enabled, generations: trialRules.max_generations, spend: trialRules.max_spend, days: trialRules.days }} />
         <HowItWorks />
         <Faq />
         <FinalCta />
