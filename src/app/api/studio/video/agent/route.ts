@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   const prompt = b?.prompt?.trim() ?? "";
   if (!prompt) return fail("Describe the video you want.");
 
-  const z = await authorize(auth.userId, "prompt-video", b?.engine, { chars: prompt.length }, "Prompt to video", 1);
+  const z = await authorize(auth.userId, "prompt-video", b?.engine, { chars: prompt.length, seconds: 60 }, "Prompt to video", 1);
   if ("error" in z) return z.error;
 
   const job = await generateFromPrompt(prompt);

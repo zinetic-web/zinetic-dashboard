@@ -9,7 +9,8 @@ import { servicesForTool, serviceName } from "@/lib/studio/services";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { History, ToolHeader, ToolProvider } from "@/components/studio/ui";
-import { LockedService, PaymentNotice, UsageBar } from "@/components/studio/plans";
+import { LockedService, PaymentNotice, TrialBar, UsageBar } from "@/components/studio/plans";
+import { trialInfo } from "@/lib/studio/trial";
 
 // The recent list is the only part that needs the database, so it streams in after
 // the page is already on screen instead of holding the whole page back.
@@ -31,7 +32,7 @@ export async function ToolPage({
 }) {
   const tool = TOOLS.find((t) => t.id === toolId)!;
   const { user } = await getDashboardSession();
-  const [engineList, rows] = await Promise.all([enabledEngines(toolId), user ? entitlementRows(user.id) : Promise.resolve([])]);
+  const [engineList, rows, trial] = await Promise.all([enabledEngines(toolId), user ? entitlementRows(user.id) : Promise.resolve([]), trialInfo(user?.id ?? null)]);
   const engines = engineList.map(toPublic);
 
   const summary = summarize(rows);
@@ -48,13 +49,18 @@ export async function ToolPage({
         <Suspense>
           <PaymentNotice />
         </Suspense>
-        {status.active ? (
+        {status.active || trial.active ? (
           <>
-            {usages.length > 0 && (
+            {status.active && usages.length > 0 && (
               <div className="flex flex-col gap-4 rounded-xl border bg-card p-4">
                 {usages.map((u) => (
                   <UsageBar key={u.service} usage={u} compact={usages.length === 1} />
                 ))}
+              </div>
+            )}
+            {!status.active && trial.active && (
+              <div className="rounded-xl border bg-card p-4">
+                <TrialBar trial={trial} />
               </div>
             )}
             {notice && (
@@ -70,7 +76,7 @@ export async function ToolPage({
             )}
           </>
         ) : (
-          <LockedService toolName={tool.name} options={planOptionsForTool(toolId)} exhausted={status.services.length > 0} />
+          <LockedService toolName={tool.name} options={planOptionsForTool(toolId)} exhausted={status.services.length > 0 || trial.started} trial={trial} />
         )}
       </div>
     </ToolProvider>

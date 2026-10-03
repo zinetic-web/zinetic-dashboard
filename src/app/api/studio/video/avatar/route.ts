@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     imageKey = data.image_key;
   }
 
-  const z = await authorize(auth.userId, "avatar-video", b.engine, { chars: script.length }, "Avatar video", Math.max(0.1, Math.ceil((script.length / 800) * 100) / 100));
+  const z = await authorize(auth.userId, "avatar-video", b.engine, { chars: script.length, seconds: Math.max(5, Math.round(script.length / 14)) }, "Avatar video", Math.max(0.1, Math.ceil((script.length / 800) * 100) / 100));
   if ("error" in z) return z.error;
 
   const job = imageKey

@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   if (!text) return fail("Describe the sound you need.");
   const seconds = b?.seconds ? Math.min(30, Math.max(0.5, Number(b.seconds))) : undefined;
 
-  const z = await authorize(auth.userId, "sound-effects", b?.engine, { chars: text.length, seconds }, "Sound effects", 1);
+  const z = await authorize(auth.userId, "sound-effects", b?.engine, { chars: text.length, seconds: seconds ?? 5 }, "Sound effects", 1);
   if ("error" in z) return z.error;
 
   const g = await begin(auth.userId, "sfx", z.authz.engine.provider, text.slice(0, 80), { text, seconds, loop: Boolean(b?.loop) }, undefined, z.authz);

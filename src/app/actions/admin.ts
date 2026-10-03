@@ -254,6 +254,9 @@ export type EngineInput = {
   max_chars: number | null;
   options: Record<string, unknown>;
   sort: number;
+  provider_rate: number | null;
+  rate_unit: string;
+  trial_allowed: boolean;
 };
 
 /** Creates or updates one AI Studio engine. Everything about it is data, not code. */
@@ -282,6 +285,9 @@ export async function saveEngine(input: EngineInput) {
     max_chars: input.max_chars || null,
     options: input.options ?? {},
     sort: input.sort || 0,
+    provider_rate: input.provider_rate === null || Number.isNaN(input.provider_rate) ? null : input.provider_rate,
+    rate_unit: ["per_1k_chars", "per_minute", "per_generation"].includes(input.rate_unit) ? input.rate_unit : "per_minute",
+    trial_allowed: input.trial_allowed,
     updated_at: new Date().toISOString(),
   };
 

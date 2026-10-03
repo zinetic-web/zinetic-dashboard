@@ -3,15 +3,17 @@ import { getDashboardSession } from "@/lib/supabase/dashboard-session";
 import { TOOLS } from "@/lib/studio/tools";
 import { entitlementRows, summarize } from "@/lib/studio/entitlements";
 import { planOption } from "@/lib/studio/plans";
+import { trialInfo } from "@/lib/studio/trial";
 import { STUDIO_SERVICES, serviceName } from "@/lib/studio/services";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { StatusBadge, UsageBar } from "@/components/studio/plans";
+import { StatusBadge, TrialBar, TrialCard, UsageBar } from "@/components/studio/plans";
 import { ServicePlans } from "./service-plans";
 
 export default async function MyPlansPage() {
   const { user } = await getDashboardSession();
   const summary = summarize(await entitlementRows(user!.id));
+  const trial = await trialInfo(user!.id);
 
   // one row per thing that can be bought: what is active first, then everything else
   const rows = STUDIO_SERVICES.map((s) => ({ s, st: summary[s.id], tool: TOOLS.find((t) => t.id === s.tool)! })).sort(
@@ -24,6 +26,16 @@ export default async function MyPlansPage() {
         <h1 className="font-heading text-2xl font-semibold">My plans</h1>
         <p className="mt-1 text-sm text-muted-foreground">What you bought, how much is left, and what you can add. Each service is its own plan.</p>
       </div>
+
+      {trial.enabled && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Free trial</CardTitle>
+            <CardDescription>One shared allowance for every service. It is a limited test and does not reset.</CardDescription>
+          </CardHeader>
+          <CardContent>{trial.started ? <TrialBar trial={trial} /> : <TrialCard trial={trial} />}</CardContent>
+        </Card>
+      )}
 
       <ul className="grid gap-4 md:grid-cols-2">
         {rows.map(({ s, st, tool }) => {

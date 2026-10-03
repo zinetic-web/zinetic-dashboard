@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import type { PlanOption } from "@/lib/studio/plans";
 import { formatUnits, type Unit } from "@/lib/studio/services";
+import { useRouter } from "next/navigation";
 
 /* ----------------------------------------------------------- plan cards */
 
@@ -105,7 +106,7 @@ export function PlanPicker({ options }: { options: PlanOption[] }) {
 /* ------------------------------------------------------ locked tool page */
 
 /** Shown in place of a tool the customer has not bought, or has used up. The menu stays open, only this page is locked. */
-export function LockedService({ toolName, options, exhausted }: { toolName: string; options: PlanOption[]; exhausted: boolean }) {
+export function LockedService({ toolName, options, exhausted, trial }: { toolName: string; options: PlanOption[]; exhausted: boolean; trial?: TrialInfo }) {
   return (
     <Card>
       <CardHeader>
@@ -123,7 +124,8 @@ export function LockedService({ toolName, options, exhausted }: { toolName: stri
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-5">
+        {trial && !trial.started && trial.enabled && <TrialCard trial={trial} />}
         <PlanPicker options={options} />
       </CardContent>
     </Card>
@@ -194,4 +196,95 @@ export function PaymentNotice() {
 export function StatusBadge({ active, hasPlan }: { active: boolean; hasPlan: boolean }) {
   if (active) return <Badge>Active</Badge>;
   return <Badge variant="outline">{hasPlan ? "Finished" : "Locked"}</Badge>;
+}
+
+/* ------------------------------------------------------- the shared free trial */
+
+export type TrialInfo = {
+  /** has a trial at all */
+  started: boolean;
+  active: boolean;
+  why: string;
+  generationsLeft: number;
+  generationsMax: number;
+  spendLeft: number;
+  spendMax: number;
+  expiresAt: string | null;
+  days: number;
+  enabled: boolean;
+};
+
+const money = (n: number) => `$${n.toFixed(2)}`;
+
+/** Where the shared free trial stands, shown above a tool the customer is using on it. */
+export function TrialBar({ trial }: { trial: TrialInfo }) {
+  const pct = trial.generationsMax ? (trial.generationsLeft / trial.generationsMax) * 100 : 0;
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+        <span className="font-medium">Free trial</span>
+        <span className="text-muted-foreground">
+          {trial.generationsLeft} of {trial.generationsMax} generations left · {money(trial.spendLeft)} of {money(trial.spendMax)} allowance
+          {trial.expiresAt ? ` · until ${when(trial.expiresAt)}` : ""}
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-foreground" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The free trial as a plan card: the same allowance across every service, a limited test and not
+ * the full provider plan. A customer who is signed in starts it with one click.
+ */
+export function TrialCard({ trial }: { trial: TrialInfo }) {
+  const router = useRouter();
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  async function start() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/studio/trial", { method: "POST" });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setError(json.error ?? "Could not start the trial.");
+        setBusy(false);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError("Could not reach the server.");
+      setBusy(false);
+    }
+  }
+
+  if (!trial.enabled) return null;
+  return (
+    <Card size="sm" className="border-dashed">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          Free trial <Badge variant="secondary">No card required</Badge>
+        </CardTitle>
+        <CardDescription>
+          A limited test of every service, not the full plan. {trial.generationsMax} generations and up to {money(trial.spendMax)} of usage in total, valid for {trial.days} days, shared across all services.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        {trial.started ? (
+          <p className="text-sm text-muted-foreground">
+            {trial.active ? `${trial.generationsLeft} generations left.` : trial.why === "expired" ? "Your trial has expired." : "You have used your free trial."} It does not reset.
+          </p>
+        ) : (
+          <Button variant="outline" onClick={start} disabled={busy}>
+            {busy && <LuLoaderCircle className="animate-spin" />} Start free trial
+          </Button>
+        )}
+        {error && <p className="text-xs text-destructive">{error}</p>}
+      </CardContent>
+    </Card>
+  );
 }

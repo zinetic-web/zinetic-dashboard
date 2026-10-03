@@ -1,6 +1,7 @@
 import { PageHero } from "@/components/landing/page-parts";
 import { CheckoutForm } from "@/components/landing/checkout-form";
 import { SERVICES } from "@/lib/landing-services";
+import { getTrialConfig } from "@/lib/studio/trial";
 
 export const metadata = {
   title: "Checkout | Zinetic Music",
@@ -13,6 +14,7 @@ export default async function CheckoutPage({
   searchParams: Promise<{ service?: string; plan?: string; payment?: string }>;
 }) {
   const { service, plan, payment } = await searchParams;
+  const trialRules = await getTrialConfig();
   const initialService = SERVICES.find((s) => s.id === service)?.id ?? SERVICES[0].id;
 
   return (
@@ -32,6 +34,7 @@ export default async function CheckoutPage({
           <CheckoutForm
             initialService={initialService}
             initialPlan={plan ?? ""}
+            trial={{ enabled: trialRules.enabled, generations: trialRules.max_generations, spend: trialRules.max_spend, days: trialRules.days }}
             notice={
               payment === "failed"
                 ? "The payment did not go through, so you were not charged. You can try again."

@@ -7,7 +7,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { LuArrowRight, LuCheck, LuEye, LuEyeOff, LuLoaderCircle, LuLock, LuX } from "react-icons/lu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FromPrice, PriceBlock, useCurrency } from "@/components/landing/currency";
-import { CATEGORIES, SERVICES, isComingSoon, servicesIn, type ServiceCategory } from "@/lib/landing-services";
+import { CATEGORIES, SERVICES, isComingSoon, servicesIn, type ServiceCategory, type Tier } from "@/lib/landing-services";
+import { studioService } from "@/lib/studio/services";
 import { USD_TO_BDT_RATE, formatBdt, formatMoney, formatUsd, periodSuffix } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
@@ -35,20 +36,24 @@ function StepHeading({ n, title, hint }: { n: string; title: string; hint?: stri
 }
 
 type Draft = { fullName: string; email: string; password: string };
+type TrialRules = { enabled: boolean; generations: number; spend: number; days: number };
+const TRIAL_PLAN = "Free trial";
 
 export function CheckoutForm({
   initialService,
   initialPlan,
   notice,
+  trial,
 }: {
   initialService: string;
   initialPlan: string;
   notice?: string | null;
+  trial: TrialRules;
 }) {
   const startService = SERVICES.find((s) => s.id === initialService) ?? SERVICES[0];
   const [serviceId, setServiceId] = React.useState(startService.id);
   const [planName, setPlanName] = React.useState(
-    startService.tiers.find((t) => t.name === initialPlan)?.name ?? startService.tiers[0].name
+    initialPlan === TRIAL_PLAN && trial.enabled && studioService(startService.id) ? TRIAL_PLAN : (startService.tiers.find((t) => t.name === initialPlan)?.name ?? startService.tiers[0].name)
   );
   const [category, setCategory] = React.useState<ServiceCategory>(startService.category);
   const [agreed, setAgreed] = React.useState(false);
@@ -58,10 +63,25 @@ export function CheckoutForm({
   const [host, setHost] = React.useState<HTMLElement | null>(null);
   const [paying, setPaying] = React.useState(false);
   const [error, setError] = React.useState<string | null>(notice ?? null);
+  const [sentTo, setSentTo] = React.useState<string | null>(null);
+  const [resent, setResent] = React.useState(false);
   const { currency } = useCurrency();
 
   const service = SERVICES.find((s) => s.id === serviceId) ?? SERVICES[0];
-  const tier = service.tiers.find((t) => t.name === planName) ?? service.tiers[0];
+  // every AI Studio service also offers the shared free trial, as one more plan
+  const trialTier: Tier | null =
+    trial.enabled && studioService(service.id)
+      ? {
+          name: TRIAL_PLAN,
+          price: 0,
+          period: null,
+          quota: `${trial.generations} generations · ${trial.days} days`,
+          perks: ["No card required", "One shared allowance for every service", "A limited test, not the full plan"],
+        }
+      : null;
+  const tiers = trialTier ? [trialTier, ...service.tiers] : service.tiers;
+  const tier = tiers.find((t) => t.name === planName) ?? service.tiers[0];
+  const isTrial = tier.name === TRIAL_PLAN && tier.price === 0;
   const soon = isComingSoon(service.id);
   const amount = formatMoney(tier.price, currency);
   const suffix = periodSuffix(tier.period);
@@ -95,9 +115,44 @@ export function CheckoutForm({
     e.preventDefault();
     if (!agreed || soon) return;
     setError(null);
-    setHost(e.currentTarget.closest<HTMLElement>(".zl") ?? document.body);
     const f = new FormData(e.currentTarget);
+    if (isTrial) {
+      void startTrial({ fullName: String(f.get("fullName") ?? ""), email: String(f.get("email") ?? ""), password: String(f.get("password") ?? "") });
+      return;
+    }
+    setHost(e.currentTarget.closest<HTMLElement>(".zl") ?? document.body);
     setDraft({ fullName: String(f.get("fullName") ?? ""), email: String(f.get("email") ?? ""), password: String(f.get("password") ?? "") });
+  }
+
+  // the free trial has no payment, but the email must be confirmed before the trial starts
+  async function startTrial(d: Draft) {
+    setPaying(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/checkout/trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...d, service: service.id, agreed }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { sent?: boolean; error?: string };
+      if (!res.ok || !json.sent) {
+        setError(json.error ?? "Could not start your free trial.");
+      } else {
+        setSentTo(d.email);
+      }
+    } catch {
+      setError("Could not reach the server. Check your connection and try again.");
+    }
+    setPaying(false);
+  }
+
+  async function resend() {
+    if (!sentTo) return;
+    setResent(false);
+    const res = await fetch("/api/checkout/trial/resend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: sentTo }) });
+    const json = (await res.json().catch(() => ({}))) as { error?: string };
+    if (!res.ok) setError(json.error ?? "Could not send the email again.");
+    else setResent(true);
   }
 
   async function pay() {
@@ -125,7 +180,27 @@ export function CheckoutForm({
     }
   }
 
-  const cols = service.tiers.length >= 4 ? "lg:grid-cols-5" : service.tiers.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
+  if (sentTo) {
+    return (
+      <div className="mx-auto max-w-2xl py-10 text-center sm:py-20">
+        <span className="zl-grad-bg mx-auto flex size-14 items-center justify-center rounded-full text-white">
+          <LuCheck className="size-7" />
+        </span>
+        <h2 className="zl-display mt-8 text-4xl font-bold sm:text-6xl">
+          Check your <span className="zl-serif zl-grad-text">email.</span>
+        </h2>
+        <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-white/65">
+          We sent a link to <strong className="text-white">{sentTo}</strong>. Open it to confirm your email and your free trial starts straight away. You will land in AI Studio, already signed in.
+        </p>
+        <button type="button" onClick={resend} className="mt-8 cursor-pointer text-sm text-white/55 underline decoration-white/25 underline-offset-4 hover:text-white">
+          {resent ? "Sent again. Check your inbox and spam folder." : "Did not get it? Send it again"}
+        </button>
+        {error && <p className="mt-4 text-sm text-[#ffb3c6]">{error}</p>}
+      </div>
+    );
+  }
+
+  const cols = tiers.length >= 5 ? "lg:grid-cols-5" : tiers.length === 4 ? "sm:grid-cols-4" : tiers.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
 
   return (
     <form onSubmit={onSubmit} className="grid items-start gap-14 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-20">
@@ -184,7 +259,7 @@ export function CheckoutForm({
           <div className="mt-12">
             <p className={fieldLabel}>Plan for {service.name}</p>
             <div className={cn("mt-4 grid grid-cols-2 border-y border-white/10", cols)}>
-              {service.tiers.map((t, i) => {
+              {tiers.map((t, i) => {
                 const active = t.name === tier.name;
                 return (
                   <button
@@ -203,7 +278,11 @@ export function CheckoutForm({
                     <span className={cn("text-[0.7rem] font-semibold uppercase tracking-[0.2em]", active ? "text-[#ff6b8f]" : "text-white/45")}>
                       {t.name}
                     </span>
-                    <PriceBlock usd={t.price} period={t.period} size={service.tiers.length >= 4 ? "lg" : "xl"} className="mt-2" />
+                    {t.price === 0 ? (
+                      <span className="zl-display mt-2 text-3xl font-bold">Free</span>
+                    ) : (
+                      <PriceBlock usd={t.price} period={t.period} size={tiers.length >= 4 ? "lg" : "xl"} className="mt-2" />
+                    )}
                     <span className="mt-2 text-sm text-white/60">{t.quota}</span>
                   </button>
                 );
@@ -228,7 +307,7 @@ export function CheckoutForm({
         </section>
 
         <section className="mt-16 border-t border-white/10 pt-14">
-          <StepHeading n="2" title="Create your account" hint="Your account is activated the moment your payment goes through." />
+          <StepHeading n="2" title="Create your account" hint={isTrial ? "Free trial: no payment, but we will email you a link to confirm your address." : "Your account is activated the moment your payment goes through."} />
           <div className="mt-10 grid gap-9 sm:grid-cols-2">
             {error && (
               <p className="rounded-sm border-l-2 border-[#ff3d86] bg-[#ff3d86]/10 px-4 py-3 text-sm text-[#ffb3c6] sm:col-span-2">{error}</p>
@@ -267,7 +346,7 @@ export function CheckoutForm({
         </section>
 
         <section className="mt-16 border-t border-white/10 pt-14">
-          <StepHeading n="3" title="Review and pay" />
+          <StepHeading n="3" title={isTrial ? "Start your trial" : "Review and pay"} />
           <label className="mt-8 flex cursor-pointer items-start gap-3.5 leading-relaxed">
             <Checkbox checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} className="mt-1" aria-required />
             <span className="text-[0.95rem] text-white/60">
@@ -288,11 +367,17 @@ export function CheckoutForm({
           </label>
           <button
             type="submit"
-            disabled={!agreed || soon}
+            disabled={!agreed || soon || paying}
             className="zl-btn zl-btn-primary zl-btn-lg mt-7 w-full disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 sm:w-auto sm:min-w-72"
           >
             {soon ? (
               "Coming soon"
+            ) : isTrial ? (
+              <>
+                {paying ? <LuLoaderCircle className="size-5 animate-spin" /> : null}
+                {paying ? "Sending your email" : "Start free trial"}
+                {!paying && <LuArrowRight className="size-5" />}
+              </>
             ) : (
               <>
                 Continue to payment, {amount}
@@ -321,8 +406,8 @@ export function CheckoutForm({
             <span>{tier.name}</span>
             <span aria-hidden className="mb-1 flex-1 border-b border-dotted border-white/25" />
             <span className="text-white">
-              {amount}
-              {suffix}
+              {isTrial ? "Free" : amount}
+              {isTrial ? "" : suffix}
             </span>
           </div>
           <p className="mt-1 text-white/50">{tier.quota}</p>
@@ -343,9 +428,9 @@ export function CheckoutForm({
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-white/50">Total</p>
-              <p className="mt-1 text-white/45">{billing(tier.period)}</p>
+              <p className="mt-1 text-white/45">{isTrial ? "No card required" : billing(tier.period)}</p>
             </div>
-            <PriceBlock usd={tier.price} period={tier.period} size="xl" align="right" />
+            {isTrial ? <span className="zl-display text-4xl font-bold text-white">Free</span> : <PriceBlock usd={tier.price} period={tier.period} size="xl" align="right" />}
           </div>
 
           <p className="mt-7 border-t border-dashed border-white/20 pt-5 text-[0.72rem] leading-relaxed text-white/40">

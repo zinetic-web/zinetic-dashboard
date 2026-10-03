@@ -3,6 +3,7 @@ import {
   LuClipboardList,
   LuDisc3,
   LuGauge,
+  LuGift,
   LuHistory,
   LuLayoutDashboard,
   LuReceipt,
@@ -38,6 +39,7 @@ export const ADMIN_NAV: NavSection[] = [
     product: "studio",
     entries: [
       { href: "/admin/studio", label: "Usage", icon: <LuAudioLines />, hint: "Runs, failures and what is used most" },
+      { href: "/admin/studio/trial", label: "Free trial", icon: <LuGift />, hint: "The shared trial and what it costs" },
       { href: "/admin/engines", label: "Engines", icon: <LuServerCog />, hint: "Providers, models and limits" },
     ],
   },

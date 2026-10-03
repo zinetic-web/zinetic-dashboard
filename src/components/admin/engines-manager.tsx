@@ -31,6 +31,9 @@ const blank = (service: string, nextIndex: number): EngineInput => ({
   max_chars: null,
   options: {},
   sort: nextIndex,
+  provider_rate: null,
+  rate_unit: "per_minute",
+  trial_allowed: true,
 });
 
 const fromEngine = (e: Engine): EngineInput => ({
@@ -50,6 +53,9 @@ const fromEngine = (e: Engine): EngineInput => ({
   max_chars: e.max_chars,
   options: e.options,
   sort: e.sort,
+  provider_rate: e.provider_rate,
+  rate_unit: e.rate_unit,
+  trial_allowed: e.trial_allowed,
 });
 
 const selectClass = "h-9 w-full rounded-md border bg-background px-3 text-sm";
@@ -120,6 +126,22 @@ function EngineForm({ initial, onDone }: { initial: EngineInput; onDone: () => v
         <Input type="number" min={0} step="0.001" value={v.credit_cost} onChange={(e) => set("credit_cost", Number(e.target.value))} />
       </Field>
 
+
+      <Field label="What it costs us" hint="The provider's rate. Used to work out the real cost of a run, and to cap the free trial. Empty keeps this engine out of the trial.">
+        <div className="grid grid-cols-[1fr_auto] gap-2">
+          <Input type="number" min={0} step="0.0001" value={v.provider_rate ?? ""} onChange={(e) => set("provider_rate", e.target.value === "" ? null : Number(e.target.value))} />
+          <select className={selectClass} value={v.rate_unit} onChange={(e) => set("rate_unit", e.target.value)}>
+            <option value="per_1k_chars">per 1,000 chars</option>
+            <option value="per_minute">per minute</option>
+            <option value="per_generation">per generation</option>
+          </select>
+        </div>
+      </Field>
+      <Field label="Free trial">
+        <label className="flex items-center gap-2 text-sm">
+          <Switch checked={v.trial_allowed} onCheckedChange={(c) => set("trial_allowed", c)} /> Allowed in the trial
+        </label>
+      </Field>
 
       <Field label="Longest media (minutes)" hint="Empty means no limit.">
         <Input
