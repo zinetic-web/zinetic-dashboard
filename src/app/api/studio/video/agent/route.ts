@@ -39,7 +39,9 @@ export async function POST(request: Request) {
   const seconds = b?.seconds && DURATIONS.includes(b.seconds) ? b.seconds : undefined;
   const orientation = b?.orientation === "portrait" || b?.orientation === "landscape" ? b.orientation : undefined;
 
-  const z = await authorize(auth.userId, "prompt-video", b?.engine, { chars: text.length, seconds: seconds ?? 60 }, "Prompt to video", 1);
+  // a video takes from the plan in proportion to its length (at least a quarter minute), because HeyGen bills us by the second
+  const planMinutes = Math.max(0.25, Math.round(((seconds ?? 30) / 60) * 100) / 100);
+  const z = await authorize(auth.userId, "prompt-video", b?.engine, { chars: text.length, seconds: seconds ?? 30 }, "Prompt to video", planMinutes);
   if ("error" in z) return z.error;
 
   const job = await generateFromPrompt({
