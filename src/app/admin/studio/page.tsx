@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, HBars } from "@/components/admin-panel/charts";
 import { StatCard } from "@/components/admin-panel/stat-card";
+import { heygenBalance } from "@/lib/studio/heygen";
 import { cn } from "@/lib/utils";
 
 type Row = {
@@ -44,7 +45,7 @@ export default async function AdminStudioPage({ searchParams }: { searchParams: 
   if (status !== "all") list = list.eq("status", status);
   if (sp.tool) list = list.eq("kind", sp.tool);
 
-  const [{ data }, { data: recent }] = await Promise.all([list, db.from("studio_generations").select("kind, status, created_at, user_id").gte("created_at", since)]);
+  const [{ data }, { data: recent }, hgBalance] = await Promise.all([list, db.from("studio_generations").select("kind, status, created_at, user_id").gte("created_at", since), heygenBalance()]);
   const rows = (data ?? []) as unknown as Row[];
   const r30 = recent ?? [];
 
@@ -71,11 +72,12 @@ export default async function AdminStudioPage({ searchParams }: { searchParams: 
         <p className="mt-1 text-sm text-muted-foreground">Every run across all customers, what it drew from their plan, and what failed.</p>
       </div>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard label="Runs, last 30 days" value={fmtNum(total)} spark={seriesByDay(r30, (r) => r.created_at, () => 1, 30).map((p) => p.value)} icon={<LuAudioLines />} />
         <StatCard label="Succeeded" value={total ? `${Math.round(((total - failed) / total) * 100)}%` : "-"} sub={`${fmtNum(total - failed)} runs`} />
         <StatCard label="Failed" value={fmtNum(failed)} sub="credited back to the plan automatically" href="/admin/studio?status=failed" tone={failed ? "attention" : "default"} />
         <StatCard label="Customers using it" value={fmtNum(customers)} sub="last 30 days" />
+        <StatCard label="HeyGen credit left" value={hgBalance === null ? "-" : `$${hgBalance.toFixed(2)}`} sub={hgBalance !== null && hgBalance < 10 ? "Low: top up so videos keep working" : "pays for every video and translation"} tone={hgBalance !== null && hgBalance < 10 ? "attention" : "default"} />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">

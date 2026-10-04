@@ -22,7 +22,7 @@ export type JobState<T = unknown> =
   | { phase: "done"; id: string; data?: T }
   | { phase: "error"; error: string };
 
-const POLL_MS = 5000;
+const POLL_MS = 10000;
 const GIVE_UP_MS = 3 * 60 * 60 * 1000;
 
 type Poll = { status?: string; error?: string; progress?: number; stage?: string };

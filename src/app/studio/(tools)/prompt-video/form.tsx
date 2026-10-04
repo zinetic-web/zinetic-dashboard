@@ -8,32 +8,65 @@ import { useJob } from "@/components/studio/use-job";
 import { Field, Output, Segmented, SubmitButton, TextArea, VideoResult, Workspace, EnginePicker, useEngine } from "@/components/studio/ui";
 
 const IDEAS = [
-  "A 30 second promo for a new lo-fi album release, calm and cinematic",
+  "A promo for a new lo-fi album release, calm and cinematic",
   "Explain how music royalties work in simple words for new artists",
   "A friendly welcome video for new subscribers of a music channel",
 ];
 
 export function PromptVideoForm() {
-  const [prompt, setPrompt] = React.useState("");
+  const [mode, setMode] = React.useState("idea");
+  const [text, setText] = React.useState("");
+  const [seconds, setSeconds] = React.useState("30");
   const [orientation, setOrientation] = React.useState("auto");
   const [style, setStyle] = React.useState("");
   const [avatar, setAvatar] = React.useState<AvatarChoice | null>(null);
   const [voice, setVoice] = React.useState<VoiceChoice | null>(null);
   const { state, run } = useJob();
   const eng = useEngine();
+  const script = mode === "script";
 
   return (
     <Workspace
       form={
         <>
           <EnginePicker />
-          <Field label="Describe your video" hint="Topic, tone, length">
-            <TextArea value={prompt} onChange={setPrompt} max={2000} rows={8} placeholder="A 45 second video explaining..." />
-            <div className="flex flex-col items-start gap-2">
-              {IDEAS.map((i) => (
-                <Button key={i} variant="outline" size="xs" className="h-auto justify-start whitespace-normal py-1.5 text-left" onClick={() => setPrompt(i)}>{i}</Button>
-              ))}
-            </div>
+
+          <Field label="What do you have?">
+            <Segmented
+              value={mode}
+              onChange={setMode}
+              options={[
+                { value: "idea", label: "An idea" },
+                { value: "script", label: "A script" },
+              ]}
+            />
+          </Field>
+
+          <Field label={script ? "Your script" : "Describe your video"} hint={script ? "Every word is used as written, one scene for each paragraph" : "What it is about, the tone, who it is for"}>
+            <TextArea value={text} onChange={setText} max={8000} rows={8} placeholder={script ? "Paste the words the presenter should say." : "A video explaining..."} />
+            {!script && (
+              <div className="flex flex-col items-start gap-2">
+                {IDEAS.map((i) => (
+                  <Button key={i} variant="outline" size="xs" className="h-auto justify-start whitespace-normal py-1.5 text-left" onClick={() => setText(i)}>
+                    {i}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </Field>
+
+          <Field label="Length" hint="A longer video takes longer to make">
+            <Segmented
+              value={seconds}
+              onChange={setSeconds}
+              options={[
+                { value: "15", label: "15s" },
+                { value: "30", label: "30s" },
+                { value: "45", label: "45s" },
+                { value: "60", label: "1 min" },
+                { value: "90", label: "90s" },
+              ]}
+            />
           </Field>
 
           <Field label="Shape">
@@ -61,7 +94,7 @@ export function PromptVideoForm() {
 
           <SubmitButton
             busy={state.phase === "working"}
-            disabled={!prompt.trim()}
+            disabled={!text.trim()}
             busyLabel="Creating video"
             onClick={() =>
               run(
@@ -71,14 +104,16 @@ export function PromptVideoForm() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       engine: eng.key,
-                      prompt,
+                      prompt: text,
+                      script,
+                      seconds: Number(seconds),
                       orientation: orientation === "auto" ? undefined : orientation,
                       styleId: style || undefined,
                       avatarId: avatar?.id,
                       voiceId: voice?.id,
                     }),
                   }),
-                { async: true, message: "Your video is being made", eta: "Prompt videos usually take 5 to 10 minutes." }
+                { async: true, message: "Your video is being made", eta: "Prompt videos usually take 6 to 13 minutes." }
               )
             }
           >

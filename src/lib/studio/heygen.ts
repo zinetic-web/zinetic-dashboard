@@ -21,31 +21,74 @@ type Envelope<T> = {
 
 type Called<T> = Ok<{ data: T; next: string | null }> | Fail;
 
-/** One v3 request. Lists come back with a cursor in `next`. `revalidate` caches reads for a while. */
+/**
+ * What a customer is told for the errors HeyGen documents. Anything about credit or plan limits is
+ * our problem, not theirs, so it is logged for us and shown as a plain "try again later".
+ */
+const FRIENDLY: Record<string, string> = {
+  content_policy_violation: "This request was turned down because it may break the content rules. Change the wording and try again.",
+  avatar_not_usable: "This avatar cannot be used right now. Please choose another one.",
+  avatar_expired: "This avatar cannot be used right now. Please choose another one.",
+  avatar_not_found: "This avatar was not found. Please choose another one.",
+  voice_not_found: "This voice was not found. Please choose another one.",
+  voice_not_usable: "This voice cannot be used right now. Please choose another one.",
+  voice_unavailable: "This voice cannot be used right now. Please choose another one.",
+  voice_expired: "This voice cannot be used right now. Please choose another one.",
+  script_too_short: "The script is too short. Write a little more.",
+  no_audio_track: "That video has no audio to work with.",
+  video_too_long: "That video is too long for this tool.",
+  rate_limit_exceeded: "A lot of videos are being made right now. Please try again in a minute.",
+  service_unavailable: "The video service is busy right now. Please try again in a minute.",
+  gateway_timeout: "The video service is busy right now. Please try again in a minute.",
+  insufficient_credit: "Video making is paused for a short while. Please try again later.",
+  quota_exceeded: "Video making is paused for a short while. Please try again later.",
+  trial_limit_exceeded: "Video making is paused for a short while. Please try again later.",
+  subscription_required: "Video making is paused for a short while. Please try again later.",
+  plan_upgrade_required: "Video making is paused for a short while. Please try again later.",
+};
+const OUR_PROBLEM = new Set(["insufficient_credit", "quota_exceeded", "trial_limit_exceeded", "subscription_required", "plan_upgrade_required"]);
+
+const RETRY_STATUS = new Set([429, 502, 503, 504]);
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * One v3 request. Lists come back with a cursor in `next`. `revalidate` caches reads for a while.
+ * Busy answers (429, 502, 503, 504) are retried twice, waiting as long as HeyGen asks.
+ */
 async function call<T>(path: string, init: RequestInit = {}, revalidate?: number): Promise<Called<T>> {
   const k = key();
   if (!k) return NOT_CONFIGURED;
   try {
-    const res = await fetch(`${API}${path}`, {
-      ...init,
-      headers: { "x-api-key": k, Accept: "application/json", ...(init.headers ?? {}) },
-      ...(revalidate ? { next: { revalidate } } : { cache: "no-store" as const }),
-    });
-    const json = (await res.json().catch(() => ({}))) as Envelope<T>;
-    if (!res.ok || json.error) {
-      const e = json.error;
-      const msg = typeof e === "string" ? e : (e?.message ?? json.message);
-      return { ok: false, error: msg || `HeyGen returned ${res.status}.` };
+    for (let attempt = 0; ; attempt++) {
+      const res = await fetch(`${API}${path}`, {
+        ...init,
+        headers: { "x-api-key": k, Accept: "application/json", ...(init.headers ?? {}) },
+        ...(revalidate ? { next: { revalidate } } : { cache: "no-store" as const }),
+      });
+      if (RETRY_STATUS.has(res.status) && attempt < 2) {
+        const wait = Number(res.headers.get("retry-after"));
+        await sleep(Math.min(5000, (Number.isFinite(wait) && wait > 0 ? wait : 1 + attempt * 2) * 1000));
+        continue;
+      }
+      const json = (await res.json().catch(() => ({}))) as Envelope<T>;
+      if (!res.ok || json.error) {
+        const e = json.error;
+        const code = typeof e === "object" && e ? e.code : undefined;
+        const msg = typeof e === "string" ? e : (e?.message ?? json.message);
+        if (code && OUR_PROBLEM.has(code)) console.error(`HeyGen refused a request because of our account (${code}): ${msg}`);
+        return { ok: false, error: (code && FRIENDLY[code]) || msg || `HeyGen returned ${res.status}.` };
+      }
+      return { ok: true, data: json.data as T, next: json.has_more ? (json.next_token ?? null) : null };
     }
-    return { ok: true, data: json.data as T, next: json.has_more ? (json.next_token ?? null) : null };
   } catch {
     return { ok: false, error: "Could not reach HeyGen." };
   }
 }
 
+/** A JSON POST. The key lets HeyGen recognise a repeat of the same request, so a retry never makes two videos. */
 const post = (body: unknown): RequestInit => ({
   method: "POST",
-  headers: { "Content-Type": "application/json" },
+  headers: { "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() },
   body: JSON.stringify(body),
 });
 
@@ -273,21 +316,26 @@ export async function generatePhotoVideo(
   return r.ok ? { ok: true, videoId: r.data.video_id } : r;
 }
 
-/** A video made from a written idea. The first job id may be a session, finished by videoStatus. */
+/**
+ * A video made from a written idea, by HeyGen's Video Agent. The agent is a conversation: it plans, writes
+ * scenes and renders, which takes 5 to 10 times the length of the video. We start it in one-shot mode and,
+ * as HeyGen documents, follow the SESSION (not just the video) until it has finished. Incognito mode keeps
+ * one customer's prompts from shaping another customer's video, as all of them share one HeyGen account.
+ */
 export async function generateFromPrompt(opts: { prompt: string; orientation?: "landscape" | "portrait"; avatarId?: string; voiceId?: string; styleId?: string }): Promise<VideoJob> {
-  const r = await call<{ session_id: string; video_id?: string | null }>(
+  const r = await call<{ session_id: string }>(
     "/v3/video-agents",
     post({
       prompt: opts.prompt,
       mode: "generate",
+      incognito_mode: true,
       ...(opts.orientation ? { orientation: opts.orientation } : {}),
       ...(opts.avatarId ? { avatar_id: opts.avatarId } : {}),
       ...(opts.voiceId ? { voice_id: opts.voiceId } : {}),
       ...(opts.styleId ? { style_id: opts.styleId } : {}),
     })
   );
-  if (!r.ok) return r;
-  return { ok: true, videoId: r.data.video_id || `agent:${r.data.session_id}` };
+  return r.ok ? { ok: true, videoId: `agent:${r.data.session_id}` } : r;
 }
 
 export type JobState = { status: "processing" | "done" | "failed"; url?: string; error?: string; progress?: number; stage?: string };
@@ -300,17 +348,74 @@ async function plainVideoStatus(videoId: string): Promise<JobState> {
   return { status: "processing", stage: r.data.status === "processing" ? "Rendering your video" : "Waiting in line" };
 }
 
-export async function videoStatus(id: string): Promise<JobState> {
-  if (!id.startsWith("agent:")) return plainVideoStatus(id);
-  const r = await call<{ status: string; video_id?: string | null; progress?: number | null; error?: { message?: string } | string | null }>(`/v3/video-agents/${encodeURIComponent(id.slice(6))}`);
+type AgentMessage = { role?: string; type?: string; content?: string | null; created_at?: number | null };
+type AgentSession = {
+  status: string;
+  video_id?: string | null;
+  progress?: number | null;
+  error?: { message?: string } | string | null;
+  messages?: AgentMessage[];
+};
+
+/** What the agent last said about its own work, as one short line a customer can read. */
+function latestNote(messages: AgentMessage[] = []): string | undefined {
+  const m = messages.find((x) => x.role === "model" && x.type === "text" && x.content);
+  if (!m?.content) return undefined;
+  const first = m.content.replace(/\s+/g, " ").trim().split(/(?<=[.!?])\s/)[0] ?? "";
+  return first.length > 110 ? `${first.slice(0, 107)}...` : first || undefined;
+}
+
+/**
+ * Where a prompt video stands. The session is the source of truth: it can fail (a plan or content problem),
+ * or stop to ask a question, while the video it reserved just looks "pending". If it does ask, we answer once
+ * so a customer's video is never left waiting on a question nobody can see.
+ */
+async function agentStatus(sessionId: string): Promise<JobState> {
+  const r = await call<AgentSession>(`/v3/video-agents/${encodeURIComponent(sessionId)}`);
   if (!r.ok) return { status: "processing" };
-  if (r.data.video_id) return plainVideoStatus(r.data.video_id);
-  if (r.data.status === "failed") {
-    const e = r.data.error;
-    return { status: "failed", error: (typeof e === "string" ? e : e?.message) || "HeyGen could not make this video." };
+  const d = r.data;
+  const note = latestNote(d.messages);
+
+  if (d.status === "failed" || d.error) {
+    const e = d.error;
+    const reason = (typeof e === "string" ? e : e?.message) || "";
+    if (reason) console.error(`Video agent session ${sessionId} failed: ${reason}`);
+    return { status: "failed", error: "The video could not be made. Please try again, with a shorter or simpler description if it keeps happening." };
   }
-  const stage = r.data.status === "generating" ? "Creating the scenes" : r.data.status === "completed" ? "Finishing up" : "Planning your video";
-  return { status: "processing", stage, progress: typeof r.data.progress === "number" ? r.data.progress : undefined };
+
+  if (d.status === "waiting_for_input") {
+    const last = d.messages?.[0];
+    await call(
+      `/v3/video-agents/${encodeURIComponent(sessionId)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Idempotency-Key": `continue-${sessionId}-${last?.created_at ?? 0}` },
+        body: JSON.stringify({ message: "Please continue. Use your best judgement for anything that is unclear, and do not ask more questions." }),
+      }
+    );
+    return { status: "processing", stage: "Planning your video", progress: undefined };
+  }
+
+  if (d.video_id) {
+    const v = await plainVideoStatus(d.video_id);
+    if (v.status === "done") return v;
+    // a reserved draft can show "failed" while the agent is still working, so only believe it once the agent is finished
+    if (v.status === "failed" && d.status === "completed") return v;
+    return { status: "processing", stage: note ?? v.stage, progress: typeof d.progress === "number" && d.progress > 0 ? d.progress : undefined };
+  }
+
+  const stage = d.status === "generating" ? "Creating the scenes" : d.status === "reviewing" ? "Checking the plan" : "Planning your video";
+  return { status: "processing", stage: note ?? stage, progress: typeof d.progress === "number" && d.progress > 0 ? d.progress : undefined };
+}
+
+export async function videoStatus(id: string): Promise<JobState> {
+  return id.startsWith("agent:") ? agentStatus(id.slice(6)) : plainVideoStatus(id);
+}
+
+/** HeyGen's remaining credit in dollars, so a low balance is seen before it stops every video. */
+export async function heygenBalance(): Promise<number | null> {
+  const r = await call<{ wallet?: { remaining_balance?: number } }>("/v3/users/me", {}, 300);
+  return r.ok && typeof r.data?.wallet?.remaining_balance === "number" ? r.data.wallet.remaining_balance : null;
 }
 
 /* ----------------------------------------------------------- translation */
