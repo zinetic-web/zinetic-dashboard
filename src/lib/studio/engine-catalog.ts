@@ -33,6 +33,7 @@ export type CostUnit = (typeof COST_UNITS)[number]["value"];
 export const FEATURE_LABELS: Record<string, string> = {
   multilingual: "Many languages",
   expressive: "Most expressive",
+  finetunes: "Ready-made styles",
   "audio-tags": "Audio tags",
   loop: "Seamless loops",
   speakers: "Speaker labels",

@@ -62,6 +62,8 @@ export function useEngine() {
   const engine = ctx?.engines.find((e) => e.key === ctx.key) ?? ctx?.engines[0];
   return {
     key: engine?.key ?? "",
+    setKey: ctx?.setKey ?? (() => {}),
+    engines: ctx?.engines ?? [],
     engine,
     has: (feature: string) => Boolean(engine?.features.includes(feature)),
   };

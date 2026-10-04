@@ -238,12 +238,48 @@ export function soundEffect(opts: { text: string; durationSeconds?: number; loop
   });
 }
 
-export function composeMusic(opts: { prompt: string; seconds: number; modelId?: string }) {
+export type MusicOptions = {
+  prompt: string;
+  seconds: number;
+  modelId?: string;
+  /** no singing, music only */
+  instrumental?: boolean;
+  /** one of the ready-made styles from listFinetunes (they need the v2 model) */
+  finetuneId?: string;
+  seed?: number;
+};
+
+export function composeMusic(opts: MusicOptions) {
   return audioCall(`${BASE}/music?output_format=mp3_44100_128`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt: opts.prompt, music_length_ms: Math.round(opts.seconds * 1000), ...(opts.modelId ? { model_id: opts.modelId } : {}) }),
+    body: JSON.stringify({
+      prompt: opts.prompt,
+      music_length_ms: Math.round(clamp(opts.seconds, 3, 600) * 1000),
+      ...(opts.modelId ? { model_id: opts.modelId } : {}),
+      ...(opts.instrumental ? { force_instrumental: true } : {}),
+      ...(opts.finetuneId ? { finetune_id: opts.finetuneId } : {}),
+      ...(typeof opts.seed === "number" ? { seed: Math.trunc(opts.seed) } : {}),
+    }),
   });
+}
+
+export type Finetune = { id: string; name: string; genre: string; tags: string[] };
+
+/** The ready-made music styles ElevenLabs offers, such as "Deep Hip-Hop Voice (Male)". They rarely change. */
+export async function listFinetunes(): Promise<Finetune[]> {
+  const k = key();
+  if (!k) return [];
+  try {
+    const res = await fetch(`${BASE}/music/finetunes?page_size=100`, { headers: { "xi-api-key": k }, next: { revalidate: 6 * 3600 } });
+    if (!res.ok) return [];
+    const j = (await res.json()) as { finetunes: { id: string; name: string; primary_genre?: string; tags?: string[]; status?: string }[] };
+    return j.finetunes
+      .filter((f) => !f.status || f.status === "completed")
+      .map((f) => ({ id: f.id, name: f.name, genre: f.primary_genre ?? "Other", tags: f.tags ?? [] }));
+  } catch {
+    return [];
+  }
 }
 
 export function isolateAudio(opts: { audio: Blob; filename: string }) {
