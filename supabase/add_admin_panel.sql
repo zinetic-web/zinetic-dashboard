@@ -41,7 +41,7 @@ begin
     return null;
   end if;
   insert into public.wallet_transactions (user_id, type, amount, note, created_by)
-  values (p_user, case when p_usd >= 0 then 'topup' else 'adjustment' end, p_usd, p_note, p_admin);
+  values (p_user, (case when p_usd >= 0 then 'topup' else 'adjustment' end)::public.wallet_tx_type, p_usd, p_note, p_admin);
   return new_balance;
 end;
 $$;
