@@ -13,6 +13,39 @@ const refresh = (userId?: string) => {
   if (userId) revalidatePath(`/admin/customers/${userId}`);
 };
 
+type Wallet = { balance: number | null } | { error: string };
+
+/**
+ * Changes a customer's Channel Checker balance and writes the ledger row. Uses the database function
+ * when it works. If that function is the older version with the type bug (error 42804), it does the same
+ * thing in two safe steps instead, so admin top-ups never depend on a database patch. `balance: null`
+ * means the change would have gone below zero.
+ */
+async function adjustWallet(userId: string, usd: number, note: string, adminId: string): Promise<Wallet> {
+  const db = createAdminClient();
+  const rpc = await db.rpc("wallet_adjust", { p_user: userId, p_usd: usd, p_note: note, p_admin: adminId });
+  if (!rpc.error) return { balance: rpc.data === null ? null : Number(rpc.data) };
+  if (rpc.error.code !== "42804") return { error: rpc.error.message };
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { data: row } = await db.from("profiles").select("wallet_balance").eq("id", userId).single();
+    if (!row) return { error: "Customer not found." };
+    const current = Number(row.wallet_balance);
+    const next = Math.round((current + usd) * 100) / 100;
+    if (next < 0) return { balance: null };
+    // only succeeds if nobody changed the balance in between
+    const { data: updated } = await db.from("profiles").update({ wallet_balance: next }).eq("id", userId).eq("wallet_balance", current).select("id");
+    if (!updated || updated.length === 0) continue;
+    const { error } = await db.from("wallet_transactions").insert({ user_id: userId, type: usd >= 0 ? "topup" : "adjustment", amount: usd, note, created_by: adminId });
+    if (error) {
+      await db.from("profiles").update({ wallet_balance: current }).eq("id", userId).eq("wallet_balance", next);
+      return { error: error.message };
+    }
+    return { balance: next };
+  }
+  return { error: "The balance changed while saving. Please try again." };
+}
+
 /**
  * Adds or removes Channel Checker credits for one customer, with a note that appears on
  * their transaction list. Credits are the unit customers see (1 credit = one check).
@@ -22,14 +55,10 @@ export async function adjustCheckerCredits(userId: string, credits: number, note
   if (!Number.isFinite(credits) || credits === 0) return { error: "Enter a number of credits, positive to add or negative to remove." };
   const usd = Math.round(credits * CHECK_PRICE * 100) / 100;
 
-  const { data, error } = await createAdminClient().rpc("wallet_adjust", {
-    p_user: userId,
-    p_usd: usd,
-    p_note: note?.trim() || (credits > 0 ? "Credits added by admin" : "Credits removed by admin"),
-    p_admin: admin.id,
-  });
-  if (error) return { error: error.message };
-  if (data === null) return { error: "That would take the balance below zero." };
+  const result = await adjustWallet(userId, usd, note?.trim() || (credits > 0 ? "Credits added by admin" : "Credits removed by admin"), admin.id);
+  if ("error" in result) return { error: result.error };
+  if (result.balance === null) return { error: "That would take the balance below zero." };
+  const data = result.balance;
 
   await audit(admin, credits > 0 ? "checker_credits_add" : "checker_credits_remove", { id: userId, label: await labelFor(userId) }, {
     credits,
