@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { LuArrowUpRight, LuClock } from "react-icons/lu";
+import { PiArrowUpRightBold, PiClockBold } from "react-icons/pi";
 import { cn } from "@/lib/utils";
 import { TOOLS, type StudioTool } from "@/lib/studio/tools";
 import { WaveArt } from "@/components/studio/audio-player";
@@ -116,11 +116,11 @@ export function BentoTile({
         )}
         {tool.soon ? (
           <span className="flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[0.7rem] backdrop-blur">
-            <LuClock className="size-3" /> Soon
+            <PiClockBold className="size-3" /> Soon
           </span>
         ) : (
           <span className="flex size-9 items-center justify-center rounded-full bg-white/15 backdrop-blur transition-all duration-300 group-hover:bg-white group-hover:text-black">
-            <LuArrowUpRight className="size-4" />
+            <PiArrowUpRightBold className="size-4" />
           </span>
         )}
       </div>

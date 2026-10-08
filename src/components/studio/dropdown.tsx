@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { LuCheck, LuChevronDown, LuSearch } from "react-icons/lu";
+import { PiCaretDownBold, PiCheckBold, PiMagnifyingGlassBold } from "react-icons/pi";
 import { cn } from "@/lib/utils";
 
 export type DropdownOption = { value: string; label: string; hint?: string; group?: string };
@@ -71,10 +71,10 @@ export function Dropdown({
   }
 
   const list = (
-    <div className={cn("flex flex-col rounded-xl border border-white/10 bg-[#101020] p-1.5", inline ? "mt-1.5" : "absolute top-full z-40 mt-1.5 min-w-full shadow-[0_24px_60px_-20px_rgb(0_0_0/0.9)]", !inline && (align === "right" ? "right-0" : "left-0"))}>
+    <div className={cn("zs-shine flex flex-col rounded-xl border border-white/10 bg-[#101020] p-1.5", inline ? "mt-1.5" : "absolute top-full z-40 mt-1.5 min-w-full shadow-[0_24px_60px_-20px_rgb(0_0_0/0.9)]", !inline && (align === "right" ? "right-0" : "left-0"))}>
       {showSearch && (
         <div className="relative mb-1">
-          <LuSearch className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-white/40" />
+          <PiMagnifyingGlassBold className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-white/40" />
           <input
             autoFocus
             value={q}
@@ -105,7 +105,7 @@ export function Dropdown({
                     >
                       <span className="min-w-0 flex-1 truncate">{o.label}</span>
                       {o.hint && <span className="shrink-0 text-xs text-white/40">{o.hint}</span>}
-                      <span className="flex size-4 shrink-0 items-center justify-center">{on && <LuCheck className="size-4 text-violet-300" />}</span>
+                      <span className="flex size-4 shrink-0 items-center justify-center">{on && <PiCheckBold className="size-4 text-violet-300" />}</span>
                     </button>
                   </li>
                 );
@@ -133,7 +133,7 @@ export function Dropdown({
       >
         {icon && <span className="shrink-0 text-white/50">{icon}</span>}
         <span className={cn("min-w-0 flex-1 truncate", current ? "text-white" : "text-white/40")}>{current?.label ?? placeholder}</span>
-        <LuChevronDown className={cn("size-4 shrink-0 text-white/50 transition-transform", open && "rotate-180")} />
+        <PiCaretDownBold className={cn("size-4 shrink-0 text-white/50 transition-transform", open && "rotate-180")} />
       </button>
       {open && list}
     </div>

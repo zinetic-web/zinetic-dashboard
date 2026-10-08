@@ -3,22 +3,7 @@
 import * as React from "react";
 import { Dropdown } from "@/components/studio/dropdown";
 import Link from "next/link";
-import {
-  LuArrowDownUp,
-  LuAudioLines,
-  LuClapperboard,
-  LuCopy,
-  LuDownload,
-  LuEllipsis,
-  LuFileText,
-  LuLayoutGrid,
-  LuList,
-  LuPause,
-  LuPlay,
-  LuRotateCw,
-  LuSearch,
-  LuTriangleAlert,
-} from "react-icons/lu";
+import { PiArrowClockwiseBold, PiArrowsDownUpBold, PiCopyBold, PiDotsThreeBold, PiDownloadSimpleBold, PiFileTextBold, PiFilmSlateBold, PiListBold, PiMagnifyingGlassBold, PiPauseFill, PiPlayFill, PiSquaresFourBold, PiWarningBold, PiWaveformBold } from "react-icons/pi";
 import { toast } from "sonner";
 import { LocalTime } from "@/components/local-time";
 import { VideoPlayer } from "@/components/studio/video-player";
@@ -99,14 +84,14 @@ function RowMenu({ r, text }: { r: LibraryRow; text?: string }) {
   const item = "flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-left text-sm text-white/80 hover:bg-white/[0.07]";
   return (
     <div ref={box} className="relative">
-      <button type="button" onClick={() => setOpen((v) => !v)} aria-label="More" aria-expanded={open} className="flex size-8 cursor-pointer items-center justify-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white">
-        <LuEllipsis className="size-4" />
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-label="More" aria-expanded={open} className="flex size-8 cursor-pointer items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+        <PiDotsThreeBold className="size-4" />
       </button>
       {open && (
-        <div className="absolute right-0 bottom-full z-30 mb-1 w-48 rounded-lg border border-white/10 bg-[#101020] p-1 shadow-[0_18px_40px_-16px_rgb(0_0_0/0.9)]">
+        <div className="absolute right-0 bottom-full zs-shine z-30 mb-1 w-48 rounded-lg border border-white/10 bg-[#101020] p-1 shadow-[0_18px_40px_-16px_rgb(0_0_0/0.9)]">
           {r.status === "done" && r.mime_type && (
             <a href={`/api/studio/files/${r.id}`} download className={item}>
-              <LuDownload className="size-4" /> Download
+              <PiDownloadSimpleBold className="size-4" /> Download
             </a>
           )}
           {text && (
@@ -119,12 +104,12 @@ function RowMenu({ r, text }: { r: LibraryRow; text?: string }) {
                 setOpen(false);
               }}
             >
-              <LuCopy className="size-4" /> Copy text
+              <PiCopyBold className="size-4" /> Copy text
             </button>
           )}
           {tool?.href && (
             <Link href={tool.href} className={item}>
-              <LuRotateCw className="size-4" /> Make another
+              <PiArrowClockwiseBold className="size-4" /> Make another
             </Link>
           )}
         </div>
@@ -144,7 +129,7 @@ function Card({ r, play }: { r: LibraryRow; play: Play }) {
   const src = done && r.mime_type ? `/api/studio/files/${r.id}` : null;
   const dur = useDuration(src, type === "video" ? "video" : "audio");
   const on = play.playing === r.id;
-  const Kind = type === "video" ? LuClapperboard : type === "text" ? LuFileText : LuAudioLines;
+  const Kind = type === "video" ? PiFilmSlateBold : type === "text" ? PiFileTextBold : PiWaveformBold;
   const kindLabel = type === "video" ? "Video" : type === "text" ? "Transcript" : "Audio";
   const sub = r.input?.voiceName || tool?.name || "";
   const bars = React.useMemo(() => waveFor(r.id, 46), [r.id]);
@@ -155,8 +140,8 @@ function Card({ r, play }: { r: LibraryRow; play: Play }) {
         <LocalTime iso={r.created_at} mode="datetime" />
       </p>
       {src && (
-        <a href={src} download aria-label="Download" className="flex size-8 shrink-0 items-center justify-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white">
-          <LuDownload className="size-4" />
+        <a href={src} download aria-label="Download" className="flex size-8 shrink-0 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+          <PiDownloadSimpleBold className="size-4" />
         </a>
       )}
       <RowMenu r={r} text={r.result?.text} />
@@ -165,7 +150,7 @@ function Card({ r, play }: { r: LibraryRow; play: Play }) {
 
   const head = (
     <div className="flex items-start gap-3 p-4 pb-3">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-violet-300 ring-1 ring-white/10">
+      <span className="flex size-10 shrink-0 items-center justify-center zs-shine zs-shine-thin rounded-full bg-white/[0.06] text-violet-300 ring-1 ring-white/10">
         <Kind className="size-5" />
       </span>
       <div className="min-w-0 flex-1">
@@ -194,7 +179,7 @@ function Card({ r, play }: { r: LibraryRow; play: Play }) {
         <>
           {head}
           <p className="mx-4 mb-4 flex items-start gap-2 rounded-lg bg-red-500/10 p-3 text-xs leading-relaxed text-red-200">
-            <LuTriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+            <PiWarningBold className="mt-0.5 size-3.5 shrink-0" />
             <span>This did not finish. Nothing was used from your plan.</span>
           </p>
           {footer}
@@ -205,7 +190,7 @@ function Card({ r, play }: { r: LibraryRow; play: Play }) {
             <video src={`${src}#t=0.1`} preload="metadata" muted playsInline className="absolute inset-0 size-full object-cover" />
             <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
             <span className="absolute top-1/2 left-1/2 flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-black shadow-xl transition-transform group-hover:scale-110">
-              <LuPlay className="size-5 translate-x-0.5" />
+              <PiPlayFill className="size-5 translate-x-0.5" />
             </span>
             {dur !== null && <span className="absolute right-2.5 bottom-2.5 rounded-md bg-black/60 px-2 py-0.5 text-xs font-medium tabular-nums text-white backdrop-blur">{fmtDuration(dur)}</span>}
           </button>
@@ -225,9 +210,9 @@ function Card({ r, play }: { r: LibraryRow; play: Play }) {
               type="button"
               onClick={() => play.toggle(r)}
               aria-label={on ? "Pause" : "Play"}
-              className="zs-grad-bg flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-white shadow-[0_10px_26px_-10px_rgb(124_58_237/0.95)] transition-transform hover:scale-105 active:scale-95"
+              className="zs-shine zs-shine-thin bg-violet-500/30 ring-1 ring-white/10 flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-white transition-transform hover:scale-105 active:scale-95"
             >
-              {on ? <LuPause className="size-5" /> : <LuPlay className="size-5 translate-x-0.5" />}
+              {on ? <PiPauseFill className="size-5" /> : <PiPlayFill className="size-5 translate-x-0.5" />}
             </button>
             <div aria-hidden className="flex h-11 min-w-0 flex-1 items-center gap-[2px]">
               {bars.map((h, i) => (
@@ -256,7 +241,7 @@ function ListRow({ r, play }: { r: LibraryRow; play: Play }) {
   const dur = useDuration(src, type === "video" ? "video" : "audio");
   const on = play.playing === r.id;
   const bars = React.useMemo(() => waveFor(r.id, 36), [r.id]);
-  const Kind = type === "video" ? LuClapperboard : type === "text" ? LuFileText : LuAudioLines;
+  const Kind = type === "video" ? PiFilmSlateBold : type === "text" ? PiFileTextBold : PiWaveformBold;
 
   return (
     <li className="px-3 py-2.5">
@@ -265,7 +250,7 @@ function ListRow({ r, play }: { r: LibraryRow; play: Play }) {
           <div className="relative h-11 w-16 shrink-0 overflow-hidden rounded-md bg-black/40">
             <video src={`${src}#t=0.1`} preload="metadata" muted playsInline className="absolute inset-0 size-full object-cover" />
             <button type="button" onClick={() => play.watch(r)} aria-label="Watch" className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/35 text-white transition-colors hover:bg-black/50">
-              <LuPlay className="size-4 translate-x-px" />
+              <PiPlayFill className="size-4 translate-x-px" />
             </button>
           </div>
         ) : type === "audio" && src ? (
@@ -273,9 +258,9 @@ function ListRow({ r, play }: { r: LibraryRow; play: Play }) {
             type="button"
             onClick={() => play.toggle(r)}
             aria-label={on ? "Pause" : "Play"}
-            className={cn("flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-all", on ? "zs-grad-bg text-white" : "bg-white/[0.07] text-white hover:bg-white/15")}
+            className={cn("flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-all", on ? "zs-shine zs-shine-thin bg-violet-500/30 text-white" : "bg-white/[0.07] text-white hover:bg-white/15")}
           >
-            {on ? <LuPause className="size-[1.1rem]" /> : <LuPlay className="size-[1.1rem] translate-x-px" />}
+            {on ? <PiPauseFill className="size-[1.1rem]" /> : <PiPlayFill className="size-[1.1rem] translate-x-px" />}
           </button>
         ) : (
           <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/[0.05] text-white/40">
@@ -305,8 +290,8 @@ function ListRow({ r, play }: { r: LibraryRow; play: Play }) {
           <LocalTime iso={r.created_at} mode="day" />
         </span>
         {src ? (
-          <a href={src} download aria-label="Download" className="flex size-8 shrink-0 items-center justify-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white">
-            <LuDownload className="size-4" />
+          <a href={src} download aria-label="Download" className="flex size-8 shrink-0 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+            <PiDownloadSimpleBold className="size-4" />
           </a>
         ) : (
           <span className="size-8 shrink-0" />
@@ -412,7 +397,7 @@ export function LibraryView({ rows }: { rows: LibraryRow[] }) {
     <div className="flex flex-col gap-6">
       <div className="sticky top-16 z-10 -mx-4 flex flex-col gap-3 border-b border-white/[0.06] bg-[#07070f]/80 px-4 py-3 backdrop-blur-xl sm:-mx-8 sm:px-8">
         <div className="flex flex-wrap items-center gap-3">
-          <div role="tablist" className="inline-flex rounded-xl bg-white/[0.04] p-1 ring-1 ring-white/10">
+          <div role="tablist" className="inline-flex rounded-full bg-white/[0.04] p-1 ring-1 ring-white/10">
             {[{ id: "all" as const, label: "All" }, ...TYPES].map((t) => (
               <button
                 key={t.id}
@@ -420,7 +405,7 @@ export function LibraryView({ rows }: { rows: LibraryRow[] }) {
                 role="tab"
                 aria-selected={type === t.id}
                 onClick={() => setType(t.id)}
-                className={cn("cursor-pointer rounded-lg px-3.5 py-1.5 text-sm transition-colors", type === t.id ? "zs-grad-bg font-medium text-white shadow-[0_6px_20px_-8px_rgb(124_58_237/0.9)]" : "text-white/60 hover:text-white")}
+                className={cn("cursor-pointer rounded-full px-4 py-1.5 text-sm transition-colors", type === t.id ? "zs-shine zs-shine-thin bg-violet-500/25 font-medium text-white" : "text-white/60 hover:text-white")}
               >
                 {t.label}
                 <span className={cn("ml-1.5 text-xs", type === t.id ? "text-white/75" : "text-white/40")}>{count(t.id)}</span>
@@ -429,21 +414,21 @@ export function LibraryView({ rows }: { rows: LibraryRow[] }) {
           </div>
 
           <div className="relative min-w-44 flex-1 sm:max-w-xs">
-            <LuSearch className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-white/40" />
+            <PiMagnifyingGlassBold className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-white/40" />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, tool or voice" className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pr-3 pl-9 text-sm outline-none placeholder:text-white/35 focus:border-violet-400/50" />
           </div>
 
           <Dropdown className="w-48" value={tool} onChange={setTool} label="Filter by tool" options={[{ value: "", label: "All tools" }, ...toolsHere.map((t) => ({ value: t.id, label: t.name }))]} />
 
           <div className="ml-auto flex items-center gap-2">
-            <button type="button" onClick={() => setOldest((v) => !v)} className="flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white/70 transition-colors hover:text-white">
-              <LuArrowDownUp className="size-4" /> {oldest ? "Oldest first" : "Newest first"}
+            <button type="button" onClick={() => setOldest((v) => !v)} className="zs-pill flex h-10 cursor-pointer items-center gap-2 px-3 text-sm text-white/70 transition-colors hover:text-white">
+              <PiArrowsDownUpBold className="size-4" /> {oldest ? "Oldest first" : "Newest first"}
             </button>
             <div className="inline-flex rounded-xl bg-white/[0.04] p-1 ring-1 ring-white/10">
               {(
                 [
-                  ["grid", LuLayoutGrid],
-                  ["list", LuList],
+                  ["grid", PiSquaresFourBold],
+                  ["list", PiListBold],
                 ] as const
               ).map(([id, Icon]) => (
                 <button key={id} type="button" aria-label={`${id} view`} aria-pressed={view === id} onClick={() => setView(id)} className={cn("flex size-8 cursor-pointer items-center justify-center rounded-lg transition-colors", view === id ? "bg-white/15 text-white" : "text-white/45 hover:text-white")}>
@@ -507,7 +492,7 @@ export function LibraryView({ rows }: { rows: LibraryRow[] }) {
       )}
 
       <Dialog open={Boolean(watching)} onOpenChange={(o) => !o && setWatching(null)}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="zs-dialog dark sm:max-w-3xl">
           <DialogTitle className="pr-8 text-base font-semibold">{watching ? plain(watching.title) : ""}</DialogTitle>
           <DialogDescription className="sr-only">Video player</DialogDescription>
           {watching && <VideoPlayer src={`/api/studio/files/${watching.id}`} name="video.mp4" />}

@@ -3,7 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { LuLoaderCircle, LuLock } from "react-icons/lu";
+import { LuLoaderCircle } from "react-icons/lu";
+import { PiLockSimpleBold } from "react-icons/pi";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -112,8 +113,8 @@ export function LockedService({ toolName, options, exhausted, trial }: { toolNam
     <Card>
       <CardHeader>
         <div className="flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-lg border bg-muted/40">
-            <LuLock className="size-5 text-muted-foreground" />
+          <span className="flex size-10 items-center justify-center rounded-full border bg-muted/40">
+            <PiLockSimpleBold className="size-5 text-muted-foreground" />
           </span>
           <div>
             <CardTitle className="text-lg">{exhausted ? `Your ${toolName} plan is finished` : `${toolName} is not on your account yet`}</CardTitle>
@@ -184,12 +185,32 @@ export function Ring({ pct, size = 60, stroke = 6, children }: { pct: number; si
 }
 
 /** What the customer bought for this tool and how much is left: a gauge, the amount, and when it ends. */
-export function UsageBar({ usage, compact = false, large = false, ringRight = false }: { usage: PlanUsage; compact?: boolean; large?: boolean; ringRight?: boolean }) {
+export function UsageBar({ usage, compact = false, large = false, ringRight = false, mini = false }: { usage: PlanUsage; compact?: boolean; large?: boolean; ringRight?: boolean; mini?: boolean }) {
   const pct = usage.total > 0 ? (usage.remaining / usage.total) * 100 : 0;
   const left = formatUnits(usage.remaining, usage.unit);
   const amount = left.match(/^[\d,.]+/)?.[0] ?? "0";
   const unit = left.replace(/^[\d,.]+\s*/, "");
   const total = formatUnits(usage.total, usage.unit).match(/^[\d,.]+/)?.[0] ?? "";
+  if (mini) {
+    return (
+      <div className="flex items-center gap-3">
+        <Ring pct={pct} size={42} stroke={4}>
+          <span className="text-[0.6rem]">{Math.round(pct)}%</span>
+        </Ring>
+        <div className="min-w-0 leading-tight">
+          {!compact && <p className="truncate text-[0.7rem] font-medium text-white/55">{usage.serviceName}</p>}
+          <p className="flex items-baseline gap-1.5 whitespace-nowrap">
+            <span className="text-base font-bold tabular-nums">{amount}</span>
+            <span className="text-xs text-white/55">{unit} left</span>
+          </p>
+          <p className="truncate text-[0.7rem] text-white/35">
+            of {total}
+            {usage.expiresAt ? ` · until ${when(usage.expiresAt)}` : ""}
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={ringRight ? "flex flex-row-reverse items-center justify-between gap-4" : "flex items-center gap-4"}>
       <Ring pct={pct} size={large ? 80 : 56} stroke={large ? 8 : 6} />

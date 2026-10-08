@@ -4,25 +4,8 @@ import * as React from "react";
 import { Dropdown } from "@/components/studio/dropdown";
 import { FaMars, FaVenus } from "react-icons/fa6";
 import { SparkIcon } from "@/components/spark-icon";
-import {
-  LuBookOpen,
-  LuCheck,
-  LuChevronDown,
-  LuChevronLeft,
-  LuChevronRight,
-  LuGraduationCap,
-  LuLoaderCircle,
-  LuMegaphone,
-  LuMessageCircle,
-  LuPause,
-  LuPlay,
-  LuSearch,
-  LuSlidersHorizontal,
-  LuSmartphone,
-  LuTv,
-  LuUsers,
-  LuX,
-} from "react-icons/lu";
+import { LuLoaderCircle, LuX } from "react-icons/lu";
+import { PiBookOpenBold, PiCaretDownBold, PiCaretLeftBold, PiCaretRightBold, PiChatCircleBold, PiCheckBold, PiDeviceMobileBold, PiGraduationCapBold, PiMagnifyingGlassBold, PiMegaphoneBold, PiPauseFill, PiPlayFill, PiSlidersHorizontalBold, PiTelevisionBold, PiUsersBold } from "react-icons/pi";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,13 +38,13 @@ const LANGUAGES: [string, string][] = [
 ];
 
 const USE_CASES: { id: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: "conversational", label: "Conversational", icon: LuMessageCircle },
-  { id: "narrative_story", label: "Narration", icon: LuBookOpen },
+  { id: "conversational", label: "Conversational", icon: PiChatCircleBold },
+  { id: "narrative_story", label: "Narration", icon: PiBookOpenBold },
   { id: "characters_animation", label: "Characters", icon: SparkIcon },
-  { id: "social_media", label: "Social media", icon: LuSmartphone },
-  { id: "informative_educational", label: "Educational", icon: LuGraduationCap },
-  { id: "advertisement", label: "Advertisement", icon: LuMegaphone },
-  { id: "entertainment_tv", label: "Entertainment", icon: LuTv },
+  { id: "social_media", label: "Social media", icon: PiDeviceMobileBold },
+  { id: "informative_educational", label: "Educational", icon: PiGraduationCapBold },
+  { id: "advertisement", label: "Advertisement", icon: PiMegaphoneBold },
+  { id: "entertainment_tv", label: "Entertainment", icon: PiTelevisionBold },
 ];
 
 const ACCENTS = ["american", "british", "australian", "indian", "irish", "canadian", "south african", "scottish", "new zealand", "nigerian", "jamaican", "singaporean", "standard"];
@@ -96,7 +79,7 @@ export function Chip({ active, onClick, children }: { active: boolean; onClick: 
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
+        "zs-shine zs-shine-thin flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
         active ? "border-foreground bg-foreground text-background" : "hover:bg-muted"
       )}
     >
@@ -185,7 +168,7 @@ export function VoiceRow({
         <VoiceAvatar id={row.id} size={44} />
         {row.previewUrl && (
           <span className={cn("absolute inset-0 flex items-center justify-center rounded-full bg-black/45 text-white transition-opacity", playing ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
-            {playing ? <LuPause className="size-4" /> : <LuPlay className="size-4" />}
+            {playing ? <PiPauseFill className="size-4" /> : <PiPlayFill className="size-4" />}
           </span>
         )}
       </button>
@@ -195,7 +178,7 @@ export function VoiceRow({
           <span className="truncate">{row.name}</span>
           {row.category === "professional" && (
             <span title="Professional voice" className="shrink-0 text-sky-500">
-              <LuCheck className="size-3.5" />
+              <PiCheckBold className="size-3.5" />
             </span>
           )}
         </p>
@@ -209,13 +192,13 @@ export function VoiceRow({
 
       {row.saves !== undefined && (
         <div className="hidden w-20 shrink-0 items-center justify-end gap-1.5 text-xs text-muted-foreground tabular-nums lg:flex" title="People who saved this voice">
-          <LuUsers className="size-3.5" />
+          <PiUsersBold className="size-3.5" />
           {compact(row.saves)}
         </div>
       )}
 
       <Button size="sm" variant={active ? "secondary" : "outline"} onClick={onPick} disabled={busy} className="shrink-0">
-        {busy ? <LuLoaderCircle className="animate-spin" /> : active ? <LuCheck /> : null}
+        {busy ? <LuLoaderCircle className="animate-spin" /> : active ? <PiCheckBold /> : null}
         {active ? "Selected" : action}
       </Button>
     </li>
@@ -505,7 +488,7 @@ export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice
                 aria-pressed={on}
                 className={cn(
                   "flex w-[7.25rem] shrink-0 cursor-pointer select-none flex-col items-center gap-2 rounded-2xl border px-2 py-3.5 text-center transition-all",
-                  on ? "border-violet-400/70 bg-violet-500/15 shadow-[0_8px_26px_-12px_rgb(124_58_237/0.8)]" : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
+                  on ? "zs-shine zs-shine-thin border-transparent bg-violet-500/20" : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
                 )}
               >
                 <VoiceAvatar id={v.id} size={56} />
@@ -530,7 +513,7 @@ export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice
             }
           >
             <span className="flex size-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.04]">
-              <LuSearch className="size-5" />
+              <PiMagnifyingGlassBold className="size-5" />
             </span>
             <span className="text-sm font-medium">Browse all</span>
           </DialogTrigger>
@@ -541,7 +524,7 @@ export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice
           onClick={() => strip.current?.scrollBy({ left: -280 })}
           className="absolute top-1/2 -left-3 hidden size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-[#12121f]/95 text-white shadow-lg backdrop-blur transition-colors hover:bg-white/15 group-hover/strip:flex"
         >
-          <LuChevronLeft className="size-4" />
+          <PiCaretLeftBold className="size-4" />
         </button>
         <button
           type="button"
@@ -549,7 +532,7 @@ export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice
           onClick={() => strip.current?.scrollBy({ left: 280 })}
           className="absolute top-1/2 -right-3 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-[#12121f]/95 text-white shadow-lg backdrop-blur transition-colors hover:bg-white/15"
         >
-          <LuChevronRight className="size-4" />
+          <PiCaretRightBold className="size-4" />
         </button>
       </div>
       <DialogTrigger
@@ -560,12 +543,12 @@ export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice
           />
         }
       >
-        <LuSearch className="size-4" />
+        <PiMagnifyingGlassBold className="size-4" />
         <span className="flex-1">Search and filter thousands of voices</span>
         <span className="rounded-md bg-white/[0.08] px-2 py-0.5 text-xs text-white/70">Browse all</span>
       </DialogTrigger>
 
-      <DialogContent className="flex! h-[min(46rem,92vh)] w-[calc(100vw-1.5rem)] max-w-none grid-cols-[minmax(0,1fr)] flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl" showCloseButton>
+      <DialogContent className="zs-dialog dark flex! h-[min(46rem,92vh)] w-[calc(100vw-1.5rem)] max-w-none grid-cols-[minmax(0,1fr)] flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl" showCloseButton>
         <DialogTitle className="sr-only">Voice library</DialogTitle>
         <DialogDescription className="sr-only">Search, preview and choose a voice.</DialogDescription>
 
@@ -596,13 +579,13 @@ export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice
                 {tab === "explore" && (
                   <>
                     <div className="relative min-w-48 flex-1">
-                      <LuSearch className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                      <PiMagnifyingGlassBold className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                       <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, mood or style" className="h-10 pl-9" />
                     </div>
                     <Dropdown className="w-40" align="right" value={sort} onChange={setSort} label="Sort voices" options={SORTS.map((x) => ({ value: x.id, label: x.label }))} />
                     <Button variant="outline" size="sm" className="md:hidden" onClick={() => setFiltersOpen((v) => !v)}>
-                      <LuSlidersHorizontal /> Filters{activeFilters ? ` (${activeFilters})` : ""}
-                      <LuChevronDown className={cn("transition-transform", filtersOpen && "rotate-180")} />
+                      <PiSlidersHorizontalBold /> Filters{activeFilters ? ` (${activeFilters})` : ""}
+                      <PiCaretDownBold className={cn("transition-transform", filtersOpen && "rotate-180")} />
                     </Button>
                   </>
                 )}

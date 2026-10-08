@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { LuArrowRight, LuDownload, LuEllipsis, LuFileText, LuPause, LuPlay } from "react-icons/lu";
+import { PiArrowRightBold, PiDotsThreeBold, PiDownloadSimpleBold, PiFileTextBold, PiPauseFill, PiPlayFill } from "react-icons/pi";
 import { RunMeter } from "@/components/studio/processing";
 import { LandscapeThumb, fmtDuration, twoWords, useDuration, waveFor } from "@/components/studio/media-bits";
 import { cn } from "@/lib/utils";
@@ -28,17 +28,17 @@ function Menu({ id, canDownload }: { id: string; canDownload: boolean }) {
   }, [open]);
   return (
     <div ref={box} className="relative">
-      <button type="button" onClick={() => setOpen((v) => !v)} aria-label="More" aria-expanded={open} className="flex size-8 cursor-pointer items-center justify-center rounded-md text-white/45 transition-colors hover:bg-white/10 hover:text-white">
-        <LuEllipsis className="size-4" />
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-label="More" aria-expanded={open} className="flex size-8 cursor-pointer items-center justify-center rounded-full text-white/45 transition-colors hover:bg-white/10 hover:text-white">
+        <PiDotsThreeBold className="size-4" />
       </button>
       {open && (
-        <div className="absolute top-full right-0 z-30 mt-1 w-44 rounded-lg border border-white/10 bg-[#101020] p-1 shadow-[0_18px_40px_-16px_rgb(0_0_0/0.9)]">
+        <div className="absolute top-full right-0 zs-shine z-30 mt-1 w-44 rounded-lg border border-white/10 bg-[#101020] p-1 shadow-[0_18px_40px_-16px_rgb(0_0_0/0.9)]">
           <Link href="/studio/library" className="flex h-9 items-center gap-2 rounded-md px-2.5 text-sm text-white/80 hover:bg-white/[0.07]">
-            <LuFileText className="size-4" /> Open in Library
+            <PiFileTextBold className="size-4" /> Open in Library
           </Link>
           {canDownload && (
             <a href={`/api/studio/files/${id}`} download className="flex h-9 items-center gap-2 rounded-md px-2.5 text-sm text-white/80 hover:bg-white/[0.07]">
-              <LuDownload className="size-4" /> Download
+              <PiDownloadSimpleBold className="size-4" /> Download
             </a>
           )}
         </div>
@@ -62,7 +62,7 @@ function Item({ r, playing, progress, onToggle }: { r: Row; playing: boolean; pr
           {video && src ? <video src={`${src}#t=0.1`} preload="metadata" muted playsInline className="size-full object-cover" /> : <LandscapeThumb id={r.id} />}
           {video ? (
             <Link href="/studio/library" aria-label="Open in Library" className="absolute inset-0 flex items-center justify-center bg-black/25 text-white">
-              <LuPlay className="size-4" />
+              <PiPlayFill className="size-4" />
             </Link>
           ) : (
             <button
@@ -72,7 +72,7 @@ function Item({ r, playing, progress, onToggle }: { r: Row; playing: boolean; pr
               aria-label={playing ? "Pause" : "Play"}
               className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/30 text-white transition-colors hover:bg-black/45 disabled:cursor-default disabled:bg-black/50 disabled:text-white/40"
             >
-              {playing ? <LuPause className="size-4" /> : <LuPlay className="size-4 translate-x-px" />}
+              {playing ? <PiPauseFill className="size-4" /> : <PiPlayFill className="size-4 translate-x-px" />}
             </button>
           )}
         </div>
@@ -94,8 +94,8 @@ function Item({ r, playing, progress, onToggle }: { r: Row; playing: boolean; pr
 
         <span className="w-9 shrink-0 text-right text-xs tabular-nums text-white/55">{fmtDuration(dur)}</span>
         {src ? (
-          <a href={src} download aria-label="Download" className="flex size-8 shrink-0 items-center justify-center rounded-md text-white/55 transition-colors hover:bg-white/10 hover:text-white">
-            <LuDownload className="size-4" />
+          <a href={src} download aria-label="Download" className="flex size-8 shrink-0 items-center justify-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white">
+            <PiDownloadSimpleBold className="size-4" />
           </a>
         ) : (
           <span className="size-8 shrink-0" />
@@ -134,7 +134,7 @@ export function CompactRecent({ rows }: { rows: Row[] }) {
       <div className="flex items-center justify-between px-1">
         <h2 className="font-heading text-base font-semibold">Recent</h2>
         <Link href="/studio/library" className="flex items-center gap-1 text-xs text-white/50 transition-colors hover:text-white">
-          View all <LuArrowRight className="size-3.5" />
+          View all <PiArrowRightBold className="size-3.5" />
         </Link>
       </div>
       <div className="zs-card overflow-visible rounded-lg">

@@ -64,7 +64,7 @@ export function CreatorForm() {
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
               <CardTitle className="font-heading text-lg">Preview</CardTitle>
-              <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${done ? "bg-emerald-500/15 text-emerald-300" : preview ? "bg-violet-500/15 text-violet-200" : "bg-white/[0.07] text-white/55"}`}>
+              <span className={`zs-shine zs-shine-thin flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${done ? "bg-emerald-500/15 text-emerald-300" : preview ? "bg-violet-500/15 text-violet-200" : "bg-white/[0.07] text-white/55"}`}>
                 <span className={`size-1.5 rounded-full ${done ? "bg-emerald-400" : preview ? "bg-violet-300" : "bg-white/35"}`} />
                 {done ? "Saved" : preview ? "Ready" : "Waiting"}
               </span>

@@ -2,22 +2,8 @@
 
 import * as React from "react";
 import { Dropdown } from "@/components/studio/dropdown";
-import {
-  LuBriefcase,
-  LuCheck,
-  LuChevronDown,
-  LuClapperboard,
-  LuDices,
-  LuDumbbell,
-  LuGamepad2,
-  LuGraduationCap,
-  LuHeart,
-  LuMegaphone,
-  LuMic,
-  LuSlidersHorizontal,
-  LuSmartphone,
-  LuX,
-} from "react-icons/lu";
+import { LuX } from "react-icons/lu";
+import { PiBarbellBold, PiBriefcaseBold, PiCaretDownBold, PiCheckBold, PiDeviceMobileBold, PiDiceFiveBold, PiFilmSlateBold, PiGameControllerBold, PiGraduationCapBold, PiHeartBold, PiMegaphoneBold, PiMicrophoneBold, PiSlidersHorizontalBold } from "react-icons/pi";
 import type { Finetune } from "@/lib/studio/elevenlabs";
 import { useJob } from "@/components/studio/use-job";
 import { Slider } from "@/components/studio/slider";
@@ -36,15 +22,15 @@ const IDEAS = [
 
 // what each use case sounds like, added in front of the description
 const STYLES: { id: string; label: string; icon: React.ComponentType<{ className?: string }>; text: string }[] = [
-  { id: "corporate", label: "Corporate", icon: LuBriefcase, text: "Clean, uplifting corporate background music, confident and modern" },
-  { id: "cinematic", label: "Cinematic", icon: LuClapperboard, text: "Epic cinematic score with sweeping orchestral build" },
-  { id: "podcasts", label: "Podcasts", icon: LuMic, text: "Warm, unobtrusive podcast intro and background bed" },
-  { id: "advertising", label: "Advertising", icon: LuMegaphone, text: "Catchy, high-energy advertising track with a strong hook" },
-  { id: "education", label: "Education", icon: LuGraduationCap, text: "Calm, focused music for learning and explainer videos" },
-  { id: "social", label: "Social", icon: LuSmartphone, text: "Trendy, punchy short-form music for social videos" },
-  { id: "lifestyle", label: "Lifestyle", icon: LuHeart, text: "Relaxed, feel-good lifestyle and vlog music" },
-  { id: "fitness", label: "Fitness", icon: LuDumbbell, text: "Driving, high-tempo workout music with a strong beat" },
-  { id: "gaming", label: "Gaming", icon: LuGamepad2, text: "Dynamic game soundtrack with energy and momentum" },
+  { id: "corporate", label: "Corporate", icon: PiBriefcaseBold, text: "Clean, uplifting corporate background music, confident and modern" },
+  { id: "cinematic", label: "Cinematic", icon: PiFilmSlateBold, text: "Epic cinematic score with sweeping orchestral build" },
+  { id: "podcasts", label: "Podcasts", icon: PiMicrophoneBold, text: "Warm, unobtrusive podcast intro and background bed" },
+  { id: "advertising", label: "Advertising", icon: PiMegaphoneBold, text: "Catchy, high-energy advertising track with a strong hook" },
+  { id: "education", label: "Education", icon: PiGraduationCapBold, text: "Calm, focused music for learning and explainer videos" },
+  { id: "social", label: "Social", icon: PiDeviceMobileBold, text: "Trendy, punchy short-form music for social videos" },
+  { id: "lifestyle", label: "Lifestyle", icon: PiHeartBold, text: "Relaxed, feel-good lifestyle and vlog music" },
+  { id: "fitness", label: "Fitness", icon: PiBarbellBold, text: "Driving, high-tempo workout music with a strong beat" },
+  { id: "gaming", label: "Gaming", icon: PiGameControllerBold, text: "Dynamic game soundtrack with energy and momentum" },
 ];
 
 const OPTIONS = {
@@ -117,7 +103,7 @@ export function MusicForm({ finetunes, initialPrompt = "" }: { finetunes: Finetu
                     onClick={() => setPrompt(IDEAS[Math.floor(Math.random() * IDEAS.length)])}
                     className="flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs text-white/75 transition-colors hover:bg-white/[0.09] hover:text-white"
                   >
-                    <LuDices className="size-3.5" /> Inspire me
+                    <PiDiceFiveBold className="size-3.5" /> Inspire me
                   </button>
                   <button
                     type="button"
@@ -144,8 +130,8 @@ export function MusicForm({ finetunes, initialPrompt = "" }: { finetunes: Finetu
                     onClick={() => setStyle(on ? "" : s.id)}
                     aria-pressed={on}
                     className={cn(
-                      "flex h-10 cursor-pointer items-center gap-2 rounded-xl border px-3.5 text-sm transition-all",
-                      on ? "border-violet-400/70 bg-violet-500/15 text-white shadow-[0_6px_20px_-10px_rgb(124_58_237/0.9)]" : "border-white/10 bg-white/[0.03] text-white/65 hover:border-white/20 hover:text-white"
+                      "flex h-10 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm transition-all",
+                      on ? "zs-shine zs-shine-thin border-transparent bg-violet-500/25 text-white" : "border-white/10 bg-white/[0.03] text-white/65 hover:border-white/20 hover:text-white"
                     )}
                   >
                     <s.icon className={cn("size-4", on ? "text-violet-300" : "text-white/45")} />
@@ -165,7 +151,7 @@ export function MusicForm({ finetunes, initialPrompt = "" }: { finetunes: Finetu
                 </button>
               )}
             </div>
-            <div role="tablist" className="grid grid-cols-3 gap-1 rounded-xl bg-white/[0.04] p-1 ring-1 ring-white/10">
+            <div role="tablist" className="grid grid-cols-3 gap-1 rounded-full bg-white/[0.04] p-1 ring-1 ring-white/10">
               {(Object.keys(OPTIONS) as Group[]).map((g) => (
                 <button
                   key={g}
@@ -173,10 +159,10 @@ export function MusicForm({ finetunes, initialPrompt = "" }: { finetunes: Finetu
                   role="tab"
                   aria-selected={tab === g}
                   onClick={() => setTab(g)}
-                  className={cn("flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg text-sm transition-colors", tab === g ? "zs-grad-bg font-medium text-white shadow-[0_6px_20px_-8px_rgb(124_58_237/0.9)]" : "text-white/60 hover:text-white")}
+                  className={cn("flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-full text-sm transition-colors", tab === g ? "zs-shine zs-shine-thin bg-violet-500/25 font-medium text-white" : "text-white/60 hover:text-white")}
                 >
                   {GROUP_LABEL[g]}
-                  {tags[g].length > 0 && <span className={cn("rounded-full px-1.5 text-[0.65rem] font-semibold", tab === g ? "bg-white/25" : "bg-violet-500/30 text-violet-100")}>{tags[g].length}</span>}
+                  {tags[g].length > 0 && <span className={cn("rounded-full px-1.5 text-[0.65rem] font-semibold", tab === g ? "bg-white/20" : "bg-violet-500/30 text-violet-100")}>{tags[g].length}</span>}
                 </button>
               ))}
             </div>
@@ -189,9 +175,9 @@ export function MusicForm({ finetunes, initialPrompt = "" }: { finetunes: Finetu
                     type="button"
                     onClick={() => toggle(tab, o)}
                     aria-pressed={on}
-                    className={cn("flex h-8 cursor-pointer items-center gap-1 rounded-full border px-3 text-xs transition-colors", on ? "border-violet-400/70 bg-violet-500/20 text-white" : "border-white/10 text-white/65 hover:border-white/25 hover:text-white")}
+                    className={cn("flex h-8 cursor-pointer items-center gap-1 rounded-full border px-3 text-xs transition-colors", on ? "zs-shine zs-shine-thin border-transparent bg-violet-500/25 text-white" : "border-white/10 text-white/65 hover:border-white/25 hover:text-white")}
                   >
-                    {on && <LuCheck className="size-3 text-violet-300" />}
+                    {on && <PiCheckBold className="size-3 text-violet-300" />}
                     {o}
                   </button>
                 );
@@ -212,11 +198,11 @@ export function MusicForm({ finetunes, initialPrompt = "" }: { finetunes: Finetu
           <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
             <button type="button" onClick={() => setMore((v) => !v)} aria-expanded={more} className="flex w-full cursor-pointer items-center justify-between px-4 py-3.5 text-sm font-medium">
               <span className="flex items-center gap-2.5">
-                <LuSlidersHorizontal className="size-4 text-violet-300" />
+                <PiSlidersHorizontalBold className="size-4 text-violet-300" />
                 Advanced settings
                 {(finetune || seed) && <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[0.65rem] text-violet-200">Changed</span>}
               </span>
-              <LuChevronDown className={cn("size-4 text-white/50 transition-transform", more && "rotate-180")} />
+              <PiCaretDownBold className={cn("size-4 text-white/50 transition-transform", more && "rotate-180")} />
             </button>
             {more && (
               <div className="flex flex-col gap-5 border-t border-white/[0.07] p-4">

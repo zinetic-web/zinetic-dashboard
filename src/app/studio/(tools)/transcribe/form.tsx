@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { postForm } from "@/components/studio/upload";
-import { LuDownload } from "react-icons/lu";
+import { PiDownloadSimpleBold } from "react-icons/pi";
 import type { Transcript } from "@/lib/studio/elevenlabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -95,14 +95,14 @@ export function TranscribeForm() {
                   size="sm"
                   onClick={() => save("transcript.txt", lines.map((l) => `${l.speaker ? speakerName(l.speaker) + ": " : ""}${l.text}`).join(NL + NL))}
                 >
-                  <LuDownload /> TXT
+                  <PiDownloadSimpleBold /> TXT
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => save("transcript.srt", lines.map((l, i) => `${i + 1}${NL}${srtTime(l.start)} --> ${srtTime(l.end)}${NL}${l.text}${NL}`).join(NL))}
                 >
-                  <LuDownload /> SRT
+                  <PiDownloadSimpleBold /> SRT
                 </Button>
               </div>
               <ol className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto rounded-lg border p-4">

@@ -5,22 +5,8 @@ import { serifFont } from "@/components/landing/fonts";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LuChevronDown,
-  LuZap,
-  LuFolderOpen,
-  LuHouse,
-  LuLifeBuoy,
-  LuLogOut,
-  LuMenu,
-  LuPanelLeftClose,
-  LuPanelLeftOpen,
-  LuSearch,
-  LuLock,
-  LuReceipt,
-  LuUserRoundX,
-  LuX,
-} from "react-icons/lu";
+import { LuX } from "react-icons/lu";
+import { PiCaretDownBold, PiFolderOpenBold, PiHouseBold, PiLifebuoyBold, PiLightningFill, PiListBold, PiLockSimpleBold, PiMagnifyingGlassBold, PiReceiptBold, PiSidebarSimpleBold, PiSignOutBold, PiUserMinusBold } from "react-icons/pi";
 import { signOut } from "@/app/actions/auth";
 import { stopImpersonating } from "@/app/actions/admin";
 import { cn } from "@/lib/utils";
@@ -84,14 +70,13 @@ function Item({ href, label, icon, active, collapsed, onNavigate, locked }: Item
       className={cn(
         "group relative flex h-10 items-center gap-3 rounded-lg text-[0.9375rem] transition-colors [&_svg]:size-5 [&_svg]:shrink-0",
         collapsed ? "mx-auto w-11 justify-center" : "px-3",
-        active ? "bg-gradient-to-r from-violet-600/30 to-blue-600/10 font-medium text-white ring-1 ring-violet-400/25" : "text-white/60 hover:bg-white/[0.05] hover:text-white"
+        active ? "zs-shine zs-shine-thin bg-white/[0.07] font-medium text-white ring-1 ring-white/10" : "text-white/60 hover:bg-white/[0.05] hover:text-white"
       )}
     >
-      {active && !collapsed && <span aria-hidden className="zs-grad-bg absolute top-1/2 -left-3 h-6 w-[3px] -translate-y-1/2 rounded-r-full" />}
-      <span className={cn("transition-colors", active ? "text-violet-300" : "text-white/45 group-hover:text-white/85")}>{icon}</span>
+      <span className={cn("transition-colors", active ? "text-white" : "text-white/45 group-hover:text-white/85")}>{icon}</span>
       {!collapsed && <span className="flex-1 truncate">{label}</span>}
-      {!collapsed && locked && <LuLock className="!size-3.5 text-white/35" />}
-      {collapsed && locked && <LuLock className="absolute right-1 bottom-1 !size-3 text-white/45" />}
+      {!collapsed && locked && <PiLockSimpleBold className="!size-3.5 text-white/35" />}
+      {collapsed && locked && <PiLockSimpleBold className="absolute right-1 bottom-1 !size-3 text-white/45" />}
     </Link>
   );
   if (!collapsed) return link;
@@ -144,7 +129,7 @@ function Group({ id, label, tools, collapsed, query, pathname, onNavigate, open:
         >
           <span className="flex-1 text-left">{label}</span>
           <span className="text-xs tabular-nums text-white/30">{tools.length}</span>
-          <LuChevronDown className={cn("size-4 transition-transform", !open && "-rotate-90")} />
+          <PiCaretDownBold className={cn("size-4 transition-transform", !open && "-rotate-90")} />
         </button>
       )}
       {(collapsed || open) &&
@@ -181,8 +166,8 @@ function Sidebar({ collapsed, onToggle, onNavigate, mobile = false, open, me }: 
           )}
         </Link>
         {!rail && !mobile && (
-          <button type="button" onClick={onToggle} aria-label="Collapse sidebar" title="Collapse sidebar (Ctrl+B)" className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/[0.07] hover:text-white">
-            <LuPanelLeftClose className="size-5" />
+          <button type="button" onClick={onToggle} aria-label="Collapse sidebar" title="Collapse sidebar (Ctrl+B)" className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-white/45 transition-colors hover:bg-white/[0.07] hover:text-white">
+            <PiSidebarSimpleBold className="size-5" />
           </button>
         )}
       </div>
@@ -191,10 +176,10 @@ function Sidebar({ collapsed, onToggle, onNavigate, mobile = false, open, me }: 
           <Tooltip>
             <TooltipTrigger
               render={
-                <button type="button" onClick={onToggle} aria-label="Expand sidebar" className="flex size-10 cursor-pointer items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/[0.07] hover:text-white" />
+                <button type="button" onClick={onToggle} aria-label="Expand sidebar" className="flex size-10 cursor-pointer items-center justify-center rounded-full text-white/45 transition-colors hover:bg-white/[0.07] hover:text-white" />
               }
             >
-              <LuPanelLeftOpen className="size-5" />
+              <PiSidebarSimpleBold className="size-5" />
             </TooltipTrigger>
             <TooltipContent side="right">Expand sidebar</TooltipContent>
           </Tooltip>
@@ -214,13 +199,13 @@ function Sidebar({ collapsed, onToggle, onNavigate, mobile = false, open, me }: 
                 />
               }
             >
-              <LuSearch className="size-5" />
+              <PiMagnifyingGlassBold className="size-5" />
             </TooltipTrigger>
             <TooltipContent side="right">Search tools</TooltipContent>
           </Tooltip>
         ) : (
           <div className="relative mb-4">
-            <LuSearch className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-white/40" />
+            <PiMagnifyingGlassBold className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-white/40" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -234,9 +219,9 @@ function Sidebar({ collapsed, onToggle, onNavigate, mobile = false, open, me }: 
         <nav className="flex flex-col gap-0.5">
           {!needle && (
             <>
-              <Item href="/studio" label="Home" icon={<LuHouse />} active={pathname === "/studio"} collapsed={rail} onNavigate={onNavigate} />
-              <Item href="/studio/library" label="Library" icon={<LuFolderOpen />} active={pathname === "/studio/library"} collapsed={rail} onNavigate={onNavigate} />
-              <Item href="/studio/plans" label="My plans" icon={<LuReceipt />} active={pathname === "/studio/plans"} collapsed={rail} onNavigate={onNavigate} />
+              <Item href="/studio" label="Home" icon={<PiHouseBold />} active={pathname === "/studio"} collapsed={rail} onNavigate={onNavigate} />
+              <Item href="/studio/library" label="Library" icon={<PiFolderOpenBold />} active={pathname === "/studio/library"} collapsed={rail} onNavigate={onNavigate} />
+              <Item href="/studio/plans" label="My plans" icon={<PiReceiptBold />} active={pathname === "/studio/plans"} collapsed={rail} onNavigate={onNavigate} />
             </>
           )}
         </nav>
@@ -250,7 +235,7 @@ function Sidebar({ collapsed, onToggle, onNavigate, mobile = false, open, me }: 
       </div>
 
       <div className={cn("flex shrink-0 flex-col gap-2 border-t border-white/[0.07] py-3", rail ? "px-2" : "px-3")}>
-        <Item href="/dashboard/support" label="Support" icon={<LuLifeBuoy />} active={false} collapsed={rail} onNavigate={onNavigate} />
+        <Item href="/dashboard/support" label="Support" icon={<PiLifebuoyBold />} active={false} collapsed={rail} onNavigate={onNavigate} />
         <UserCard me={me} rail={rail} />
       </div>
     </div>
@@ -266,9 +251,9 @@ function UserCard({ me, rail }: { me: Me; rail: boolean }) {
         type="submit"
         aria-label={me.impersonating ? "Stop impersonating" : "Sign out"}
         title={me.impersonating ? "Stop impersonating" : "Sign out"}
-        className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-xl text-white/55 transition-colors hover:bg-white/10 hover:text-white"
+        className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white"
       >
-        {me.impersonating ? <LuUserRoundX className="size-[1.15rem]" /> : <LuLogOut className="size-[1.15rem]" />}
+        {me.impersonating ? <PiUserMinusBold className="size-[1.15rem]" /> : <PiSignOutBold className="size-[1.15rem]" />}
       </button>
     </form>
   );
@@ -284,8 +269,8 @@ function UserCard({ me, rail }: { me: Me; rail: boolean }) {
           </TooltipContent>
         </Tooltip>
         <Tooltip>
-          <TooltipTrigger render={<Link href="/studio/plans" aria-label="Upgrade" className="zs-btn flex size-10 items-center justify-center rounded-xl" />}>
-            <LuZap className="size-[1.15rem]" />
+          <TooltipTrigger render={<Link href="/studio/plans" aria-label="Upgrade" className="zs-btn flex size-10 items-center justify-center rounded-full" />}>
+            <PiLightningFill className="size-[1.15rem]" />
           </TooltipTrigger>
           <TooltipContent side="right">Upgrade</TooltipContent>
         </Tooltip>
@@ -301,14 +286,14 @@ function UserCard({ me, rail }: { me: Me; rail: boolean }) {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{label}</p>
           <p className="flex items-center gap-1.5 truncate text-xs text-white/50">
-            <LuZap className={me.activePlans > 0 ? "size-3 text-amber-300" : "size-3 text-white/30"} />
+            <PiLightningFill className={me.activePlans > 0 ? "size-3 text-amber-300" : "size-3 text-white/30"} />
             {me.activePlans} active {me.activePlans === 1 ? "plan" : "plans"}
           </p>
         </div>
       </div>
       <div className="flex items-center gap-2">
         <Link href="/studio/plans" className="zs-btn flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold">
-          <LuZap className="size-4" /> Upgrade
+          <PiLightningFill className="size-4" /> Upgrade
         </Link>
         {out}
       </div>
@@ -317,6 +302,72 @@ function UserCard({ me, rail }: { me: Me; rail: boolean }) {
 }
 
 /* ----------------------------------------------------------------- top bar */
+
+/** The signed-in user in the top bar: opens a small menu with things that belong to them. */
+function UserMenu({ me }: { me: Me }) {
+  const [open, setOpen] = React.useState(false);
+  const box = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const away = (e: MouseEvent) => !box.current?.contains(e.target as Node) && setOpen(false);
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", away);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [open]);
+  const initial = (me.name || me.email).slice(0, 1).toUpperCase();
+  const items = [
+    { href: "/studio/plans", label: "My plans", icon: PiReceiptBold },
+    { href: "/studio/library", label: "Library", icon: PiFolderOpenBold },
+    { href: "/dashboard/support", label: "Support", icon: PiLifebuoyBold },
+  ];
+  return (
+    <div ref={box} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="zs-shine zs-shine-thin flex cursor-pointer items-center gap-2 rounded-full bg-white/[0.05] py-1 pr-3 pl-1 ring-1 ring-white/10 transition-colors hover:bg-white/[0.09]"
+      >
+        <span className="zs-grad-bg flex size-8 items-center justify-center rounded-full text-xs font-semibold">{initial}</span>
+        <span className="hidden max-w-40 truncate text-sm xl:block">{me.name || me.email}</span>
+        <PiCaretDownBold className={cn("size-3.5 text-white/50 transition-transform", open && "rotate-180")} />
+      </button>
+      {open && (
+        <div role="menu" className="zs-shine absolute top-full right-0 z-40 mt-2 w-64 rounded-xl border border-white/10 bg-[#101020] p-1.5 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.9)]">
+          <div className="flex items-center gap-3 px-3 py-2.5">
+            <span className="zs-grad-bg flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold">{initial}</span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">{me.name || "Your account"}</p>
+              <p className="truncate text-xs text-white/50">{me.email}</p>
+            </div>
+          </div>
+          <p className="mx-3 mb-1 flex items-center gap-1.5 rounded-lg bg-white/[0.05] px-3 py-1.5 text-xs text-white/65">
+            <PiLightningFill className={me.activePlans > 0 ? "size-3.5 text-amber-300" : "size-3.5 text-white/30"} />
+            {me.activePlans} active {me.activePlans === 1 ? "plan" : "plans"}
+          </p>
+          <div className="my-1 border-t border-white/[0.07]" />
+          {items.map((it) => (
+            <Link key={it.href} href={it.href} role="menuitem" onClick={() => setOpen(false)} className="flex h-10 items-center gap-3 rounded-lg px-3 text-sm text-white/75 transition-colors hover:bg-white/[0.07] hover:text-white">
+              <it.icon className="size-4 text-white/45" /> {it.label}
+            </Link>
+          ))}
+          <div className="my-1 border-t border-white/[0.07]" />
+          <form action={me.impersonating ? stopImpersonating : signOut}>
+            <button type="submit" role="menuitem" className="flex h-10 w-full cursor-pointer items-center gap-3 rounded-lg px-3 text-sm text-white/75 transition-colors hover:bg-red-500/10 hover:text-red-200">
+              {me.impersonating ? <PiUserMinusBold className="size-4" /> : <PiSignOutBold className="size-4" />}
+              {me.impersonating ? "Stop impersonating" : "Sign out"}
+            </button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function TopBar({ activePlans, me }: { activePlans: number; me: Me }) {
   const pathname = usePathname();
@@ -330,26 +381,15 @@ function TopBar({ activePlans, me }: { activePlans: number; me: Me }) {
         <span className="font-medium">{title}</span>
       </div>
       <div className="flex items-center gap-3">
-        <Link href="/studio/plans" className="flex h-10 items-center gap-2 rounded-xl bg-white/[0.05] px-4 text-sm ring-1 ring-white/10 transition-colors hover:bg-white/[0.09]">
-          <LuZap className={activePlans > 0 ? "size-4 text-amber-300" : "size-4 text-white/35"} />
+        <Link href="/studio/plans" className="zs-shine zs-shine-thin flex h-10 items-center gap-2 rounded-full bg-white/[0.05] px-4 text-sm ring-1 ring-white/10 transition-colors hover:bg-white/[0.09]">
+          <PiLightningFill className={activePlans > 0 ? "size-4 text-amber-300" : "size-4 text-white/35"} />
           <span className="font-semibold tabular-nums">{activePlans}</span>
           <span className="text-white/55">{activePlans === 1 ? "active plan" : "active plans"}</span>
         </Link>
-        <Link href="/studio/plans" className="zs-btn flex h-10 items-center gap-2 rounded-xl px-5 text-sm font-semibold">
-          <LuZap className="size-4" /> Upgrade
+        <Link href="/studio/plans" className="zs-btn flex h-10 items-center gap-2 rounded-full px-5 text-sm font-semibold">
+          <PiLightningFill className="size-4" /> Upgrade
         </Link>
-        <form action={me.impersonating ? stopImpersonating : signOut} className="flex items-center gap-2 rounded-xl bg-white/[0.05] py-1 pr-1.5 pl-1.5 ring-1 ring-white/10">
-          <span className="zs-grad-bg flex size-8 items-center justify-center rounded-full text-xs font-semibold">{(me.name || me.email).slice(0, 1).toUpperCase()}</span>
-          <span className="hidden max-w-40 truncate text-sm xl:block">{me.name || me.email}</span>
-          <button
-            type="submit"
-            aria-label={me.impersonating ? "Stop impersonating" : "Sign out"}
-            title={me.impersonating ? "Stop impersonating" : "Sign out"}
-            className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-white/55 hover:bg-white/10 hover:text-white"
-          >
-            {me.impersonating ? <LuUserRoundX className="size-4" /> : <LuLogOut className="size-4" />}
-          </button>
-        </form>
+        <UserMenu me={me} />
       </div>
     </header>
   );
@@ -402,16 +442,16 @@ export function StudioShell({
       </aside>
 
       <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/10 bg-[#090913]/90 px-4 backdrop-blur lg:hidden">
-        <button type="button" aria-label="Open menu" onClick={() => setOpen(true)} className="flex size-9 cursor-pointer items-center justify-center rounded-lg hover:bg-white/10">
-          <LuMenu className="size-5" />
+        <button type="button" aria-label="Open menu" onClick={() => setOpen(true)} className="flex size-9 cursor-pointer items-center justify-center rounded-full hover:bg-white/10">
+          <PiListBold className="size-5" />
         </button>
         <Link href="/studio" className="flex items-center gap-2">
           <Image src="/brand/logo.png" alt="" width={899} height={1140} style={{ height: 24, width: "auto" }} />
           <span className="font-heading text-sm font-semibold">AI Studio</span>
         </Link>
         <form action={impersonating ? stopImpersonating : signOut} className="ml-auto">
-          <button type="submit" aria-label="Sign out" className="flex size-9 cursor-pointer items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white">
-            {impersonating ? <LuUserRoundX className="size-5" /> : <LuLogOut className="size-5" />}
+          <button type="submit" aria-label="Sign out" className="flex size-9 cursor-pointer items-center justify-center rounded-full text-white/60 hover:bg-white/10 hover:text-white">
+            {impersonating ? <PiUserMinusBold className="size-5" /> : <PiSignOutBold className="size-5" />}
           </button>
         </form>
       </header>
@@ -420,7 +460,7 @@ export function StudioShell({
         <div className="fixed inset-0 z-40 lg:hidden">
           <button type="button" aria-label="Close menu" onClick={close} className="absolute inset-0 bg-black/70" />
           <div className="absolute inset-y-0 left-0 w-80 max-w-[88vw] border-r border-white/10 bg-[#090913]">
-            <button type="button" aria-label="Close" onClick={close} className="absolute top-3.5 right-3 z-10 flex size-9 cursor-pointer items-center justify-center rounded-lg hover:bg-white/10">
+            <button type="button" aria-label="Close" onClick={close} className="absolute top-3.5 right-3 z-10 flex size-9 cursor-pointer items-center justify-center rounded-full hover:bg-white/10">
               <LuX className="size-5" />
             </button>
             <Sidebar collapsed={false} onToggle={close} onNavigate={close} mobile open={openTools} me={me} />

@@ -55,9 +55,11 @@ export async function ToolPage({
   // what is left on the plan (or the trial), shown beside the page title
   const limit =
     status.active && usages.length > 0 ? (
-      <div className="zs-card flex flex-col gap-4 p-4">
+      <div className="zs-card flex flex-col divide-y divide-white/[0.07] px-3.5 py-1">
         {usages.map((u) => (
-          <UsageBar key={u.service} usage={u} compact={usages.length === 1} />
+          <div key={u.service} className="py-2.5">
+            <UsageBar mini usage={u} compact={usages.length === 1} />
+          </div>
         ))}
       </div>
     ) : trial.active ? (

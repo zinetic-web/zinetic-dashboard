@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { SparkIcon } from "@/components/spark-icon";
-import { LuChevronDown, LuDices, LuRectangleHorizontal, LuRectangleVertical, LuX } from "react-icons/lu";
+import { LuRectangleHorizontal, LuRectangleVertical, LuX } from "react-icons/lu";
+import { PiCaretDownBold, PiDiceFiveBold } from "react-icons/pi";
 import { AvatarLibrary, HeyGenVoiceLibrary, StylePicker, type AvatarChoice } from "@/components/studio/heygen-pickers";
 import type { VoiceChoice } from "@/components/studio/voice-library";
 import { useJob } from "@/components/studio/use-job";
@@ -67,7 +68,7 @@ export function PromptVideoForm({ initialPrompt = "" }: { initialPrompt?: string
                       onClick={() => setText(IDEAS[Math.floor(Math.random() * IDEAS.length)])}
                       className="flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs text-white/75 transition-colors hover:bg-white/[0.09] hover:text-white"
                     >
-                      <LuDices className="size-3.5" /> Inspire me
+                      <PiDiceFiveBold className="size-3.5" /> Inspire me
                     </button>
                   )}
                   <button
@@ -119,7 +120,7 @@ export function PromptVideoForm({ initialPrompt = "" }: { initialPrompt?: string
           <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
             <button type="button" onClick={() => setMore((v) => !v)} aria-expanded={more} className="flex w-full cursor-pointer items-center justify-between px-4 py-3.5 text-sm font-medium">
               Advanced settings
-              <LuChevronDown className={cn("size-4 text-white/50 transition-transform", more && "rotate-180")} />
+              <PiCaretDownBold className={cn("size-4 text-white/50 transition-transform", more && "rotate-180")} />
             </button>
             {more && (
               <div className="flex flex-col gap-5 border-t border-white/[0.07] p-4">

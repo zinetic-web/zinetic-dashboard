@@ -3,13 +3,13 @@
 import * as React from "react";
 import { SparkIcon } from "@/components/spark-icon";
 import { useRouter } from "next/navigation";
-import { LuAudioLines, LuClapperboard, LuMusic } from "react-icons/lu";
+import { PiFilmSlateBold, PiMusicNotesBold, PiWaveformBold } from "react-icons/pi";
 import { cn } from "@/lib/utils";
 
 const TARGETS = [
-  { id: "video", label: "Video", icon: LuClapperboard, href: "/studio/prompt-video", param: "prompt", placeholder: "Describe the video you want to see..." },
-  { id: "voice", label: "Voice", icon: LuAudioLines, href: "/studio/voice", param: "text", placeholder: "Type what the voice should say..." },
-  { id: "music", label: "Music", icon: LuMusic, href: "/studio/music", param: "prompt", placeholder: "Describe the song you want to hear..." },
+  { id: "video", label: "Video", icon: PiFilmSlateBold, href: "/studio/prompt-video", param: "prompt", placeholder: "Describe the video you want to see..." },
+  { id: "voice", label: "Voice", icon: PiWaveformBold, href: "/studio/voice", param: "text", placeholder: "Type what the voice should say..." },
+  { id: "music", label: "Music", icon: PiMusicNotesBold, href: "/studio/music", param: "prompt", placeholder: "Describe the song you want to hear..." },
 ];
 
 /** The big "what will you create" box on Home. It carries the idea into the tool that makes it. */
@@ -48,8 +48,8 @@ export function HomePrompt() {
                 onClick={() => setTarget(t)}
                 aria-pressed={on}
                 className={cn(
-                  "flex h-10 cursor-pointer items-center gap-2 rounded-xl border px-4 text-sm transition-all",
-                  on ? "border-violet-400/70 bg-violet-500/15 text-white" : "border-white/10 bg-white/[0.03] text-white/65 hover:border-white/20 hover:text-white"
+                  "flex h-10 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm transition-all",
+                  on ? "zs-shine zs-shine-thin border-transparent bg-violet-500/25 text-white" : "border-white/10 bg-white/[0.03] text-white/65 hover:border-white/20 hover:text-white"
                 )}
               >
                 <t.icon className="size-4" />

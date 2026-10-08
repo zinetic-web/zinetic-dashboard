@@ -4,7 +4,8 @@ import * as React from "react";
 import { Dropdown } from "@/components/studio/dropdown";
 import { SparkIcon } from "@/components/spark-icon";
 import Image from "next/image";
-import { LuCheck, LuCircleUserRound, LuImage, LuLoaderCircle, LuPlay, LuSearch, LuUserRound, LuWand, LuX } from "react-icons/lu";
+import { LuLoaderCircle, LuX } from "react-icons/lu";
+import { PiCheckBold, PiImageBold, PiMagicWandBold, PiMagnifyingGlassBold, PiPlayFill, PiUserBold, PiUserCircleBold } from "react-icons/pi";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,11 +88,11 @@ function MediaTile({
       aria-pressed={active}
       className={cn("group relative cursor-pointer overflow-hidden rounded-xl border bg-muted text-left transition-shadow focus-visible:ring-2 focus-visible:ring-ring", ratio, active && "ring-2 ring-primary")}
     >
-      {image ? <Image src={image} alt={label} fill unoptimized sizes="200px" className="object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-muted-foreground"><LuImage className="size-6" /></span>}
+      {image ? <Image src={image} alt={label} fill unoptimized sizes="200px" className="object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-muted-foreground"><PiImageBold className="size-6" /></span>}
       {hover && video && <video src={video} autoPlay muted loop playsInline className="absolute inset-0 size-full object-cover" />}
       {video && !hover && (
         <span className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-full bg-black/55 text-white opacity-0 transition-opacity group-hover:opacity-100">
-          <LuPlay className="size-3" />
+          <PiPlayFill className="size-3" />
         </span>
       )}
       <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-2.5 pt-8 pb-2 text-white">
@@ -101,7 +102,7 @@ function MediaTile({
       {badge && <span className="absolute top-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-[0.65rem] font-medium text-white backdrop-blur">{badge}</span>}
       {active && (
         <span className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
-          <LuCheck className="size-3.5" />
+          <PiCheckBold className="size-3.5" />
         </span>
       )}
     </button>
@@ -138,7 +139,7 @@ export function AvatarLibrary({ value, onChange, mine, required = true }: { valu
     <Dialog open={open} onOpenChange={setOpen}>
       <div className="flex items-center gap-3 rounded-xl border bg-card p-3">
         <span className="relative flex h-[4.5rem] w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-muted-foreground">
-          {value?.image ? <Image src={value.image} alt="" fill unoptimized sizes="56px" className="object-cover" /> : <LuUserRound className="size-5" />}
+          {value?.image ? <Image src={value.image} alt="" fill unoptimized sizes="56px" className="object-cover" /> : <PiUserBold className="size-5" />}
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{value?.name ?? "No presenter chosen"}</p>
@@ -150,11 +151,11 @@ export function AvatarLibrary({ value, onChange, mine, required = true }: { valu
           </Button>
         )}
         <DialogTrigger render={<Button variant="outline" size="sm" className="shrink-0" />}>
-          <LuSearch /> Browse avatars
+          <PiMagnifyingGlassBold /> Browse avatars
         </DialogTrigger>
       </div>
 
-      <DialogContent className="flex! h-[min(46rem,92vh)] w-[calc(100vw-1.5rem)] max-w-none grid-cols-[minmax(0,1fr)] flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl">
+      <DialogContent className="zs-dialog dark flex! h-[min(46rem,92vh)] w-[calc(100vw-1.5rem)] max-w-none grid-cols-[minmax(0,1fr)] flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl">
         <DialogTitle className="sr-only">Avatar gallery</DialogTitle>
         <DialogDescription className="sr-only">Choose the presenter for your video.</DialogDescription>
 
@@ -173,7 +174,7 @@ export function AvatarLibrary({ value, onChange, mine, required = true }: { valu
               ))}
             </div>
             <div className="relative min-w-48 flex-1">
-              <LuSearch className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <PiMagnifyingGlassBold className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name" className="h-10 pl-9" />
             </div>
           </div>
@@ -250,7 +251,7 @@ export function AvatarLibrary({ value, onChange, mine, required = true }: { valu
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2 py-16 text-center text-sm text-muted-foreground">
-                <LuCircleUserRound className="size-8" />
+                <PiUserCircleBold className="size-8" />
                 <p>No photo avatars yet.</p>
                 <p>Make one in the Avatar creator and it will be here.</p>
               </div>
@@ -299,18 +300,18 @@ export function HeyGenVoiceLibrary({ value, onChange }: { value: VoiceChoice | n
           <p className="truncate text-xs text-muted-foreground">{value?.meta || "Pick a narrator"}</p>
         </div>
         <DialogTrigger render={<Button variant="outline" size="sm" className="shrink-0" />}>
-          <LuSearch /> Browse voices
+          <PiMagnifyingGlassBold /> Browse voices
         </DialogTrigger>
       </div>
 
-      <DialogContent className="flex! h-[min(44rem,92vh)] w-[calc(100vw-1.5rem)] max-w-none grid-cols-[minmax(0,1fr)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+      <DialogContent className="zs-dialog dark flex! h-[min(44rem,92vh)] w-[calc(100vw-1.5rem)] max-w-none grid-cols-[minmax(0,1fr)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
         <DialogTitle className="sr-only">Voices</DialogTitle>
         <DialogDescription className="sr-only">Choose the narrator.</DialogDescription>
 
         <div className="flex flex-col gap-3 border-b p-4 pr-12">
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative min-w-48 flex-1">
-              <LuSearch className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <PiMagnifyingGlassBold className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name" className="h-10 pl-9" />
             </div>
             <Dropdown className="w-48" align="right" value={language} onChange={setLanguage} label="Language" placeholder="Any language" options={[{ value: "", label: "Any language" }, ...HG_LANGUAGES.map((l) => ({ value: l, label: l }))]} />
@@ -402,7 +403,7 @@ export function StylePicker({ value, onChange }: { value: string; onChange: (id:
           aria-pressed={value === ""}
           className={cn("flex aspect-video cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border text-sm transition-colors hover:bg-muted/50", value === "" && "border-primary bg-primary/5 ring-1 ring-primary")}
         >
-          <LuWand className="size-5" />
+          <PiMagicWandBold className="size-5" />
           Let it choose
         </button>
         {list.items.map((s) => (

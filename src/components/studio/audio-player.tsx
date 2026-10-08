@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { LuDownload, LuPause, LuPlay, LuVolume2, LuVolumeX } from "react-icons/lu";
+import { PiDownloadSimpleBold, PiPauseFill, PiPlayFill, PiSpeakerHighBold, PiSpeakerSlashBold } from "react-icons/pi";
 import { cn } from "@/lib/utils";
 
 const BARS = 64;
@@ -218,11 +218,11 @@ export function AudioPlayer({
           aria-label={playing ? "Pause" : "Play"}
           className={cn(
             "flex shrink-0 cursor-pointer items-center justify-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 disabled:cursor-default disabled:bg-white/[0.07] disabled:text-white/30 disabled:hover:scale-100",
-            off ? "" : "zs-grad-bg shadow-[0_10px_28px_-10px_rgb(124_58_237/0.95)]",
+            off ? "" : "zs-shine zs-shine-thin bg-violet-500/30 ring-1 ring-white/10",
             compact ? "size-10" : "size-12"
           )}
         >
-          {playing ? <LuPause className="size-5" /> : <LuPlay className="size-5 translate-x-px" />}
+          {playing ? <PiPauseFill className="size-5" /> : <PiPlayFill className="size-5 translate-x-px" />}
         </button>
         <span className="shrink-0 text-xs tabular-nums text-white/55">
           <span className="text-white">{off ? "0:00" : fmt(time)}</span> / {off || !duration ? "0:00" : fmt(duration)}
@@ -244,17 +244,17 @@ export function AudioPlayer({
           onClick={() => setMuted((m) => !m)}
           disabled={off}
           aria-label={muted ? "Unmute" : "Mute"}
-          className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-default disabled:opacity-40"
+          className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-default disabled:opacity-40"
         >
-          {muted ? <LuVolumeX className="size-[1.15rem]" /> : <LuVolume2 className="size-[1.15rem]" />}
+          {muted ? <PiSpeakerSlashBold className="size-[1.15rem]" /> : <PiSpeakerHighBold className="size-[1.15rem]" />}
         </button>
         {off ? (
-          <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white/60 opacity-40">
-            <LuDownload className="size-[1.15rem]" />
+          <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-full text-white/60 opacity-40">
+            <PiDownloadSimpleBold className="size-[1.15rem]" />
           </span>
         ) : (
-          <a href={src} download={name} aria-label="Download" className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/10 hover:text-white">
-            <LuDownload className="size-[1.15rem]" />
+          <a href={src} download={name} aria-label="Download" className="flex size-8 shrink-0 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/10 hover:text-white">
+            <PiDownloadSimpleBold className="size-[1.15rem]" />
           </a>
         )}
         <button

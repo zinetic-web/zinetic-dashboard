@@ -576,7 +576,8 @@
 /* ------------------------------------------------------------------ AI Studio look
    One violet-to-blue brand gradient on a deep navy ground. Everything inside .zs
    (shadcn cards, inputs, tabs) picks these up through the usual variables. */
-.zs {
+.zs,
+.zs-dialog {
   --zs-violet: #7c3aed;
   --zs-blue: #3b82f6;
   --zs-grad: linear-gradient(95deg, #7c3aed 0%, #5b5bf0 55%, #3b82f6 100%);
@@ -611,14 +612,15 @@
   color: transparent;
 }
 .zs-btn {
-  background-image: var(--zs-grad);
+  background-color: rgb(139 92 246 / 0.25);
   color: #fff;
-  box-shadow: 0 10px 30px -12px rgb(124 58 237 / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.18);
-  transition: filter 0.2s, transform 0.2s, box-shadow 0.2s;
+  border-radius: 9999px;
+  box-shadow: 0 10px 30px -14px rgb(124 58 237 / 0.6);
+  transition: background-color 0.25s, transform 0.2s, box-shadow 0.3s;
 }
 .zs-btn:hover:not(:disabled) {
-  filter: brightness(1.08);
-  box-shadow: 0 14px 38px -12px rgb(124 58 237 / 0.85), inset 0 1px 0 rgb(255 255 255 / 0.22);
+  background-color: rgb(139 92 246 / 0.4);
+  box-shadow: 0 14px 38px -12px rgb(124 58 237 / 0.8);
 }
 .zs-btn:active:not(:disabled) {
   transform: scale(0.99);
@@ -630,7 +632,11 @@
 .zs-card {
   background: linear-gradient(180deg, rgb(255 255 255 / 0.04), rgb(255 255 255 / 0.015));
   border: 1px solid rgb(255 255 255 / 0.09);
-  border-radius: 1.25rem;
+}
+@layer components {
+  .zs-card {
+    border-radius: 0.875rem;
+  }
 }
 
 /* range slider with a filled track and a round thumb */
@@ -666,10 +672,22 @@
 }
 
 /* glass edge: light catches only the top-left and bottom-right corners of the border */
-.zs .zs-shine {
-  position: relative;
+@layer components {
+  :is(.zs, .zs-dialog) .zs-shine,
+  :is(.zs, .zs-dialog) .zs-card,
+  :is(.zs, .zs-dialog) .zs-btn,
+  :is(.zs, .zs-dialog) .zs-pill,
+  :is(.zs, .zs-dialog) [data-slot="button"][data-variant="default"],
+  :is(.zs, .zs-dialog) [data-slot="button"][data-variant="outline"],
+  :is(.zs, .zs-dialog) [data-slot="button"][data-variant="secondary"],
+  :is(.zs, .zs-dialog) [data-slot="button"][data-variant="destructive"] {
+    position: relative;
+  }
 }
-.zs .zs-shine::after {
+:is(.zs, .zs-dialog) .zs-shine::after,
+.zs-dialog::after,
+:is(.zs, .zs-dialog) .zs-card::after,
+:is(.zs, .zs-dialog) .zs-btn::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -683,6 +701,121 @@
   opacity: 0.7;
   transition: opacity 0.3s;
 }
-.zs .zs-shine:hover::after {
+:is(.zs, .zs-dialog) .zs-shine:hover::after,
+:is(.zs, .zs-dialog) .zs-card:hover::after,
+:is(.zs, .zs-dialog) .zs-btn:hover::after {
   opacity: 1;
+}
+:is(.zs, .zs-dialog) .zs-shine-thin::after,
+:is(.zs, .zs-dialog) .zs-btn::after {
+  padding: 1px;
+  opacity: 0.85;
+}
+
+/* Studio buttons: every variant of the shared Button follows the same pill and glass-edge look */
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="default"],
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="outline"],
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="secondary"],
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="destructive"] {
+  border-radius: 9999px;
+  border-color: transparent;
+  color: #fff;
+  transition: background-color 0.25s, box-shadow 0.3s, transform 0.2s;
+}
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="default"]::after,
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="outline"]::after,
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="secondary"]::after,
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="destructive"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.85) 0%, rgb(255 255 255 / 0.18) 22%, transparent 42%, transparent 58%, rgb(255 255 255 / 0.18) 78%, rgb(167 139 250 / 0.85) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant]:hover::after {
+  opacity: 1;
+}
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="default"] {
+  background-color: rgb(139 92 246 / 0.25);
+  box-shadow: 0 10px 30px -14px rgb(124 58 237 / 0.6);
+}
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="default"]:hover:not(:disabled) {
+  background-color: rgb(139 92 246 / 0.4);
+}
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="outline"] {
+  background-color: rgb(255 255 255 / 0.04);
+}
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="outline"]:hover:not(:disabled) {
+  background-color: rgb(255 255 255 / 0.1);
+}
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="secondary"] {
+  background-color: rgb(255 255 255 / 0.08);
+}
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="secondary"]:hover:not(:disabled) {
+  background-color: rgb(255 255 255 / 0.14);
+}
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="destructive"] {
+  background-color: rgb(239 68 68 / 0.18);
+  color: rgb(252 165 165);
+}
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="destructive"]:hover:not(:disabled) {
+  background-color: rgb(239 68 68 / 0.3);
+}
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="ghost"] {
+  border-radius: 9999px;
+  color: rgb(255 255 255 / 0.7);
+}
+:is(.zs, .zs-dialog) [data-slot="button"][data-variant="ghost"]:hover:not(:disabled) {
+  background-color: rgb(255 255 255 / 0.09);
+  color: #fff;
+}
+
+/* neutral glass pill for secondary actions that are not a Button component */
+:is(.zs, .zs-dialog) .zs-pill {
+  border-radius: 9999px;
+  background-color: rgb(255 255 255 / 0.05);
+  color: #fff;
+  transition: background-color 0.25s;
+}
+:is(.zs, .zs-dialog) .zs-pill:hover {
+  background-color: rgb(255 255 255 / 0.11);
+}
+:is(.zs, .zs-dialog) .zs-pill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.85) 0%, rgb(255 255 255 / 0.18) 22%, transparent 42%, transparent 58%, rgb(255 255 255 / 0.18) 78%, rgb(167 139 250 / 0.85) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  opacity: 0.8;
+}
+
+.zs-dialog {
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  box-shadow: 0 40px 100px -30px rgb(0 0 0 / 0.9), 0 0 80px -40px rgb(124 58 237 / 0.5);
+}
+.zs-dialog::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  z-index: 5;
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.8) 0%, rgb(255 255 255 / 0.15) 20%, transparent 40%, transparent 60%, rgb(255 255 255 / 0.15) 80%, rgb(167 139 250 / 0.8) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }

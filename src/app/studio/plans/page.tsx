@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LuArrowRight, LuCheck } from "react-icons/lu";
+import { PiArrowRightBold, PiCheckBold } from "react-icons/pi";
 import { getDashboardSession } from "@/lib/supabase/dashboard-session";
 import { TOOLS } from "@/lib/studio/tools";
 import { entitlementRows, summarize } from "@/lib/studio/entitlements";
@@ -30,14 +30,14 @@ export default async function MyPlansPage() {
       <li key={s.id}>
         <div className={cn("zs-card flex h-full flex-col gap-5 p-5", live && "border-violet-400/25")}>
           <div className="flex items-start gap-3.5">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-violet-300 ring-1 ring-white/10 [&_svg]:size-5">
+            <span className="flex size-11 shrink-0 items-center justify-center zs-shine zs-shine-thin rounded-xl bg-white/[0.06] text-violet-300 ring-1 ring-white/10 [&_svg]:size-5">
               <Icon />
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate font-heading text-base font-semibold">{serviceName(s.id)}</p>
               <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-white/50">{tool.blurb}</p>
             </div>
-            <span className={cn("flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.7rem] font-medium", live ? "bg-emerald-500/15 text-emerald-300" : st ? "bg-white/[0.07] text-white/60" : "bg-white/[0.05] text-white/45")}>
+            <span className={cn("zs-shine zs-shine-thin flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.7rem] font-medium", live ? "bg-emerald-500/15 text-emerald-300" : st ? "bg-white/[0.07] text-white/60" : "bg-white/[0.05] text-white/45")}>
               <span className={cn("size-1.5 rounded-full", live ? "bg-emerald-400" : "bg-white/30")} />
               {live ? "Active" : st ? "Finished" : "Not bought"}
             </span>
@@ -61,7 +61,7 @@ export default async function MyPlansPage() {
             <ul className="flex flex-col gap-2.5">
               {info.features.slice(0, 5).map((f) => (
                 <li key={f} className="flex items-start gap-2.5 text-sm text-white/70">
-                  <LuCheck className="mt-0.5 size-4 shrink-0 text-violet-300" />
+                  <PiCheckBold className="mt-0.5 size-4 shrink-0 text-violet-300" />
                   {f}
                 </li>
               ))}
@@ -70,8 +70,8 @@ export default async function MyPlansPage() {
 
           <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
             {live && tool.href && (
-              <Link href={tool.href} className="flex h-9 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.05] px-3.5 text-sm transition-colors hover:bg-white/10">
-                Open <LuArrowRight className="size-3.5" />
+              <Link href={tool.href} className="zs-pill flex h-9 items-center gap-1.5 px-4 text-sm">
+                Open <PiArrowRightBold className="size-3.5" />
               </Link>
             )}
             {option && <ServicePlans option={option} label={st ? "Add more" : "Get a plan"} />}

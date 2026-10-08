@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { LuChevronDown, LuRotateCcw, LuSlidersHorizontal } from "react-icons/lu";
+import { PiArrowCounterClockwiseBold, PiCaretDownBold, PiSlidersHorizontalBold } from "react-icons/pi";
 import type { Voice } from "@/lib/studio/elevenlabs";
 import { useJob } from "@/components/studio/use-job";
 import { VoiceLibrary, type VoiceChoice } from "@/components/studio/voice-library";
@@ -58,11 +58,11 @@ export function VoiceForm({ voices, initialText = "" }: { voices: Voice[]; initi
           <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
             <button type="button" onClick={() => setShowSettings((v) => !v)} aria-expanded={showSettings} className="flex w-full cursor-pointer items-center justify-between px-4 py-3.5 text-sm font-medium">
               <span className="flex items-center gap-2.5">
-                <LuSlidersHorizontal className="size-4 text-violet-300" />
+                <PiSlidersHorizontalBold className="size-4 text-violet-300" />
                 Advanced settings
                 {touched && <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[0.65rem] text-violet-200">Changed</span>}
               </span>
-              <LuChevronDown className={cn("size-4 text-white/50 transition-transform", showSettings && "rotate-180")} />
+              <PiCaretDownBold className={cn("size-4 text-white/50 transition-transform", showSettings && "rotate-180")} />
             </button>
             {showSettings && (
               <div className="flex flex-col gap-6 border-t border-white/[0.07] p-4">
@@ -88,7 +88,7 @@ export function VoiceForm({ voices, initialText = "" }: { voices: Voice[]; initi
                   disabled={!touched}
                   className="flex w-fit cursor-pointer items-center gap-2 text-sm text-white/55 transition-colors hover:text-white disabled:opacity-40"
                 >
-                  <LuRotateCcw className="size-4" /> Reset to default
+                  <PiArrowCounterClockwiseBold className="size-4" /> Reset to default
                 </button>
               </div>
             )}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { LuArrowRight } from "react-icons/lu";
+import { PiArrowRightBold } from "react-icons/pi";
 import { getDashboardSession } from "@/lib/supabase/dashboard-session";
 import { createClient } from "@/lib/supabase/server";
 import { GROUPS, TOOLS } from "@/lib/studio/tools";
@@ -26,7 +26,7 @@ async function Recent({ userId }: { userId: string }) {
       <div className="flex items-end justify-between">
         <h2 className="font-heading text-xl font-semibold">Recent creations</h2>
         <Link href="/studio/library" className="flex items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-white">
-          View all <LuArrowRight className="size-4" />
+          View all <PiArrowRightBold className="size-4" />
         </Link>
       </div>
       <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -58,7 +58,7 @@ export default async function StudioHome() {
             <h2 className="font-heading text-xl font-semibold">{g.label}</h2>
             <p className="mt-1 text-sm text-white/50">{g.blurb}</p>
           </div>
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {TOOLS.filter((t) => t.group === g.id).map((t) => (
               <li key={t.id}>
                 <ToolCard id={t.id} />

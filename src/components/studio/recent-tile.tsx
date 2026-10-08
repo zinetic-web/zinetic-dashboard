@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LuAudioLines, LuClapperboard, LuPlay } from "react-icons/lu";
+import { PiFilmSlateBold, PiPlayFill, PiWaveformBold } from "react-icons/pi";
 import { LocalTime } from "@/components/local-time";
 import { LandscapeThumb, fmtDuration, useDuration } from "@/components/studio/media-bits";
 
@@ -9,7 +9,7 @@ import { LandscapeThumb, fmtDuration, useDuration } from "@/components/studio/me
 export function RecentTile({ id, video, label, createdAt }: { id: string; video: boolean; label: string; createdAt: string }) {
   const src = `/api/studio/files/${id}`;
   const dur = useDuration(src, video ? "video" : "audio");
-  const Kind = video ? LuClapperboard : LuAudioLines;
+  const Kind = video ? PiFilmSlateBold : PiWaveformBold;
   return (
     <Link href="/studio/library" className="group relative block aspect-[16/10] overflow-hidden rounded-2xl border border-white/10 bg-black/40 transition-colors hover:border-violet-400/50">
       {video ? <video src={`${src}#t=0.1`} preload="metadata" muted playsInline className="absolute inset-0 size-full object-cover" /> : <LandscapeThumb id={id} className="transition-transform duration-500 group-hover:scale-105" />}
@@ -20,7 +20,7 @@ export function RecentTile({ id, video, label, createdAt }: { id: string; video:
       </span>
       <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 px-3 pb-2.5">
         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white text-black shadow-lg transition-transform group-hover:scale-110">
-          <LuPlay className="size-3.5 translate-x-px" />
+          <PiPlayFill className="size-3.5 translate-x-px" />
         </span>
         <span className="flex items-center gap-1.5 pb-0.5 text-xs leading-none font-medium tabular-nums text-white">
           {dur !== null && <span>{fmtDuration(dur)}</span>}

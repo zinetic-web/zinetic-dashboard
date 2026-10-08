@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { LuClock, LuLibrary, LuLoaderCircle } from "react-icons/lu";
+import { LuLoaderCircle } from "react-icons/lu";
+import { PiBooksBold, PiClockBold } from "react-icons/pi";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { JobView } from "@/components/studio/job-context";
@@ -34,7 +35,7 @@ export function JobModal({ view }: { view: JobView }) {
 
   return (
     <Dialog open={show} onOpenChange={(o) => !o && close()}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="zs-dialog dark sm:max-w-sm">
         <DialogTitle className="flex items-center gap-2.5 pr-8 text-lg font-semibold">
           <LuLoaderCircle className="size-5 shrink-0 animate-spin" />
           {working?.message ?? "Working on it"}
@@ -52,7 +53,7 @@ export function JobModal({ view }: { view: JobView }) {
           <div className="flex items-center justify-between gap-3 text-sm">
             <span className="min-w-0 truncate text-muted-foreground">{working?.stage ?? (elapsed < 8 ? "Getting started" : "Working")}</span>
             <span className="flex shrink-0 items-center gap-1.5 tabular-nums text-muted-foreground">
-              <LuClock className="size-3.5" />
+              <PiClockBold className="size-3.5" />
               {clock(elapsed)}
               {typeof working?.progress === "number" && <span className="ml-1 font-medium text-foreground">{Math.round(working.progress)}%</span>}
             </span>
@@ -64,7 +65,7 @@ export function JobModal({ view }: { view: JobView }) {
             Close
           </Button>
           <Button className="flex-1" nativeButton={false} render={<Link href="/studio/library" />}>
-            <LuLibrary /> Library
+            <PiBooksBold /> Library
           </Button>
         </div>
       </DialogContent>

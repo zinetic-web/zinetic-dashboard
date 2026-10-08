@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { LuChevronDown, LuRotateCcw } from "react-icons/lu";
+import { PiArrowCounterClockwiseBold, PiCaretDownBold } from "react-icons/pi";
 import { AvatarLibrary, HeyGenVoiceLibrary, type AvatarChoice, type MyAvatar } from "@/components/studio/heygen-pickers";
 import type { VoiceChoice } from "@/components/studio/voice-library";
 import { Slider } from "@/components/studio/slider";
@@ -88,7 +88,7 @@ export function AvatarVideoForm({ mine }: { mine: MyAvatar[] }) {
           <div className="rounded-xl border">
             <button type="button" onClick={() => setShowMore((v) => !v)} aria-expanded={showMore} className="flex w-full cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium">
               More options
-              <LuChevronDown className={cn("size-4 text-muted-foreground transition-transform", showMore && "rotate-180")} />
+              <PiCaretDownBold className={cn("size-4 text-muted-foreground transition-transform", showMore && "rotate-180")} />
             </button>
             {showMore && (
               <div className="flex flex-col gap-5 border-t p-4">
@@ -138,7 +138,7 @@ export function AvatarVideoForm({ mine }: { mine: MyAvatar[] }) {
                 )}
 
                 <Button variant="ghost" size="sm" className="w-fit" onClick={() => { setSpeech(DEFAULTS); setBackground(null); setCaptions(false); setQuality("720p"); }}>
-                  <LuRotateCcw /> Reset options
+                  <PiArrowCounterClockwiseBold /> Reset options
                 </Button>
               </div>
             )}

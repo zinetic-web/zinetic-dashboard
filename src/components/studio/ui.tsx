@@ -3,20 +3,8 @@
 import * as React from "react";
 import { Dropdown } from "@/components/studio/dropdown";
 import { SparkIcon } from "@/components/spark-icon";
-import {
-  LuArrowRight,
-  LuCheck,
-  LuChevronDown,
-  LuDownload,
-  LuFileText,
-  LuLoaderCircle,
-  LuPlay,
-  LuSearch,
-  LuTriangleAlert,
-  LuUpload,
-  LuUserRound,
-  LuX,
-} from "react-icons/lu";
+import { LuLoaderCircle, LuX } from "react-icons/lu";
+import { PiArrowRightBold, PiCaretDownBold, PiCheckBold, PiDownloadSimpleBold, PiFileTextBold, PiMagnifyingGlassBold, PiPlayFill, PiUploadSimpleBold, PiUserBold, PiWarningBold } from "react-icons/pi";
 import { cn } from "@/lib/utils";
 import { TOOLS } from "@/lib/studio/tools";
 import type { PublicEngine } from "@/lib/studio/engines";
@@ -84,7 +72,7 @@ export function ToolHeader({ aside }: { aside?: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
       <div className="flex min-w-0 items-start gap-3">
-        <span className="zs-grad-bg flex size-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_10px_30px_-12px_rgb(124_58_237/0.8)] [&_svg]:size-6">
+        <span className="zs-shine flex size-12 shrink-0 items-center justify-center rounded-2xl bg-violet-500/20 text-violet-100 ring-1 ring-white/10 [&_svg]:size-6">
           <Icon />
         </span>
         <div>
@@ -170,7 +158,7 @@ export function Segmented<T extends string>({
   options: { value: T; label: string; icon?: React.ReactNode }[];
 }) {
   return (
-    <div role="radiogroup" className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(options.length, 5)}, minmax(0, 1fr))` }}>
+    <div role="radiogroup" className="grid gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1" style={{ gridTemplateColumns: `repeat(${Math.min(options.length, 5)}, minmax(0, 1fr))` }}>
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -181,12 +169,12 @@ export function Segmented<T extends string>({
             aria-checked={on}
             onClick={() => onChange(o.value)}
             className={cn(
-              "flex min-h-11 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2 text-center text-sm transition-all",
-              on ? "border-violet-400/70 bg-violet-500/15 font-medium text-white shadow-[0_0_0_1px_rgb(139_92_246/0.35),0_8px_24px_-12px_rgb(124_58_237/0.7)]" : "border-white/10 bg-white/[0.03] text-white/70 hover:border-white/20 hover:bg-white/[0.06] hover:text-white"
+              "flex h-9 min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 text-center text-sm transition-all",
+              on ? "zs-shine zs-shine-thin bg-violet-500/25 font-medium text-white" : "text-white/60 hover:text-white"
             )}
           >
             {o.icon}
-            <span className="leading-tight">{o.label}</span>
+            <span className="truncate leading-tight">{o.label}</span>
           </button>
         );
       })}
@@ -249,21 +237,21 @@ export function FileDrop({
       <input ref={ref} type="file" accept={accept} hidden onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
       {file ? (
         <div className="flex items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-200">
-            <LuFileText className="size-5" />
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-violet-200">
+            <PiFileTextBold className="size-5" />
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{file.name}</p>
             <p className="text-xs text-white/45">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
           </div>
-          <button type="button" onClick={() => onFile(null)} aria-label="Remove file" className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+          <button type="button" onClick={() => onFile(null)} aria-label="Remove file" className="flex size-8 cursor-pointer items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/10 hover:text-white">
             <LuX className="size-4" />
           </button>
         </div>
       ) : (
         <button type="button" onClick={() => ref.current?.click()} className="flex w-full cursor-pointer flex-col items-center gap-2.5 py-3 text-center">
-          <span className="zs-grad-bg flex size-11 items-center justify-center rounded-full text-white shadow-[0_8px_24px_-10px_rgb(124_58_237/0.9)]">
-            <LuUpload className="size-5" />
+          <span className="zs-shine zs-shine-thin flex size-11 items-center justify-center rounded-full bg-violet-500/25 text-violet-100 ring-1 ring-white/10">
+            <PiUploadSimpleBold className="size-5" />
           </span>
           <span className="text-sm font-medium">Drop a file here, or click to choose</span>
           <span className="max-w-xs text-xs text-white/45">{hint}</span>
@@ -306,7 +294,7 @@ export function VoicePicker({ items, value, onChange }: { items: PickerItem[]; v
   return (
     <div className="flex flex-col gap-2">
       <div className="relative">
-        <LuSearch className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+        <PiMagnifyingGlassBold className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${items.length} voices`} className="pl-8" />
       </div>
       <ul className="max-h-60 divide-y overflow-y-auto rounded-lg border">
@@ -318,7 +306,7 @@ export function VoicePicker({ items, value, onChange }: { items: PickerItem[]; v
             <li key={v.id} className={cn("flex items-center gap-1 pr-1", active && "bg-muted")}>
               <button type="button" onClick={() => onChange(v.id)} className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 px-3 py-2 text-left">
                 <span className={cn("flex size-4 shrink-0 items-center justify-center rounded-full border", active && "border-primary bg-primary text-primary-foreground")}>
-                  {active && <LuCheck className="size-3" />}
+                  {active && <PiCheckBold className="size-3" />}
                 </span>
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium">{v.name}</span>
@@ -327,7 +315,7 @@ export function VoicePicker({ items, value, onChange }: { items: PickerItem[]; v
               </button>
               {v.preview && (
                 <Button variant="ghost" size="icon-sm" onClick={() => toggle(v)} aria-label={`Preview ${v.name}`}>
-                  {playing === v.id ? <LuX /> : <LuPlay />}
+                  {playing === v.id ? <LuX /> : <PiPlayFill />}
                 </Button>
               )}
             </li>
@@ -361,7 +349,7 @@ export function SubmitButton({
     >
       {busy ? <LuLoaderCircle className="size-5 animate-spin" /> : <SparkIcon className="size-5" />}
       {busy ? (uploading !== null ? `Uploading ${uploading}%` : busyLabel) : children}
-      {!busy && <LuArrowRight className="size-4 opacity-80" />}
+      {!busy && <PiArrowRightBold className="size-4 opacity-80" />}
     </button>
   );
 }
@@ -377,7 +365,7 @@ function EngineMark({ label, active }: { label: string; active?: boolean }) {
   const n = /\d[\d.]*/.exec(label)?.[0];
   const text = n ? `V${n}` : label.slice(0, 2).toUpperCase();
   return (
-    <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl font-bold", text.length > 3 ? "text-[0.7rem]" : "text-sm", active ? "zs-grad-bg text-white shadow-[0_8px_22px_-10px_rgb(124_58_237/0.9)]" : "bg-white/[0.07] text-white/70")}>
+    <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl font-bold", text.length > 3 ? "text-[0.7rem]" : "text-sm", active ? "zs-shine zs-shine-thin bg-violet-500/25 text-violet-100 ring-1 ring-white/10" : "bg-white/[0.07] text-white/70")}>
       {text}
     </span>
   );
@@ -436,7 +424,7 @@ export function EnginePicker() {
           {current.description && <span className="block truncate text-xs text-white/45">{current.description}</span>}
         </span>
         <span className="hidden rounded-full bg-white/[0.07] px-2.5 py-1 text-[0.7rem] text-white/60 sm:block">{usageTag(current)}</span>
-        <LuChevronDown className={cn("size-4 shrink-0 text-white/50 transition-transform", open && "rotate-180")} />
+        <PiCaretDownBold className={cn("size-4 shrink-0 text-white/50 transition-transform", open && "rotate-180")} />
       </button>
 
       {open && (
@@ -459,7 +447,7 @@ export function EnginePicker() {
                     {e.description && <span className="line-clamp-2 block text-xs leading-snug text-white/50">{e.description}</span>}
                   </span>
                   <span className="shrink-0 rounded-full bg-white/[0.07] px-2.5 py-1 text-[0.7rem] text-white/60">{usageTag(e)}</span>
-                  <span className="flex size-5 shrink-0 items-center justify-center">{on && <LuCheck className="size-4 text-violet-300" />}</span>
+                  <span className="flex size-5 shrink-0 items-center justify-center">{on && <PiCheckBold className="size-4 text-violet-300" />}</span>
                 </button>
               </li>
             );
@@ -489,10 +477,10 @@ function Placeholder({ busy }: { busy: boolean }) {
         <div className="flex items-center gap-2">
           <Badge variant="outline">Language</Badge>
           <Button variant="outline" size="sm" disabled>
-            <LuDownload /> TXT
+            <PiDownloadSimpleBold /> TXT
           </Button>
           <Button variant="outline" size="sm" disabled>
-            <LuDownload /> SRT
+            <PiDownloadSimpleBold /> SRT
           </Button>
         </div>
         <div className="flex flex-col gap-3 rounded-lg border p-4">
@@ -515,7 +503,7 @@ function Placeholder({ busy }: { busy: boolean }) {
       <div className="grid grid-cols-3 gap-3">
         {[0, 1, 2].map((i) => (
           <div key={i} className={cn("flex aspect-[9/16] items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.03]", busy && "animate-pulse")}>
-            <LuPlay className="size-6 text-white/20" />
+            <PiPlayFill className="size-6 text-white/20" />
           </div>
         ))}
       </div>
@@ -550,7 +538,7 @@ export function Output({
           <CardTitle className="font-heading text-lg">{tool.group === "video" ? "Generated video" : "Generated audio"}</CardTitle>
           <span
             className={cn(
-              "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium",
+              "zs-shine zs-shine-thin flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium",
               state.phase === "done" ? "bg-emerald-500/15 text-emerald-300" : state.phase === "error" ? "bg-red-500/15 text-red-300" : state.phase === "working" ? "bg-violet-500/15 text-violet-200" : "bg-white/[0.07] text-white/55"
             )}
           >
@@ -578,7 +566,7 @@ export function Output({
             )}
             {state.phase === "error" && (
               <Alert variant="destructive">
-                <LuTriangleAlert />
+                <PiWarningBold />
                 <AlertDescription>{state.error}</AlertDescription>
               </Alert>
             )}
@@ -601,7 +589,7 @@ export function VideoResult({ id, name, vertical }: { id: string; name: string; 
 export function DownloadLink({ id, name }: { id: string; name: string }) {
   return (
     <Button variant="outline" size="sm" className="w-fit" nativeButton={false} render={<a href={`/api/studio/files/${id}`} download={name} />}>
-      <LuDownload /> Download
+      <PiDownloadSimpleBold /> Download
     </Button>
   );
 }
@@ -614,7 +602,7 @@ export function ImageFrame({ src }: { src: string | null }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt="" className="size-full object-cover" />
       ) : (
-        <LuUserRound className="size-10 text-white/20" />
+        <PiUserBold className="size-10 text-white/20" />
       )}
     </div>
   );
