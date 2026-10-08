@@ -96,9 +96,9 @@ export function HomeHero({ name }: { name: string }) {
         <div>
           <p className="text-sm text-white/60">{name ? `Welcome back, ${name}` : "Welcome back"}</p>
           <h1 className="mt-3 text-balance text-5xl leading-[1.05] font-medium tracking-tight sm:text-6xl lg:text-7xl">
-            <span className="zl-serif">What will you </span>
+            <span className="font-semibold">What will you </span>
             <span className="zl-serif zs-grad-text pr-1">create</span>
-            <span className="zl-serif"> today?</span>
+            <span className="font-semibold"> today?</span>
           </h1>
         </div>
 
