@@ -35,6 +35,7 @@ import { useUploadProgress } from "@/components/studio/upload";
 import { JobHost } from "@/components/studio/job-context";
 import { LocalTime } from "@/components/local-time";
 import { RunMeter } from "@/components/studio/processing";
+import { RecentSlot } from "@/components/studio/recent-compact";
 
 /* ------------------------------------------------------------------ context */
 
@@ -102,7 +103,10 @@ export function Workspace({ form, output }: { form: React.ReactNode; output: Rea
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,32rem)_minmax(0,1fr)]">
       <div className="zs-card flex flex-col gap-6 p-5 sm:p-6">{form}</div>
       {/* the result stays in view beside the controls while the page scrolls */}
-      <div className="min-w-0 lg:sticky lg:top-20">{output}</div>
+      <div className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-20">
+        {output}
+        <RecentSlot />
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+/** A range control with a filled track, a value badge and labelled ends. */
 export function Slider({
   label,
   hint,
@@ -10,6 +11,7 @@ export function Slider({
   step = 0.01,
   left,
   right,
+  format,
 }: {
   label: string;
   hint?: string;
@@ -20,12 +22,14 @@ export function Slider({
   step?: number;
   left?: string;
   right?: string;
+  format?: (v: number) => string;
 }) {
+  const pct = ((value - min) / (max - min)) * 100;
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-baseline justify-between gap-3">
+    <div className="flex flex-col gap-2.5">
+      <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-medium">{label}</span>
-        <span className="text-xs tabular-nums text-muted-foreground">{Math.round(value * 100) / 100}</span>
+        <span className="min-w-12 rounded-md bg-white/[0.07] px-2 py-0.5 text-center text-xs font-medium tabular-nums">{format ? format(value) : Math.round(value * 100) / 100}</span>
       </div>
       <input
         type="range"
@@ -35,15 +39,16 @@ export function Slider({
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         aria-label={label}
-        className="h-1.5 w-full cursor-pointer accent-foreground"
+        className="zs-range"
+        style={{ backgroundImage: "linear-gradient(90deg, #7c3aed, #3b82f6), linear-gradient(rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.1))", backgroundSize: `${pct}% 100%, 100% 100%`, backgroundRepeat: "no-repeat" }}
       />
       {(left || right) && (
-        <div className="flex justify-between text-[0.7rem] text-muted-foreground">
+        <div className="flex justify-between text-[0.7rem] text-white/40">
           <span>{left}</span>
           <span>{right}</span>
         </div>
       )}
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      {hint && <p className="text-xs text-white/45">{hint}</p>}
     </div>
   );
 }

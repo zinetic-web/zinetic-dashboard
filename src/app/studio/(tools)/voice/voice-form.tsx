@@ -1,13 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { LuChevronDown, LuRotateCcw, LuSparkles } from "react-icons/lu";
+import { LuChevronDown, LuRotateCcw, LuSlidersHorizontal } from "react-icons/lu";
 import type { Voice } from "@/lib/studio/elevenlabs";
 import { useJob } from "@/components/studio/use-job";
 import { VoiceLibrary, type VoiceChoice } from "@/components/studio/voice-library";
 import { Slider } from "@/components/studio/slider";
 import { AudioResult, EnginePicker, Field, Output, SelectField, SubmitButton, TextArea, Workspace, useEngine } from "@/components/studio/ui";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +19,6 @@ const LANGUAGES: [string, string][] = [
   ["id", "Indonesian"], ["ta", "Tamil"], ["nl", "Dutch"], ["pl", "Polish"],
 ];
 
-const TAGS = ["[laughs]", "[whispers]", "[sighs]", "[excited]", "[sarcastic]", "[curious]", "[crying]", "[shouting]", "[calm]", "[pauses]"];
 
 export function VoiceForm({ voices, initialText = "" }: { voices: Voice[]; initialText?: string }) {
   const defaults: VoiceChoice[] = React.useMemo(() => voices.map((v) => ({ id: v.id, name: v.name, meta: v.labels ?? v.category, previewUrl: v.previewUrl })), [voices]);
@@ -37,7 +35,6 @@ export function VoiceForm({ voices, initialText = "" }: { voices: Voice[]; initi
     setSettings((s) => ({ ...s, [k]: v }));
     setTouched(true);
   };
-  const tagged = eng.has("audio-tags") || eng.has("expressive");
   const max = eng.engine?.max_chars ?? 5000;
 
   return (
@@ -52,25 +49,6 @@ export function VoiceForm({ voices, initialText = "" }: { voices: Voice[]; initi
 
           <Field label="Script">
             <TextArea value={text} onChange={setText} max={max} rows={9} placeholder="Type or paste what the voice should say." />
-            {tagged && (
-              <div className="flex flex-col gap-2">
-                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <LuSparkles className="size-3.5" /> Add feeling with audio tags. Click one to add it to the script.
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {TAGS.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setText((s) => (s ? `${s}${/\s$/.test(s) ? "" : " "}${t} ` : `${t} `).slice(0, max))}
-                      className="cursor-pointer rounded-full border border-violet-400/25 bg-violet-500/10 px-3 py-1 text-xs text-violet-100 transition-colors hover:bg-violet-500/25"
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </Field>
 
           <Field label="Language">
@@ -78,34 +56,40 @@ export function VoiceForm({ voices, initialText = "" }: { voices: Voice[]; initi
           </Field>
 
           <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
-            <button type="button" onClick={() => setShowSettings((v) => !v)} aria-expanded={showSettings} className="flex w-full cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium">
-              Advanced settings
-              <LuChevronDown className={cn("size-4 text-muted-foreground transition-transform", showSettings && "rotate-180")} />
+            <button type="button" onClick={() => setShowSettings((v) => !v)} aria-expanded={showSettings} className="flex w-full cursor-pointer items-center justify-between px-4 py-3.5 text-sm font-medium">
+              <span className="flex items-center gap-2.5">
+                <LuSlidersHorizontal className="size-4 text-violet-300" />
+                Advanced settings
+                {touched && <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[0.65rem] text-violet-200">Changed</span>}
+              </span>
+              <LuChevronDown className={cn("size-4 text-white/50 transition-transform", showSettings && "rotate-180")} />
             </button>
             {showSettings && (
-              <div className="flex flex-col gap-5 border-t border-white/[0.07] p-4">
-                <Slider label="Stability" value={settings.stability} onChange={(v) => set("stability", v)} left="More expressive" right="More steady" />
-                <Slider label="Similarity" value={settings.similarity} onChange={(v) => set("similarity", v)} left="More freedom" right="Closer to the voice" />
-                <Slider label="Style" value={settings.style} onChange={(v) => set("style", v)} left="Neutral" right="Exaggerated" />
-                <Slider label="Speed" value={settings.speed} min={0.7} max={1.2} step={0.05} onChange={(v) => set("speed", v)} left="Slower" right="Faster" />
-                <label className="flex items-center justify-between gap-3 text-sm">
+              <div className="flex flex-col gap-6 border-t border-white/[0.07] p-4">
+                <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2">
+                  <Slider label="Stability" value={settings.stability} onChange={(v) => set("stability", v)} left="More expressive" right="More steady" format={(v) => `${Math.round(v * 100)}%`} />
+                  <Slider label="Similarity" value={settings.similarity} onChange={(v) => set("similarity", v)} left="More freedom" right="Closer to the voice" format={(v) => `${Math.round(v * 100)}%`} />
+                  <Slider label="Style" value={settings.style} onChange={(v) => set("style", v)} left="Neutral" right="Exaggerated" format={(v) => `${Math.round(v * 100)}%`} />
+                  <Slider label="Speed" value={settings.speed} min={0.7} max={1.2} step={0.05} onChange={(v) => set("speed", v)} left="Slower" right="Faster" format={(v) => `${v.toFixed(2)}x`} />
+                </div>
+                <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 text-sm">
                   <span>
                     <span className="font-medium">Speaker boost</span>
-                    <span className="block text-xs text-muted-foreground">Makes the voice sound a little more like the original.</span>
+                    <span className="block text-xs text-white/45">Makes the voice sound a little more like the original.</span>
                   </span>
                   <Switch checked={settings.speakerBoost} onCheckedChange={(c) => set("speakerBoost", c)} />
                 </label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-fit"
+                <button
+                  type="button"
                   onClick={() => {
                     setSettings(DEFAULTS);
                     setTouched(false);
                   }}
+                  disabled={!touched}
+                  className="flex w-fit cursor-pointer items-center gap-2 text-sm text-white/55 transition-colors hover:text-white disabled:opacity-40"
                 >
-                  <LuRotateCcw /> Reset to default
-                </Button>
+                  <LuRotateCcw className="size-4" /> Reset to default
+                </button>
               </div>
             )}
           </div>

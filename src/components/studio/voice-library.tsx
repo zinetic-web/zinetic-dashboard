@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import {
-  LuAudioLines,
   LuBookOpen,
   LuCheck,
   LuChevronDown,
@@ -508,6 +507,18 @@ export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice
           <span className="text-sm font-medium">Browse all</span>
         </DialogTrigger>
       </div>
+      <DialogTrigger
+        render={
+          <button
+            type="button"
+            className="flex h-11 w-full cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 text-left text-sm text-white/55 transition-colors hover:border-violet-400/50 hover:bg-white/[0.06] hover:text-white"
+          />
+        }
+      >
+        <LuSearch className="size-4" />
+        <span className="flex-1">Search and filter thousands of voices</span>
+        <span className="rounded-md bg-white/[0.08] px-2 py-0.5 text-xs text-white/70">Browse all</span>
+      </DialogTrigger>
 
       <DialogContent className="flex! h-[min(46rem,92vh)] w-[calc(100vw-1.5rem)] max-w-none grid-cols-[minmax(0,1fr)] flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl" showCloseButton>
         <DialogTitle className="sr-only">Voice library</DialogTitle>

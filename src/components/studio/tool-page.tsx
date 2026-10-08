@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { History, ToolHeader, ToolProvider } from "@/components/studio/ui";
 import { LockedService, PaymentNotice, TrialBar, UsageBar } from "@/components/studio/plans";
 import { trialInfo } from "@/lib/studio/trial";
+import { CompactRecent, RecentProvider } from "@/components/studio/recent-compact";
 
 // The recent list is the only part that needs the database, so it streams in after
 // the page is already on screen instead of holding the whole page back.
@@ -18,6 +19,13 @@ async function Recent({ kinds }: { kinds: string[] }) {
   const { user } = await getDashboardSession();
   if (!user) return null;
   return <History rows={await recentGenerations(user.id, kinds)} />;
+}
+
+// the compact list under the result, for the pages that use it
+async function RecentCompactList({ kinds }: { kinds: string[] }) {
+  const { user } = await getDashboardSession();
+  if (!user) return null;
+  return <CompactRecent rows={await recentGenerations(user.id, kinds, 6)} />;
 }
 
 /** Header, the tool itself (or its lock), and that tool's recent generations. */
@@ -31,6 +39,8 @@ export async function ToolPage({
   children: React.ReactNode;
 }) {
   const tool = TOOLS.find((t) => t.id === toolId)!;
+  // pages that show their recent runs in the column under the result
+  const compact = toolId === "voice";
   const { user } = await getDashboardSession();
   const [engineList, rows, trial] = await Promise.all([enabledEngines(toolId), user ? entitlementRows(user.id) : Promise.resolve([]), trialInfo(user?.id ?? null)]);
   const engines = engineList.map(toPublic);
@@ -70,8 +80,20 @@ export async function ToolPage({
                 <AlertDescription>{notice}</AlertDescription>
               </Alert>
             )}
-            {children}
-            {tool.kinds && (
+            {compact && tool.kinds ? (
+              <RecentProvider
+                recent={
+                  <Suspense fallback={<Skeleton className="h-64 w-full rounded-2xl" />}>
+                    <RecentCompactList kinds={tool.kinds} />
+                  </Suspense>
+                }
+              >
+                {children}
+              </RecentProvider>
+            ) : (
+              children
+            )}
+            {!compact && tool.kinds && (
               <Suspense fallback={<Skeleton className="h-40 w-full" />}>
                 <Recent kinds={tool.kinds} />
               </Suspense>
