@@ -61,7 +61,7 @@ export default async function StudioHome() {
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {TOOLS.filter((t) => t.group === g.id).map((t) => (
               <li key={t.id}>
-                <ToolCard tool={t} />
+                <ToolCard id={t.id} />
               </li>
             ))}
           </ul>

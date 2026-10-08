@@ -4,10 +4,11 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { LuArrowRight } from "react-icons/lu";
-import type { StudioTool } from "@/lib/studio/tools";
+import { TOOLS } from "@/lib/studio/tools";
 
 /** A tool on the Home page: a cover clip that shows what it does (plays on hover), then name and one line. */
-export function ToolCard({ tool }: { tool: StudioTool }) {
+export function ToolCard({ id }: { id: string }) {
+  const tool = TOOLS.find((t) => t.id === id)!;
   const ref = React.useRef<HTMLVideoElement>(null);
   const Icon = tool.icon;
   const live = Boolean(tool.href);
