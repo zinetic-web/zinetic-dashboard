@@ -4,6 +4,7 @@ import { LuArrowRight } from "react-icons/lu";
 import { getDashboardSession } from "@/lib/supabase/dashboard-session";
 import { createClient } from "@/lib/supabase/server";
 import { GROUPS, TOOLS } from "@/lib/studio/tools";
+import { ToolCard } from "@/components/studio/tool-card";
 import { HomeHero } from "@/components/studio/home-hero";
 import { RecentTile } from "@/components/studio/recent-tile";
 
@@ -57,33 +58,12 @@ export default async function StudioHome() {
             <h2 className="font-heading text-xl font-semibold">{g.label}</h2>
             <p className="mt-1 text-sm text-white/50">{g.blurb}</p>
           </div>
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {TOOLS.filter((t) => t.group === g.id).map((t) => {
-              const Icon = t.icon;
-              const body = (
-                <>
-                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-violet-300 ring-1 ring-white/10 [&_svg]:size-5">
-                    <Icon />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">{t.name}</span>
-                    <span className="mt-0.5 line-clamp-2 block text-xs leading-relaxed text-white/50">{t.blurb}</span>
-                  </span>
-                  {t.href ? <LuArrowRight className="size-4 shrink-0 text-white/30 transition-all group-hover:translate-x-0.5 group-hover:text-white" /> : <span className="rounded-full border border-white/10 px-2 py-0.5 text-[0.65rem] text-white/40">Soon</span>}
-                </>
-              );
-              return (
-                <li key={t.id}>
-                  {t.href ? (
-                    <Link href={t.href} className="group zs-card flex h-full items-center gap-4 p-4 transition-colors hover:border-violet-400/40 hover:bg-white/[0.05]">
-                      {body}
-                    </Link>
-                  ) : (
-                    <div className="zs-card flex h-full items-center gap-4 p-4 opacity-60">{body}</div>
-                  )}
-                </li>
-              );
-            })}
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {TOOLS.filter((t) => t.group === g.id).map((t) => (
+              <li key={t.id}>
+                <ToolCard tool={t} />
+              </li>
+            ))}
           </ul>
         </section>
       ))}
