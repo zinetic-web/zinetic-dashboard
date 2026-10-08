@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 import type { PlanOption } from "@/lib/studio/plans";
 import { formatUnits, type Unit } from "@/lib/studio/services";
 import { useRouter } from "next/navigation";
@@ -185,19 +186,21 @@ export function Ring({ pct, size = 60, stroke = 6, children }: { pct: number; si
 /** What the customer bought for this tool and how much is left: a gauge, the amount, and when it ends. */
 export function UsageBar({ usage, compact = false, large = false, ringRight = false }: { usage: PlanUsage; compact?: boolean; large?: boolean; ringRight?: boolean }) {
   const pct = usage.total > 0 ? (usage.remaining / usage.total) * 100 : 0;
-  const unit = formatUnits(usage.remaining, usage.unit).replace(/^[\d,.]+\s*/, "");
-  const amount = formatUnits(usage.remaining, usage.unit).match(/^[\d,.]+/)?.[0] ?? "0";
+  const left = formatUnits(usage.remaining, usage.unit);
+  const amount = left.match(/^[\d,.]+/)?.[0] ?? "0";
+  const unit = left.replace(/^[\d,.]+\s*/, "");
+  const total = formatUnits(usage.total, usage.unit).match(/^[\d,.]+/)?.[0] ?? "";
   return (
     <div className={ringRight ? "flex flex-row-reverse items-center justify-between gap-4" : "flex items-center gap-4"}>
-      <Ring pct={pct} size={large ? 84 : 56} stroke={large ? 8 : 6} />
-      <div className="min-w-0">
+      <Ring pct={pct} size={large ? 80 : 56} stroke={large ? 8 : 6} />
+      <div className="min-w-0 flex-1">
         {!compact && <p className="truncate text-xs font-medium text-white/60">{usage.serviceName}</p>}
-        <p className="flex items-baseline gap-1.5">
-          <span className={large ? "text-3xl font-bold tabular-nums tracking-tight" : "text-xl font-bold tabular-nums tracking-tight"}>{amount}</span>
-          <span className="text-sm text-white/55">{unit} left</span>
+        <p className={cn("truncate font-bold leading-none tabular-nums tracking-tight", large ? "text-[1.7rem]" : "text-xl")} title={amount}>
+          {amount}
         </p>
-        <p className="mt-0.5 truncate text-xs text-white/40">
-          of {formatUnits(usage.total, usage.unit)}
+        <p className="mt-1.5 truncate text-sm text-white/55">{unit} left</p>
+        <p className="mt-0.5 truncate text-xs text-white/35">
+          of {total}
           {usage.expiresAt ? ` · until ${when(usage.expiresAt)}` : ""}
         </p>
       </div>

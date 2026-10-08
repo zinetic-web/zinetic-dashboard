@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { LocalTime } from "@/components/local-time";
 import { VideoPlayer } from "@/components/studio/video-player";
 import { ProcessingPanel } from "@/components/studio/processing";
-import { LandscapeThumb, fmtDuration, twoWords, useDuration, waveFor } from "@/components/studio/media-bits";
+import { fmtDuration, twoWords, useDuration, waveFor } from "@/components/studio/media-bits";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { TOOLS } from "@/lib/studio/tools";
 import { cn } from "@/lib/utils";
@@ -145,82 +145,105 @@ function Card({ r, play }: { r: LibraryRow; play: Play }) {
   const dur = useDuration(src, type === "video" ? "video" : "audio");
   const on = play.playing === r.id;
   const Kind = type === "video" ? LuClapperboard : type === "text" ? LuFileText : LuAudioLines;
+  const kindLabel = type === "video" ? "Video" : type === "text" ? "Transcript" : "Audio";
   const sub = r.input?.voiceName || tool?.name || "";
-  const bars = React.useMemo(() => waveFor(r.id, 40), [r.id]);
+  const bars = React.useMemo(() => waveFor(r.id, 46), [r.id]);
+
+  const footer = (
+    <div className="flex items-center gap-1 border-t border-white/[0.07] px-3 py-2">
+      <p className="min-w-0 flex-1 truncate text-xs text-white/45">
+        <LocalTime iso={r.created_at} mode="datetime" />
+      </p>
+      {src && (
+        <a href={src} download aria-label="Download" className="flex size-8 shrink-0 items-center justify-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+          <LuDownload className="size-4" />
+        </a>
+      )}
+      <RowMenu r={r} text={r.result?.text} />
+    </div>
+  );
+
+  const head = (
+    <div className="flex items-start gap-3 p-4 pb-3">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-violet-300 ring-1 ring-white/10">
+        <Kind className="size-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold" title={plain(r.title)}>
+          {twoWords(r.title)}
+        </p>
+        <p className="truncate text-xs text-white/45">
+          {kindLabel}
+          {sub ? ` · ${sub}` : ""}
+        </p>
+      </div>
+      {dur !== null && <span className="shrink-0 rounded-md bg-white/[0.07] px-2 py-1 text-xs font-medium tabular-nums text-white/75">{fmtDuration(dur)}</span>}
+    </div>
+  );
 
   return (
-    <article className="group zs-card flex flex-col overflow-hidden rounded-xl transition-colors hover:border-violet-400/35">
+    <article className="zs-card flex flex-col overflow-hidden rounded-xl transition-colors hover:border-violet-400/35">
       {r.status === "processing" ? (
-        <div className="p-3">
-          <ProcessingPanel id={r.id} createdAt={r.created_at} kind={type === "video" ? "video" : "audio"} hint={USUALLY[r.kind]} />
-        </div>
-      ) : (
-        <div className="relative aspect-video overflow-hidden bg-black/40">
-          {type === "video" && src ? (
+        <>
+          {head}
+          <div className="px-4 pb-4">
+            <ProcessingPanel id={r.id} createdAt={r.created_at} kind={type === "video" ? "video" : "audio"} hint={USUALLY[r.kind]} />
+          </div>
+        </>
+      ) : r.status === "failed" ? (
+        <>
+          {head}
+          <p className="mx-4 mb-4 flex items-start gap-2 rounded-lg bg-red-500/10 p-3 text-xs leading-relaxed text-red-200">
+            <LuTriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+            <span>This did not finish. Nothing was used from your plan.</span>
+          </p>
+          {footer}
+        </>
+      ) : type === "video" && src ? (
+        <>
+          <button type="button" onClick={() => play.watch(r)} aria-label="Watch" className="group relative block aspect-video cursor-pointer overflow-hidden bg-black/40">
             <video src={`${src}#t=0.1`} preload="metadata" muted playsInline className="absolute inset-0 size-full object-cover" />
-          ) : type === "audio" && done ? (
-            <LandscapeThumb id={r.id} className="transition-transform duration-500 group-hover:scale-105" />
-          ) : r.status === "failed" ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-red-500/10 text-red-300">
-              <LuTriangleAlert className="size-8" />
-            </div>
-          ) : (
-            <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-white/[0.05] to-transparent p-4 text-sm leading-relaxed text-white/60">
-              <p className="line-clamp-5">{r.result?.text ?? ""}</p>
-            </div>
-          )}
-          {(src || r.status === "failed") && <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/35" />}
-
-          <span className="absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[0.7rem] font-medium text-white backdrop-blur">
-            <Kind className="size-3.5 text-violet-300" /> {type === "video" ? "Video" : type === "text" ? "Transcript" : "Audio"}
-          </span>
-          {dur !== null && <span className="absolute top-2.5 right-2.5 rounded-full bg-black/55 px-2 py-1 text-[0.7rem] font-medium tabular-nums text-white backdrop-blur">{fmtDuration(dur)}</span>}
-
-          {src && (type === "audio" || type === "video") && (
+            <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+            <span className="absolute top-1/2 left-1/2 flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-black shadow-xl transition-transform group-hover:scale-110">
+              <LuPlay className="size-5 translate-x-0.5" />
+            </span>
+            {dur !== null && <span className="absolute right-2.5 bottom-2.5 rounded-md bg-black/60 px-2 py-0.5 text-xs font-medium tabular-nums text-white backdrop-blur">{fmtDuration(dur)}</span>}
+          </button>
+          <div className="px-4 pt-3 pb-3">
+            <p className="truncate text-sm font-semibold" title={plain(r.title)}>
+              {twoWords(r.title)}
+            </p>
+            <p className="truncate text-xs text-white/45">Video{sub ? ` · ${sub}` : ""}</p>
+          </div>
+          {footer}
+        </>
+      ) : type === "audio" && src ? (
+        <>
+          {head}
+          <div className="flex items-center gap-3 px-4 pb-4">
             <button
               type="button"
-              onClick={() => (type === "video" ? play.watch(r) : play.toggle(r))}
-              aria-label={type === "video" ? "Watch" : on ? "Pause" : "Play"}
-              className={cn(
-                "absolute top-1/2 left-1/2 flex size-14 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-white text-black shadow-xl transition-all",
-                on ? "scale-100 opacity-100" : "scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100 focus-visible:opacity-100"
-              )}
+              onClick={() => play.toggle(r)}
+              aria-label={on ? "Pause" : "Play"}
+              className="zs-grad-bg flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-white shadow-[0_10px_26px_-10px_rgb(124_58_237/0.95)] transition-transform hover:scale-105 active:scale-95"
             >
-              {on ? <LuPause className="size-6" /> : <LuPlay className="size-6 translate-x-0.5" />}
+              {on ? <LuPause className="size-5" /> : <LuPlay className="size-5 translate-x-0.5" />}
             </button>
-          )}
-          {type === "audio" && src && (
-            <div aria-hidden className="absolute inset-x-3 bottom-2.5 flex h-6 items-end gap-[2px]">
+            <div aria-hidden className="flex h-11 min-w-0 flex-1 items-center gap-[2px]">
               {bars.map((h, i) => (
-                <span key={i} className={cn("flex-1 rounded-full", on && (i + 0.5) / bars.length <= play.progress ? "bg-violet-300" : "bg-white/45")} style={{ height: `${h * 100}%` }} />
+                <span key={i} className={cn("flex-1 rounded-full", on && (i + 0.5) / bars.length <= play.progress ? "bg-gradient-to-t from-violet-500 to-blue-400" : "bg-violet-500/35")} style={{ height: `${h * 100}%` }} />
               ))}
             </div>
-          )}
-        </div>
+          </div>
+          {footer}
+        </>
+      ) : (
+        <>
+          {head}
+          <p className="mx-4 mb-4 line-clamp-4 text-sm leading-relaxed text-white/55">{r.result?.text ?? ""}</p>
+          {footer}
+        </>
       )}
-
-      <div className="flex items-center gap-2 px-3.5 py-3">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold" title={plain(r.title)}>
-            {twoWords(r.title)}
-          </p>
-          <p className="truncate text-xs text-white/45">
-            {r.status === "failed" ? <span className="text-red-300">Failed. Nothing was used from your plan.</span> : r.status === "processing" ? "In progress" : sub}
-            {r.status === "done" && (
-              <>
-                {" · "}
-                <LocalTime iso={r.created_at} mode="day" />
-              </>
-            )}
-          </p>
-        </div>
-        {src && (
-          <a href={src} download aria-label="Download" className="flex size-8 shrink-0 items-center justify-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white">
-            <LuDownload className="size-4" />
-          </a>
-        )}
-        <RowMenu r={r} text={r.result?.text} />
-      </div>
     </article>
   );
 }
@@ -238,27 +261,27 @@ function ListRow({ r, play }: { r: LibraryRow; play: Play }) {
   return (
     <li className="px-3 py-2.5">
       <div className="flex items-center gap-3">
-        <div className="relative h-11 w-16 shrink-0 overflow-hidden rounded-md bg-black/40">
-          {type === "video" && src ? (
+        {type === "video" && src ? (
+          <div className="relative h-11 w-16 shrink-0 overflow-hidden rounded-md bg-black/40">
             <video src={`${src}#t=0.1`} preload="metadata" muted playsInline className="absolute inset-0 size-full object-cover" />
-          ) : type === "audio" && done ? (
-            <LandscapeThumb id={r.id} width={200} />
-          ) : (
-            <div className="flex size-full items-center justify-center bg-white/[0.05] text-white/35">
-              <Kind className="size-5" />
-            </div>
-          )}
-          {src && (type === "audio" || type === "video") && (
-            <button
-              type="button"
-              onClick={() => (type === "video" ? play.watch(r) : play.toggle(r))}
-              aria-label={type === "video" ? "Watch" : on ? "Pause" : "Play"}
-              className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/35 text-white transition-colors hover:bg-black/50"
-            >
-              {on ? <LuPause className="size-4" /> : <LuPlay className="size-4 translate-x-px" />}
+            <button type="button" onClick={() => play.watch(r)} aria-label="Watch" className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/35 text-white transition-colors hover:bg-black/50">
+              <LuPlay className="size-4 translate-x-px" />
             </button>
-          )}
-        </div>
+          </div>
+        ) : type === "audio" && src ? (
+          <button
+            type="button"
+            onClick={() => play.toggle(r)}
+            aria-label={on ? "Pause" : "Play"}
+            className={cn("flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-all", on ? "zs-grad-bg text-white" : "bg-white/[0.07] text-white hover:bg-white/15")}
+          >
+            {on ? <LuPause className="size-[1.1rem]" /> : <LuPlay className="size-[1.1rem] translate-x-px" />}
+          </button>
+        ) : (
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/[0.05] text-white/40">
+            <Kind className="size-[1.1rem]" />
+          </span>
+        )}
         <div className="min-w-0 flex-1 sm:flex-none sm:basis-44">
           <p className="truncate text-sm font-semibold" title={plain(r.title)}>
             {twoWords(r.title)}
@@ -308,7 +331,7 @@ export function LibraryView({ rows }: { rows: LibraryRow[] }) {
   const [tool, setTool] = React.useState("");
   const [q, setQ] = React.useState("");
   const [oldest, setOldest] = React.useState(false);
-  const [view, setView] = React.useState<"grid" | "list">("grid");
+  const [view, setView] = React.useState<"grid" | "list">("list");
   const [watching, setWatching] = React.useState<LibraryRow | null>(null);
 
   const audio = React.useRef<HTMLAudioElement | null>(null);
