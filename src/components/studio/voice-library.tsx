@@ -474,14 +474,38 @@ export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice
         if (!o) preview.stop();
       }}
     >
-      <div className="flex items-center gap-3 rounded-xl border bg-card p-3">
-        {value ? <VoiceAvatar id={value.id} size={48} /> : <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground"><LuAudioLines className="size-5" /></span>}
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{value?.name ?? "No voice chosen"}</p>
-          <p className="truncate text-xs text-muted-foreground">{value?.meta || "Pick one from the library"}</p>
-        </div>
-        <DialogTrigger render={<Button variant="outline" size="sm" className="shrink-0" />}>
-          <LuSearch /> Browse voices
+      <div className="flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {[...(value && !defaults.some((d) => d.id === value.id) ? [value] : []), ...defaults].slice(0, 7).map((v) => {
+          const on = value?.id === v.id;
+          return (
+            <button
+              key={v.id}
+              type="button"
+              onClick={() => onChange(v)}
+              aria-pressed={on}
+              className={cn(
+                "flex w-[7.25rem] shrink-0 cursor-pointer flex-col items-center gap-2 rounded-2xl border px-2 py-3.5 text-center transition-all",
+                on ? "border-violet-400/70 bg-violet-500/15 shadow-[0_8px_26px_-12px_rgb(124_58_237/0.8)]" : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
+              )}
+            >
+              <VoiceAvatar id={v.id} size={56} />
+              <span className="w-full truncate text-sm font-medium">{v.name.split(" - ")[0]}</span>
+              <span className="w-full truncate text-[0.7rem] text-white/45">{v.meta || "Voice"}</span>
+            </button>
+          );
+        })}
+        <DialogTrigger
+          render={
+            <button
+              type="button"
+              className="flex w-[7.25rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-2 py-3.5 text-center text-white/60 transition-colors hover:border-violet-400/50 hover:text-white"
+            />
+          }
+        >
+          <span className="flex size-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.04]">
+            <LuSearch className="size-5" />
+          </span>
+          <span className="text-sm font-medium">Browse all</span>
         </DialogTrigger>
       </div>
 

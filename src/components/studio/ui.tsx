@@ -2,12 +2,14 @@
 
 import * as React from "react";
 import {
+  LuArrowRight,
   LuCheck,
   LuDownload,
   LuFileText,
   LuLoaderCircle,
   LuPlay,
   LuSearch,
+  LuSparkles,
   LuTriangleAlert,
   LuUpload,
   LuUserRound,
@@ -25,7 +27,6 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { JobState } from "@/components/studio/use-job";
 import { AudioPlayer } from "@/components/studio/audio-player";
@@ -82,12 +83,12 @@ export function ToolHeader({ aside }: { aside?: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
       <div className="flex min-w-0 items-start gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-card [&_svg]:size-5">
+        <span className="zs-grad-bg flex size-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_10px_30px_-12px_rgb(124_58_237/0.8)] [&_svg]:size-6">
           <Icon />
         </span>
         <div>
-          <h1 className="font-heading text-2xl leading-tight font-semibold">{tool.name}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{tool.blurb}</p>
+          <h1 className="font-heading text-3xl leading-tight font-semibold tracking-tight">{tool.name}</h1>
+          <p className="mt-1 text-sm text-white/55">{tool.blurb}</p>
         </div>
       </div>
       {aside && <div className="w-full shrink-0 sm:w-80">{aside}</div>}
@@ -95,17 +96,12 @@ export function ToolHeader({ aside }: { aside?: React.ReactNode }) {
   );
 }
 
-/** Settings on the left, output on the right. Stacks on small screens. */
+/** The controls on the left, the result on the right. Stacks on small screens. */
 export function Workspace({ form, output }: { form: React.ReactNode; output: React.ReactNode }) {
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-5">{form}</CardContent>
-      </Card>
-      {/* the result stays in view beside the settings while the page scrolls */}
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,32rem)_minmax(0,1fr)]">
+      <div className="zs-card flex flex-col gap-6 p-5 sm:p-6">{form}</div>
+      {/* the result stays in view beside the controls while the page scrolls */}
       <div className="min-w-0 lg:sticky lg:top-20">{output}</div>
     </div>
   );
@@ -167,18 +163,30 @@ export function Segmented<T extends string>({
 }: {
   value: T;
   onChange: (v: T) => void;
-  options: { value: T; label: string }[];
+  options: { value: T; label: string; icon?: React.ReactNode }[];
 }) {
   return (
-    <Tabs value={value} onValueChange={(v) => onChange(v as T)}>
-      <TabsList className="w-full">
-        {options.map((o) => (
-          <TabsTrigger key={o.value} value={o.value}>
-            {o.label}
-          </TabsTrigger>
-        ))}
-      </TabsList>
-    </Tabs>
+    <div role="radiogroup" className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(options.length, 5)}, minmax(0, 1fr))` }}>
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            onClick={() => onChange(o.value)}
+            className={cn(
+              "flex min-h-11 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2 text-center text-sm transition-all",
+              on ? "border-violet-400/70 bg-violet-500/15 font-medium text-white shadow-[0_0_0_1px_rgb(139_92_246/0.35),0_8px_24px_-12px_rgb(124_58_237/0.7)]" : "border-white/10 bg-white/[0.03] text-white/70 hover:border-white/20 hover:bg-white/[0.06] hover:text-white"
+            )}
+          >
+            {o.icon}
+            <span className="leading-tight">{o.label}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -353,14 +361,20 @@ export function SubmitButton({
 }) {
   const uploading = useUploadProgress();
   return (
-    <Button size="lg" onClick={onClick} disabled={busy || disabled} className="w-full">
-      {busy && <LuLoaderCircle className="animate-spin" />}
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={busy || disabled}
+      className="zs-btn flex h-13 w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl text-base font-semibold"
+    >
+      {busy ? <LuLoaderCircle className="size-5 animate-spin" /> : <LuSparkles className="size-5" />}
       {busy ? (uploading !== null ? `Uploading ${uploading}%` : busyLabel) : children}
-    </Button>
+      {!busy && <LuArrowRight className="size-4 opacity-80" />}
+    </button>
   );
 }
 
-/** Engine choice: one engine is a quiet line, two or more are a dropdown. */
+/** Engine choice, one quiet row: a name for one engine, a dropdown for several. */
 export function EnginePicker() {
   const ctx = React.useContext(ToolContext);
   if (!ctx || ctx.engines.length === 0) return null;
@@ -368,18 +382,24 @@ export function EnginePicker() {
   if (ctx.engines.length === 1) {
     const e = ctx.engines[0];
     return (
-      <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 px-3 py-2 text-xs">
-        <span className="text-muted-foreground">{e.label}</span>
-        <span className="shrink-0 font-medium">{costLabel(e)}</span>
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2.5 text-sm">
+        <span className="flex items-center gap-2 text-white/70">
+          <LuSparkles className="size-4 text-violet-300" />
+          {e.label}
+        </span>
+        <span className="text-xs text-white/45">{costLabel(e)}</span>
       </div>
     );
   }
 
   const current = ctx.engines.find((e) => e.key === ctx.key) ?? ctx.engines[0];
   return (
-    <Field label="Engine">
+    <div className="flex flex-col gap-1.5">
       <Select value={current.key} onValueChange={(v) => v && ctx.setKey(v)}>
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="h-11 w-full rounded-xl border-white/10 bg-white/[0.04]">
+          <span className="mr-1 flex items-center gap-2 text-white/50">
+            <LuSparkles className="size-4 text-violet-300" /> Engine
+          </span>
           <SelectValue>{current.label}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -393,8 +413,8 @@ export function EnginePicker() {
           ))}
         </SelectContent>
       </Select>
-      {current.description && <p className="text-xs text-muted-foreground">{current.description}</p>}
-    </Field>
+      {current.description && <p className="px-1 text-xs text-white/45">{current.description}</p>}
+    </div>
   );
 }
 
@@ -468,11 +488,12 @@ export function Output({
   children?: React.ReactNode;
 }) {
   const s = STATUS[state.phase];
+  const tool = useTool();
   return (
-    <Card>
+    <Card className="zs-card border-0 bg-transparent ring-0">
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
-          <CardTitle className="text-base">Output</CardTitle>
+          <CardTitle className="font-heading text-lg">{tool.group === "video" ? "Generated video" : "Generated audio"}</CardTitle>
           <Badge variant={s.variant}>{s.label}</Badge>
         </div>
         <CardDescription>

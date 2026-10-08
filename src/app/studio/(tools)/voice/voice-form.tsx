@@ -22,9 +22,9 @@ const LANGUAGES: [string, string][] = [
 
 const TAGS = ["[laughs]", "[whispers]", "[sighs]", "[excited]", "[sarcastic]", "[curious]", "[crying]", "[shouting]", "[calm]", "[pauses]"];
 
-export function VoiceForm({ voices }: { voices: Voice[] }) {
+export function VoiceForm({ voices, initialText = "" }: { voices: Voice[]; initialText?: string }) {
   const defaults: VoiceChoice[] = React.useMemo(() => voices.map((v) => ({ id: v.id, name: v.name, meta: v.labels ?? v.category, previewUrl: v.previewUrl })), [voices]);
-  const [text, setText] = React.useState("");
+  const [text, setText] = React.useState(initialText);
   const [voice, setVoice] = React.useState<VoiceChoice | null>(defaults[0] ?? null);
   const [language, setLanguage] = React.useState("");
   const [settings, setSettings] = React.useState(DEFAULTS);
@@ -63,7 +63,7 @@ export function VoiceForm({ voices }: { voices: Voice[] }) {
                       key={t}
                       type="button"
                       onClick={() => setText((s) => (s ? `${s}${/\s$/.test(s) ? "" : " "}${t} ` : `${t} `).slice(0, max))}
-                      className="cursor-pointer rounded-full border px-2.5 py-1 text-xs transition-colors hover:bg-muted"
+                      className="cursor-pointer rounded-full border border-violet-400/25 bg-violet-500/10 px-3 py-1 text-xs text-violet-100 transition-colors hover:bg-violet-500/25"
                     >
                       {t}
                     </button>
@@ -77,13 +77,13 @@ export function VoiceForm({ voices }: { voices: Voice[] }) {
             <SelectField value={language} onChange={setLanguage} options={LANGUAGES.map(([value, label]) => ({ value, label }))} />
           </Field>
 
-          <div className="rounded-xl border">
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
             <button type="button" onClick={() => setShowSettings((v) => !v)} aria-expanded={showSettings} className="flex w-full cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium">
-              Voice settings
+              Advanced settings
               <LuChevronDown className={cn("size-4 text-muted-foreground transition-transform", showSettings && "rotate-180")} />
             </button>
             {showSettings && (
-              <div className="flex flex-col gap-5 border-t p-4">
+              <div className="flex flex-col gap-5 border-t border-white/[0.07] p-4">
                 <Slider label="Stability" value={settings.stability} onChange={(v) => set("stability", v)} left="More expressive" right="More steady" />
                 <Slider label="Similarity" value={settings.similarity} onChange={(v) => set("similarity", v)} left="More freedom" right="Closer to the voice" />
                 <Slider label="Style" value={settings.style} onChange={(v) => set("style", v)} left="Neutral" right="Exaggerated" />
@@ -130,7 +130,7 @@ export function VoiceForm({ voices }: { voices: Voice[] }) {
               )
             }
           >
-            Generate voice
+            Generate audio
           </SubmitButton>
         </>
       }

@@ -91,8 +91,8 @@ function TagGroup({ title, options, picked, onToggle, open, onOpen }: { title: s
   );
 }
 
-export function MusicForm({ finetunes }: { finetunes: Finetune[] }) {
-  const [prompt, setPrompt] = React.useState("");
+export function MusicForm({ finetunes, initialPrompt = "" }: { finetunes: Finetune[]; initialPrompt?: string }) {
+  const [prompt, setPrompt] = React.useState(initialPrompt);
   const [style, setStyle] = React.useState("");
   const [tags, setTags] = React.useState<Record<Group, string[]>>({ genre: [], instrument: [], mood: [] });
   const [panel, setPanel] = React.useState<Group | null>(null);

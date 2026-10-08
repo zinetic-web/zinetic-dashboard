@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LuChevronDown,
+  LuZap,
   LuFolderOpen,
   LuHouse,
   LuLifeBuoy,
@@ -82,11 +83,11 @@ function Item({ href, label, icon, active, collapsed, onNavigate, locked }: Item
       className={cn(
         "group relative flex h-10 items-center gap-3 rounded-lg text-[0.9375rem] transition-colors [&_svg]:size-5 [&_svg]:shrink-0",
         collapsed ? "mx-auto w-11 justify-center" : "px-3",
-        active ? "bg-white/10 font-medium text-white" : "text-white/65 hover:bg-white/[0.06] hover:text-white"
+        active ? "bg-gradient-to-r from-violet-600/30 to-blue-600/10 font-medium text-white ring-1 ring-violet-400/25" : "text-white/60 hover:bg-white/[0.05] hover:text-white"
       )}
     >
-      {active && !collapsed && <span aria-hidden className="absolute top-1/2 -left-3 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-white" />}
-      <span className={cn("transition-colors", active ? "text-white" : "text-white/45 group-hover:text-white/85")}>{icon}</span>
+      {active && !collapsed && <span aria-hidden className="zs-grad-bg absolute top-1/2 -left-3 h-6 w-[3px] -translate-y-1/2 rounded-r-full" />}
+      <span className={cn("transition-colors", active ? "text-violet-300" : "text-white/45 group-hover:text-white/85")}>{icon}</span>
       {!collapsed && <span className="flex-1 truncate">{label}</span>}
       {!collapsed && locked && <LuLock className="!size-3.5 text-white/35" />}
       {collapsed && locked && <LuLock className="absolute right-1 bottom-1 !size-3 text-white/45" />}
@@ -138,7 +139,7 @@ function Group({ id, label, tools, collapsed, query, pathname, onNavigate, open:
           type="button"
           onClick={() => setClosed(!closed)}
           aria-expanded={open}
-          className="flex h-8 cursor-pointer items-center gap-2 px-3 text-[0.8125rem] font-medium text-white/45 transition-colors hover:text-white/80"
+          className="flex h-8 cursor-pointer items-center gap-2 px-3 text-xs font-medium tracking-wide text-white/40 transition-colors hover:text-white/75"
         >
           <span className="flex-1 text-left">{label}</span>
           <span className="text-xs tabular-nums text-white/30">{tools.length}</span>
@@ -169,10 +170,10 @@ function Sidebar({ collapsed, onToggle, onNavigate, mobile = false, open }: { co
     <div className="flex h-full flex-col">
       <div className={cn("flex h-16 shrink-0 items-center", rail ? "justify-center" : "px-5")}>
         <Link href="/studio" onClick={onNavigate} className="flex items-center gap-3">
-          <Image src="/brand/logo.png" alt="Zinetic Music" width={899} height={1140} style={{ height: 30, width: "auto" }} />
+          <Image src="/brand/logo.png" alt="Zinetic Music" width={899} height={1140} style={{ height: 32, width: "auto" }} />
           {!rail && (
-            <span className="font-heading text-base font-semibold">
-              Zinetic <span className="font-normal text-white/50">Studio</span>
+            <span className="font-heading text-lg font-semibold tracking-tight">
+              Zinetic <span className="zs-grad-text">Studio</span>
             </span>
           )}
         </Link>
@@ -203,7 +204,7 @@ function Sidebar({ collapsed, onToggle, onNavigate, mobile = false, open }: { co
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search tools"
               aria-label="Search tools"
-              className="h-10 w-full rounded-lg border border-white/10 bg-white/[0.04] pr-3 pl-9 text-sm text-white outline-none transition-colors placeholder:text-white/35 focus:border-white/30"
+              className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pr-3 pl-9 text-sm text-white outline-none transition-colors placeholder:text-white/35 focus:border-violet-400/50"
             />
           </div>
         )}
@@ -256,26 +257,29 @@ function TopBar({ userName, userEmail, activePlans, impersonating }: { userName:
   const label = userName || userEmail;
 
   return (
-    <header className="sticky top-0 z-20 hidden h-16 items-center justify-between gap-4 border-b border-white/10 bg-[#08070a]/80 px-8 backdrop-blur-xl lg:flex">
-      <div className="flex items-center gap-2 text-sm">
+    <header className="sticky top-0 z-20 hidden h-16 items-center justify-between gap-4 border-b border-white/[0.07] bg-[#07070f]/70 px-8 backdrop-blur-xl lg:flex">
+      <div className="flex items-center gap-2.5 text-sm">
         <span className="text-white/45">AI Studio</span>
-        <span className="text-white/25">/</span>
+        <span className="text-white/20">/</span>
         <span className="font-medium">{title}</span>
       </div>
       <div className="flex items-center gap-3">
-        <Link href="/studio/plans" className="flex h-9 items-center gap-2 rounded-full bg-white/[0.06] px-4 text-sm ring-1 ring-white/10 transition-colors hover:bg-white/10">
-          <span className={activePlans > 0 ? "size-1.5 rounded-full bg-emerald-400" : "size-1.5 rounded-full bg-white/30"} />
-          <span className="text-white/60">My plans</span>
-          <span className="font-medium">{activePlans} active</span>
+        <Link href="/studio/plans" className="flex h-10 items-center gap-2 rounded-xl bg-white/[0.05] px-4 text-sm ring-1 ring-white/10 transition-colors hover:bg-white/[0.09]">
+          <LuZap className={activePlans > 0 ? "size-4 text-amber-300" : "size-4 text-white/35"} />
+          <span className="font-semibold tabular-nums">{activePlans}</span>
+          <span className="text-white/55">{activePlans === 1 ? "active plan" : "active plans"}</span>
         </Link>
-        <form action={impersonating ? stopImpersonating : signOut} className="flex items-center gap-2 rounded-full bg-white/[0.06] py-1 pr-1 pl-1 ring-1 ring-white/10">
-          <span className="flex size-7 items-center justify-center rounded-full bg-white/15 text-xs font-semibold">{label.slice(0, 1).toUpperCase()}</span>
+        <Link href="/studio/plans" className="zs-btn flex h-10 items-center rounded-xl px-5 text-sm font-semibold">
+          Upgrade
+        </Link>
+        <form action={impersonating ? stopImpersonating : signOut} className="flex items-center gap-2 rounded-xl bg-white/[0.05] py-1 pr-1.5 pl-1.5 ring-1 ring-white/10">
+          <span className="zs-grad-bg flex size-8 items-center justify-center rounded-full text-xs font-semibold">{label.slice(0, 1).toUpperCase()}</span>
           <span className="hidden max-w-40 truncate text-sm xl:block">{label}</span>
           <button
             type="submit"
             aria-label={impersonating ? "Stop impersonating" : "Sign out"}
             title={impersonating ? "Stop impersonating" : "Sign out"}
-            className="flex size-7 cursor-pointer items-center justify-center rounded-full text-white/55 hover:bg-white/10 hover:text-white"
+            className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-white/55 hover:bg-white/10 hover:text-white"
           >
             {impersonating ? <LuUserRoundX className="size-4" /> : <LuLogOut className="size-4" />}
           </button>
@@ -320,17 +324,17 @@ export function StudioShell({
   }, [setCollapsed]);
 
   return (
-    <div className="zl dark min-h-screen bg-[#08070a] text-white">
+    <div className="zl zs dark min-h-screen text-white">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-30 hidden border-r border-white/10 bg-[#0b0a0f] transition-[width] duration-200 lg:block",
+          "fixed inset-y-0 left-0 z-30 hidden border-r border-white/[0.07] bg-[#090913]/85 backdrop-blur-xl transition-[width] duration-200 lg:block",
           collapsed ? "w-[4.5rem]" : "w-72"
         )}
       >
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} onNavigate={close} open={openTools} />
       </aside>
 
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/10 bg-[#0b0a0f]/90 px-4 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/10 bg-[#090913]/90 px-4 backdrop-blur lg:hidden">
         <button type="button" aria-label="Open menu" onClick={() => setOpen(true)} className="flex size-9 cursor-pointer items-center justify-center rounded-lg hover:bg-white/10">
           <LuMenu className="size-5" />
         </button>
@@ -348,7 +352,7 @@ export function StudioShell({
       {open && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button type="button" aria-label="Close menu" onClick={close} className="absolute inset-0 bg-black/70" />
-          <div className="absolute inset-y-0 left-0 w-80 max-w-[88vw] border-r border-white/10 bg-[#0b0a0f]">
+          <div className="absolute inset-y-0 left-0 w-80 max-w-[88vw] border-r border-white/10 bg-[#090913]">
             <button type="button" aria-label="Close" onClick={close} className="absolute top-3.5 right-3 z-10 flex size-9 cursor-pointer items-center justify-center rounded-lg hover:bg-white/10">
               <LuX className="size-5" />
             </button>
