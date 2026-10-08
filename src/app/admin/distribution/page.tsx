@@ -34,7 +34,7 @@ export default async function DistributionPage() {
             <li>When the dashboard is ready, its releases, royalties and artists will be managed from this section.</li>
           </ul>
           <div>
-            <Button variant="outline" render={<Link href="/admin/customers" />}>
+            <Button variant="outline" nativeButton={false} render={<Link href="/admin/customers" />}>
               Give someone early access
             </Button>
           </div>

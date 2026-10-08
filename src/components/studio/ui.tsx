@@ -542,7 +542,7 @@ export function VideoResult({ id, name, vertical }: { id: string; name: string; 
 
 export function DownloadLink({ id, name }: { id: string; name: string }) {
   return (
-    <Button variant="outline" size="sm" className="w-fit" render={<a href={`/api/studio/files/${id}`} download={name} />}>
+    <Button variant="outline" size="sm" className="w-fit" nativeButton={false} render={<a href={`/api/studio/files/${id}`} download={name} />}>
       <LuDownload /> Download
     </Button>
   );

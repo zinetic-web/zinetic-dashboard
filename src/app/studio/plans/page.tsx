@@ -66,7 +66,7 @@ export default async function MyPlansPage() {
                   )}
                   <div className="flex flex-wrap items-center gap-2">
                     {st?.active && tool.href && (
-                      <Button variant="outline" size="sm" render={<Link href={tool.href} />}>
+                      <Button variant="outline" size="sm" nativeButton={false} render={<Link href={tool.href} />}>
                         Open
                       </Button>
                     )}

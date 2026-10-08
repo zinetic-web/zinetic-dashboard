@@ -213,11 +213,11 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
                   ))}
                 </ul>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" render={<Link href={d.manage} />}>
+                  <Button variant="outline" size="sm" nativeButton={false} render={<Link href={d.manage} />}>
                     {d.manageLabel}
                   </Button>
                   {url && (
-                    <Button variant="ghost" size="sm" render={<a href={url} target="_blank" rel="noreferrer" />}>
+                    <Button variant="ghost" size="sm" nativeButton={false} render={<a href={url} target="_blank" rel="noreferrer" />}>
                       Open dashboard
                     </Button>
                   )}

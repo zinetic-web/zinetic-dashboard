@@ -102,7 +102,7 @@ export function VideoPlayer({
             <LuDownload />
           </Button>
         ) : (
-          <Button variant="ghost" size="icon-sm" render={<a href={src} download={name} />} aria-label="Download" className="text-white hover:bg-white/15 hover:text-white">
+          <Button variant="ghost" size="icon-sm" nativeButton={false} render={<a href={src} download={name} />} aria-label="Download" className="text-white hover:bg-white/15 hover:text-white">
             <LuDownload />
           </Button>
         )}

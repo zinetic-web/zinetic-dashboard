@@ -208,7 +208,7 @@ export function CustomersTable({ rows }: { rows: CustomerRow[] }) {
                         </Button>
                       </>
                     ) : (
-                      <Button size="sm" variant="outline" render={<Link href={`/admin/customers/${r.id}`} />}>
+                      <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`/admin/customers/${r.id}`} />}>
                         Manage
                       </Button>
                     )}
