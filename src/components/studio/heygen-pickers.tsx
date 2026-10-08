@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { SparkIcon } from "@/components/spark-icon";
 import Image from "next/image";
-import { LuCheck, LuCircleUserRound, LuImage, LuLoaderCircle, LuPlay, LuSearch, LuSparkles, LuUserRound, LuWand, LuX } from "react-icons/lu";
+import { LuCheck, LuCircleUserRound, LuImage, LuLoaderCircle, LuPlay, LuSearch, LuUserRound, LuWand, LuX } from "react-icons/lu";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -291,7 +292,7 @@ export function HeyGenVoiceLibrary({ value, onChange }: { value: VoiceChoice | n
       }}
     >
       <div className="flex items-center gap-3 rounded-xl border bg-card p-3">
-        {value ? <VoiceAvatar id={value.id} size={48} /> : <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground"><LuSparkles className="size-5" /></span>}
+        {value ? <VoiceAvatar id={value.id} size={48} /> : <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground"><SparkIcon className="size-5" /></span>}
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{value?.name ?? "No voice chosen"}</p>
           <p className="truncate text-xs text-muted-foreground">{value?.meta || "Pick a narrator"}</p>

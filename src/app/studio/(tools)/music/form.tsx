@@ -6,24 +6,32 @@ import {
   LuCheck,
   LuChevronDown,
   LuClapperboard,
+  LuDices,
   LuDumbbell,
   LuGamepad2,
   LuGraduationCap,
   LuHeart,
   LuMegaphone,
   LuMic,
+  LuSlidersHorizontal,
   LuSmartphone,
-  LuSparkles,
   LuX,
 } from "react-icons/lu";
 import type { Finetune } from "@/lib/studio/elevenlabs";
 import { useJob } from "@/components/studio/use-job";
-import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/studio/slider";
 import { Switch } from "@/components/ui/switch";
-import { AudioResult, EnginePicker, Field, Output, SubmitButton, TextArea, Workspace, useEngine } from "@/components/studio/ui";
+import { AudioResult, EnginePicker, Field, Output, SubmitButton, Workspace, useEngine } from "@/components/studio/ui";
 import { cn } from "@/lib/utils";
 
-const SUGGESTIONS = ["Upbeat Pop Anthem", "Melancholy Piano Ballad", "Driving Electronic Track", "Warm lo-fi hip hop with vinyl crackle", "Upbeat Bengali pop with dhol and a catchy chorus"];
+const IDEAS = [
+  "Upbeat pop anthem with a big singalong chorus",
+  "Melancholy piano ballad, late at night",
+  "Driving electronic track with a pulsing bassline",
+  "Warm lo-fi hip hop with vinyl crackle",
+  "Upbeat Bengali pop with dhol and a catchy chorus",
+  "Dark cinematic trap with heavy 808s",
+];
 
 // what each use case sounds like, added in front of the description
 const STYLES: { id: string; label: string; icon: React.ComponentType<{ className?: string }>; text: string }[] = [
@@ -38,72 +46,30 @@ const STYLES: { id: string; label: string; icon: React.ComponentType<{ className
   { id: "gaming", label: "Gaming", icon: LuGamepad2, text: "Dynamic game soundtrack with energy and momentum" },
 ];
 
-const GENRES = ["Pop", "Rock", "Hip Hop", "Electronic", "Lo-fi", "Jazz", "Classical", "Folk", "R&B", "Ambient", "Cinematic", "Country", "Latin", "Reggae", "Metal", "Indie", "EDM", "House", "Trap", "Baul", "Bollywood"];
-const INSTRUMENTS = ["Piano", "Acoustic guitar", "Electric guitar", "Synth", "Drums", "Bass", "Strings", "Violin", "Flute", "Sitar", "Tabla", "Dhol", "Harmonium", "Saxophone", "Trumpet", "Choir"];
-const MOODS = ["Happy", "Sad", "Energetic", "Calm", "Dark", "Epic", "Romantic", "Mysterious", "Uplifting", "Melancholic", "Aggressive", "Dreamy", "Nostalgic"];
+const OPTIONS = {
+  genre: ["Pop", "Rock", "Hip Hop", "Electronic", "Lo-fi", "Jazz", "Classical", "Folk", "R&B", "Ambient", "Cinematic", "Country", "Latin", "Reggae", "Metal", "Indie", "EDM", "House", "Trap", "Baul", "Bollywood"],
+  instrument: ["Piano", "Acoustic guitar", "Electric guitar", "Synth", "Drums", "Bass", "Strings", "Violin", "Flute", "Sitar", "Tabla", "Dhol", "Harmonium", "Saxophone", "Trumpet", "Choir"],
+  mood: ["Happy", "Sad", "Energetic", "Calm", "Dark", "Epic", "Romantic", "Mysterious", "Uplifting", "Melancholic", "Aggressive", "Dreamy", "Nostalgic"],
+};
+type Group = keyof typeof OPTIONS;
+const GROUP_LABEL: Record<Group, string> = { genre: "Genre", instrument: "Instruments", mood: "Mood" };
 
-const LENGTHS: [number, string][] = [
-  [15, "0:15"],
-  [30, "0:30"],
-  [60, "1:00"],
-  [90, "1:30"],
-  [120, "2:00"],
-  [180, "3:00"],
-  [240, "4:00"],
-  [300, "5:00"],
-];
-
-type Group = "genre" | "instrument" | "mood";
-
-function TagGroup({ title, options, picked, onToggle, open, onOpen }: { title: string; options: string[]; picked: string[]; onToggle: (v: string) => void; open: boolean; onOpen: () => void }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        onClick={onOpen}
-        aria-expanded={open}
-        className={cn("flex h-9 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm transition-colors", open || picked.length ? "border-foreground/40 bg-muted/50" : "hover:bg-muted/50")}
-      >
-        {title}
-        {picked.length > 0 && <span className="rounded-full bg-foreground px-1.5 text-[0.65rem] font-medium text-background">{picked.length}</span>}
-        <LuChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
-      </button>
-      {open && (
-        <div className="flex flex-wrap gap-1.5 rounded-lg border bg-muted/20 p-2.5">
-          {options.map((o) => {
-            const on = picked.includes(o);
-            return (
-              <button
-                key={o}
-                type="button"
-                onClick={() => onToggle(o)}
-                aria-pressed={on}
-                className={cn("flex cursor-pointer items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors", on ? "border-foreground bg-foreground text-background" : "hover:bg-muted")}
-              >
-                {on && <LuCheck className="size-3" />}
-                {o}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
+const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
 
 export function MusicForm({ finetunes, initialPrompt = "" }: { finetunes: Finetune[]; initialPrompt?: string }) {
   const [prompt, setPrompt] = React.useState(initialPrompt);
   const [style, setStyle] = React.useState("");
   const [tags, setTags] = React.useState<Record<Group, string[]>>({ genre: [], instrument: [], mood: [] });
-  const [panel, setPanel] = React.useState<Group | null>(null);
+  const [tab, setTab] = React.useState<Group>("genre");
   const [seconds, setSeconds] = React.useState(60);
   const [instrumental, setInstrumental] = React.useState(false);
   const [finetune, setFinetune] = React.useState("");
   const [seed, setSeed] = React.useState("");
+  const [more, setMore] = React.useState(false);
   const { state, run } = useJob();
   const eng = useEngine();
 
-  const toggle = (g: Group) => (v: string) => setTags((t) => ({ ...t, [g]: t[g].includes(v) ? t[g].filter((x) => x !== v) : [...t[g], v] }));
+  const toggle = (g: Group, v: string) => setTags((t) => ({ ...t, [g]: t[g].includes(v) ? t[g].filter((x) => x !== v) : [...t[g], v] }));
 
   // a ready-made style only works on the engine that offers them, so choosing one moves to that engine
   const finetuneEngine = eng.engines.find((e) => e.features.includes("finetunes"));
@@ -125,6 +91,7 @@ export function MusicForm({ finetunes, initialPrompt = "" }: { finetunes: Finetu
 
   const byGenre = finetunes.reduce<Record<string, Finetune[]>>((m, f) => ((m[f.genre] ??= []).push(f), m), {});
   const seedNumber = seed.trim() === "" ? undefined : Number(seed);
+  const chosen = (Object.keys(OPTIONS) as Group[]).flatMap((g) => tags[g].map((v) => ({ g, v })));
 
   return (
     <Workspace
@@ -132,8 +99,41 @@ export function MusicForm({ finetunes, initialPrompt = "" }: { finetunes: Finetu
         <>
           <EnginePicker />
 
-          <Field label="Start from a style">
-            <div className="grid grid-cols-3 gap-2">
+          <section className="flex flex-col gap-3">
+            <h2 className="font-heading text-base font-semibold">Describe your track</h2>
+            <div className="overflow-hidden rounded-xl border border-white/10 bg-black/20 transition-colors focus-within:border-violet-400/50">
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value.slice(0, 1500))}
+                rows={5}
+                placeholder="A soulful blues track with a gritty electric guitar. Add lyrics here if you want them sung as written."
+                className="w-full resize-none bg-transparent px-4 pt-3.5 pb-2 text-[0.95rem] leading-relaxed text-white outline-none placeholder:text-white/30"
+              />
+              <div className="flex items-center justify-between gap-2 border-t border-white/[0.07] px-2.5 py-2">
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setPrompt(IDEAS[Math.floor(Math.random() * IDEAS.length)])}
+                    className="flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs text-white/75 transition-colors hover:bg-white/[0.09] hover:text-white"
+                  >
+                    <LuDices className="size-3.5" /> Inspire me
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrompt("")}
+                    disabled={!prompt}
+                    className="flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs text-white/75 transition-colors hover:bg-white/[0.09] hover:text-white disabled:opacity-40"
+                  >
+                    <LuX className="size-3.5" /> Clear
+                  </button>
+                </div>
+                <span className="text-xs tabular-nums text-white/40">{prompt.length.toLocaleString()} / 1,500</span>
+              </div>
+            </div>
+          </section>
+
+          <Field label="Use case" hint="Optional">
+            <div className="flex flex-wrap gap-2">
               {STYLES.map((s) => {
                 const on = style === s.id;
                 return (
@@ -142,9 +142,12 @@ export function MusicForm({ finetunes, initialPrompt = "" }: { finetunes: Finetu
                     type="button"
                     onClick={() => setStyle(on ? "" : s.id)}
                     aria-pressed={on}
-                    className={cn("flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-xs transition-colors", on ? "border-foreground bg-muted" : "hover:bg-muted/50")}
+                    className={cn(
+                      "flex h-10 cursor-pointer items-center gap-2 rounded-xl border px-3.5 text-sm transition-all",
+                      on ? "border-violet-400/70 bg-violet-500/15 text-white shadow-[0_6px_20px_-10px_rgb(124_58_237/0.9)]" : "border-white/10 bg-white/[0.03] text-white/65 hover:border-white/20 hover:text-white"
+                    )}
                   >
-                    <s.icon className="size-5" />
+                    <s.icon className={cn("size-4", on ? "text-violet-300" : "text-white/45")} />
                     {s.label}
                   </button>
                 );
@@ -152,86 +155,111 @@ export function MusicForm({ finetunes, initialPrompt = "" }: { finetunes: Finetu
             </div>
           </Field>
 
-          <Field label="Describe the track" hint="Add lyrics here if you want it sung as written">
-            <TextArea value={prompt} onChange={setPrompt} max={1500} rows={6} placeholder="Make a soulful blues track with a gritty electric guitar" />
-            <div className="flex flex-wrap gap-1.5">
-              {SUGGESTIONS.map((i) => (
-                <Button key={i} variant="outline" size="xs" onClick={() => setPrompt(i)}>
-                  {i}
-                </Button>
-              ))}
+          <section className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold">Sound</h2>
+              {chosen.length > 0 && (
+                <button type="button" onClick={() => setTags({ genre: [], instrument: [], mood: [] })} className="cursor-pointer text-xs text-white/45 transition-colors hover:text-white">
+                  Clear {chosen.length}
+                </button>
+              )}
             </div>
-          </Field>
-
-          <div className="flex flex-wrap items-start gap-2">
-            <TagGroup title="Genre" options={GENRES} picked={tags.genre} onToggle={toggle("genre")} open={panel === "genre"} onOpen={() => setPanel(panel === "genre" ? null : "genre")} />
-            <TagGroup title="Instrument" options={INSTRUMENTS} picked={tags.instrument} onToggle={toggle("instrument")} open={panel === "instrument"} onOpen={() => setPanel(panel === "instrument" ? null : "instrument")} />
-            <TagGroup title="Mood" options={MOODS} picked={tags.mood} onToggle={toggle("mood")} open={panel === "mood"} onOpen={() => setPanel(panel === "mood" ? null : "mood")} />
-          </div>
-
-          <Field label="Length">
-            <div className="flex flex-wrap gap-1.5">
-              {LENGTHS.map(([s, label]) => (
+            <div role="tablist" className="grid grid-cols-3 gap-1 rounded-xl bg-white/[0.04] p-1 ring-1 ring-white/10">
+              {(Object.keys(OPTIONS) as Group[]).map((g) => (
                 <button
-                  key={s}
+                  key={g}
                   type="button"
-                  onClick={() => setSeconds(s)}
-                  aria-pressed={seconds === s}
-                  className={cn("h-8 cursor-pointer rounded-lg border px-3 text-sm tabular-nums transition-colors", seconds === s ? "border-foreground bg-foreground text-background" : "hover:bg-muted")}
+                  role="tab"
+                  aria-selected={tab === g}
+                  onClick={() => setTab(g)}
+                  className={cn("flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg text-sm transition-colors", tab === g ? "zs-grad-bg font-medium text-white shadow-[0_6px_20px_-8px_rgb(124_58_237/0.9)]" : "text-white/60 hover:text-white")}
                 >
-                  {label}
+                  {GROUP_LABEL[g]}
+                  {tags[g].length > 0 && <span className={cn("rounded-full px-1.5 text-[0.65rem] font-semibold", tab === g ? "bg-white/25" : "bg-violet-500/30 text-violet-100")}>{tags[g].length}</span>}
                 </button>
               ))}
             </div>
-          </Field>
+            <div className="flex flex-wrap gap-1.5">
+              {OPTIONS[tab].map((o) => {
+                const on = tags[tab].includes(o);
+                return (
+                  <button
+                    key={o}
+                    type="button"
+                    onClick={() => toggle(tab, o)}
+                    aria-pressed={on}
+                    className={cn("flex h-8 cursor-pointer items-center gap-1 rounded-full border px-3 text-xs transition-colors", on ? "border-violet-400/70 bg-violet-500/20 text-white" : "border-white/10 text-white/65 hover:border-white/25 hover:text-white")}
+                  >
+                    {on && <LuCheck className="size-3 text-violet-300" />}
+                    {o}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
-          <label className="flex items-center justify-between gap-3 text-sm">
+          <Slider label="Length" value={seconds} min={10} max={300} step={5} onChange={setSeconds} left="0:10" right="5:00" format={mmss} />
+
+          <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm">
             <span>
-              <span className="font-medium">Instrumental</span>
-              <span className="block text-xs text-muted-foreground">Music only, no singing.</span>
+              <span className="font-semibold">Instrumental</span>
+              <span className="block text-xs text-white/45">Music only, no singing.</span>
             </span>
             <Switch checked={instrumental} onCheckedChange={setInstrumental} />
           </label>
 
-          {finetunes.length > 0 && (
-            <Field label="Ready-made style" hint={finetuneEngine ? "Shapes the sound of the whole track. Uses the Music v2 engine." : undefined}>
-              <div className="flex items-center gap-2">
-                <select
-                  value={finetune}
-                  onChange={(e) => pickFinetune(e.target.value)}
-                  className="h-10 min-w-0 flex-1 rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                >
-                  <option value="">None</option>
-                  {Object.entries(byGenre)
-                    .sort(([a], [b]) => a.localeCompare(b))
-                    .map(([genre, list]) => (
-                      <optgroup key={genre} label={genre}>
-                        {list.map((f) => (
-                          <option key={f.id} value={f.id}>
-                            {f.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                </select>
-                {finetune && (
-                  <Button variant="ghost" size="icon-sm" aria-label="Clear style" onClick={() => setFinetune("")}>
-                    <LuX />
-                  </Button>
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
+            <button type="button" onClick={() => setMore((v) => !v)} aria-expanded={more} className="flex w-full cursor-pointer items-center justify-between px-4 py-3.5 text-sm font-medium">
+              <span className="flex items-center gap-2.5">
+                <LuSlidersHorizontal className="size-4 text-violet-300" />
+                Advanced settings
+                {(finetune || seed) && <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[0.65rem] text-violet-200">Changed</span>}
+              </span>
+              <LuChevronDown className={cn("size-4 text-white/50 transition-transform", more && "rotate-180")} />
+            </button>
+            {more && (
+              <div className="flex flex-col gap-5 border-t border-white/[0.07] p-4">
+                {finetunes.length > 0 && (
+                  <Field label="Ready-made style" hint={finetuneEngine ? "Uses the Music v2 engine" : undefined}>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={finetune}
+                        onChange={(e) => pickFinetune(e.target.value)}
+                        className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-[#0e0e1a] px-3 text-sm text-white outline-none focus:border-violet-400/60"
+                      >
+                        <option value="">None</option>
+                        {Object.entries(byGenre)
+                          .sort(([a], [b]) => a.localeCompare(b))
+                          .map(([genre, list]) => (
+                            <optgroup key={genre} label={genre}>
+                              {list.map((f) => (
+                                <option key={f.id} value={f.id}>
+                                  {f.name}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))}
+                      </select>
+                      {finetune && (
+                        <button type="button" aria-label="Clear style" onClick={() => setFinetune("")} className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-xl text-white/50 hover:bg-white/10 hover:text-white">
+                          <LuX className="size-4" />
+                        </button>
+                      )}
+                    </div>
+                  </Field>
                 )}
+                <Field label="Seed" hint="Same seed and description, similar result">
+                  <input
+                    value={seed}
+                    onChange={(e) => setSeed(e.target.value.replace(/[^\d]/g, "").slice(0, 9))}
+                    inputMode="numeric"
+                    placeholder="Random"
+                    className="h-11 rounded-xl border border-white/10 bg-[#0e0e1a] px-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-violet-400/60"
+                  />
+                </Field>
               </div>
-            </Field>
-          )}
-
-          <Field label="Seed (optional)" hint="The same seed and description give a similar result again">
-            <input
-              value={seed}
-              onChange={(e) => setSeed(e.target.value.replace(/[^\d]/g, "").slice(0, 9))}
-              inputMode="numeric"
-              placeholder="Random"
-              className="h-10 rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-            />
-          </Field>
+            )}
+          </div>
 
           <SubmitButton
             busy={state.phase === "working"}
@@ -247,7 +275,7 @@ export function MusicForm({ finetunes, initialPrompt = "" }: { finetunes: Finetu
               )
             }
           >
-            <LuSparkles /> Generate music
+            Generate music
           </SubmitButton>
         </>
       }

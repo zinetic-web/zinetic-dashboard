@@ -57,7 +57,7 @@ function CardHead({ r }: { r: LibraryRow }) {
   const Icon = tool?.icon ?? LuFileText;
   return (
     <div className="flex items-start gap-3">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground [&_svg]:size-4">
+      <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md [&_svg]:size-4", tool?.accent ?? "from-slate-500 to-slate-600")}>
         <Icon />
       </span>
       <div className="min-w-0 flex-1">
@@ -77,7 +77,7 @@ function Card({ r }: { r: LibraryRow }) {
   const cat = categoryOf(r);
   return (
     <li>
-      <article className={cn("flex h-full flex-col gap-3 rounded-xl border bg-card p-3.5", r.status === "failed" && "border-destructive/25")}>
+      <article className={cn("zs-card flex h-full flex-col gap-3.5 p-4 transition-colors hover:border-violet-400/30", r.status === "failed" && "border-red-400/30")}>
         <CardHead r={r} />
         {r.status === "processing" && <ProcessingPanel id={r.id} createdAt={r.created_at} kind={cat === "audio" ? "audio" : "video"} hint={USUALLY[r.kind]} />}
         {r.status === "done" && r.mime_type?.startsWith("audio") && <AudioPlayer compact src={src} seed={r.id} name="audio.mp3" />}
@@ -120,9 +120,9 @@ function Grid({ rows }: { rows: LibraryRow[] }) {
 function Section({ title, count, children }: { title: React.ReactNode; count: number; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="flex items-baseline gap-2 border-b pb-2 text-sm font-medium">
+      <h2 className="flex items-baseline gap-2 text-base font-semibold">
         {title}
-        <span className="text-xs font-normal text-muted-foreground">{count}</span>
+        <span className="rounded-full bg-white/[0.07] px-2 py-0.5 text-xs font-normal text-white/55">{count}</span>
       </h2>
       {children}
     </section>
@@ -156,7 +156,7 @@ export function LibraryView({ rows }: { rows: LibraryRow[] }) {
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div role="tablist" className="inline-flex rounded-lg bg-muted p-1">
+          <div role="tablist" className="inline-flex rounded-xl bg-white/[0.04] p-1 ring-1 ring-white/10">
             {tabs.map((t) => (
               <button
                 key={t.id}
@@ -167,10 +167,10 @@ export function LibraryView({ rows }: { rows: LibraryRow[] }) {
                   setCategory(t.id);
                   setTool("");
                 }}
-                className={cn("cursor-pointer rounded-md px-3 py-1.5 text-sm transition-colors", category === t.id ? "bg-background font-medium shadow-sm" : "text-muted-foreground hover:text-foreground")}
+                className={cn("cursor-pointer rounded-lg px-3.5 py-1.5 text-sm transition-colors", category === t.id ? "zs-grad-bg font-medium text-white shadow-[0_6px_20px_-8px_rgb(124_58_237/0.9)]" : "text-white/60 hover:text-white")}
               >
                 {t.label}
-                <span className="ml-1.5 text-xs text-muted-foreground">{count(t.id)}</span>
+                <span className={cn("ml-1.5 text-xs", category === t.id ? "text-white/75" : "text-white/40")}>{count(t.id)}</span>
               </button>
             ))}
           </div>
@@ -180,20 +180,20 @@ export function LibraryView({ rows }: { rows: LibraryRow[] }) {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search"
-              className="h-9 w-full rounded-lg border bg-transparent pr-3 pl-9 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
+              className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pr-3 pl-9 text-sm outline-none placeholder:text-white/35 focus:border-violet-400/50"
             />
           </div>
         </div>
 
         {toolsHere.length > 1 && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
             {toolsHere.map((t) => (
               <button
                 key={t.id}
                 type="button"
                 onClick={() => setTool(tool === t.id ? "" : t.id)}
                 aria-pressed={tool === t.id}
-                className={cn("cursor-pointer border-b py-0.5 transition-colors", tool === t.id ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")}
+                className={cn("cursor-pointer rounded-full border px-3 py-1 text-xs transition-colors", tool === t.id ? "border-violet-400/60 bg-violet-500/15 text-white" : "border-white/10 text-white/55 hover:border-white/20 hover:text-white")}
               >
                 {t.name}
               </button>
@@ -207,8 +207,8 @@ export function LibraryView({ rows }: { rows: LibraryRow[] }) {
           title={
             <span className="flex items-center gap-2">
               <span className="relative flex size-1.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-foreground/60" />
-                <span className="relative inline-flex size-1.5 rounded-full bg-foreground" />
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-violet-400/70" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-violet-400" />
               </span>
               In progress
             </span>

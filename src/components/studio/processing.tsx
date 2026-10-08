@@ -65,9 +65,9 @@ export function RunMeter({ id, createdAt, hint, className }: { id: string; creat
     <div className={cn("flex flex-col gap-2", className)}>
       <div className="h-1 overflow-hidden rounded-full bg-muted">
         {known ? (
-          <div className="h-full rounded-full bg-foreground transition-all duration-700" style={{ width: `${Math.max(4, Math.min(100, progress))}%` }} />
+          <div className="h-full rounded-full zs-grad-bg transition-all duration-700" style={{ width: `${Math.max(4, Math.min(100, progress))}%` }} />
         ) : (
-          <div className="h-full w-1/3 animate-[zl-slide_1.8s_ease-in-out_infinite] rounded-full bg-foreground" />
+          <div className="h-full w-1/3 animate-[zl-slide_1.8s_ease-in-out_infinite] rounded-full zs-grad-bg" />
         )}
       </div>
       <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">

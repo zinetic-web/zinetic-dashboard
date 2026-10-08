@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { SparkIcon } from "@/components/spark-icon";
 import { useRouter } from "next/navigation";
-import { LuAudioLines, LuClapperboard, LuMusic, LuSparkles } from "react-icons/lu";
+import { LuAudioLines, LuClapperboard, LuMusic } from "react-icons/lu";
 import { cn } from "@/lib/utils";
 
 const TARGETS = [
@@ -26,7 +27,7 @@ export function HomePrompt() {
   return (
     <form onSubmit={go} className="zs-card flex flex-col gap-4 p-4 sm:p-5">
       <div className="flex items-start gap-3">
-        <LuSparkles className="mt-3 size-5 shrink-0 text-violet-300" />
+        <SparkIcon className="mt-3 size-5 shrink-0 text-violet-300" />
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -58,7 +59,7 @@ export function HomePrompt() {
           })}
         </div>
         <button type="submit" className="zs-btn flex h-11 cursor-pointer items-center gap-2 rounded-xl px-6 text-sm font-semibold">
-          <LuSparkles className="size-4" /> Generate
+          <SparkIcon className="size-4" /> Generate
         </button>
       </div>
     </form>

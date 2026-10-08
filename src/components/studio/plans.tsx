@@ -147,19 +147,59 @@ export type PlanUsage = {
 
 const when = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 
-/** What the customer bought for this tool and how much is left, shown above the tool. */
-export function UsageBar({ usage, compact = false }: { usage: PlanUsage; compact?: boolean }) {
-  const pct = usage.total > 0 ? Math.max(0, Math.min(100, (usage.remaining / usage.total) * 100)) : 0;
-  const low = pct <= 15;
+/** A round gauge: how much of an allowance is left, in the brand gradient. Goes amber when it runs low. */
+export function Ring({ pct, size = 60, stroke = 6, children }: { pct: number; size?: number; stroke?: number; children?: React.ReactNode }) {
+  const id = React.useId();
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const p = Math.max(0, Math.min(100, pct));
+  const low = p <= 15;
   return (
-    <div className="flex flex-col gap-2">
-      <p className={low ? "text-sm text-destructive" : "text-sm text-muted-foreground"}>
-        {!compact && <span className="font-medium text-foreground">{usage.serviceName}: </span>}
-        {formatUnits(usage.remaining, usage.unit)} left of {formatUnits(usage.total, usage.unit)}
-        {usage.expiresAt ? ` · until ${when(usage.expiresAt)}` : ""}
-      </p>
-      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-        <div className={low ? "h-full rounded-full bg-destructive" : "h-full rounded-full bg-foreground"} style={{ width: `${pct}%` }} />
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+        <defs>
+          <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={low ? "#f59e0b" : "#8b5cf6"} />
+            <stop offset="100%" stopColor={low ? "#ef4444" : "#3b82f6"} />
+          </linearGradient>
+        </defs>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgb(255 255 255 / 0.09)" strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={`url(#${id})`}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - p / 100)}
+          className="transition-[stroke-dashoffset] duration-700"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center text-[0.7rem] font-semibold tabular-nums">{children ?? `${Math.round(p)}%`}</div>
+    </div>
+  );
+}
+
+/** What the customer bought for this tool and how much is left: a gauge, the amount, and when it ends. */
+export function UsageBar({ usage, compact = false, large = false }: { usage: PlanUsage; compact?: boolean; large?: boolean }) {
+  const pct = usage.total > 0 ? (usage.remaining / usage.total) * 100 : 0;
+  const unit = formatUnits(usage.remaining, usage.unit).replace(/^[\d,.]+\s*/, "");
+  const amount = formatUnits(usage.remaining, usage.unit).match(/^[\d,.]+/)?.[0] ?? "0";
+  return (
+    <div className="flex items-center gap-4">
+      <Ring pct={pct} size={large ? 76 : 56} stroke={large ? 7 : 6} />
+      <div className="min-w-0">
+        {!compact && <p className="truncate text-xs font-medium text-white/60">{usage.serviceName}</p>}
+        <p className="flex items-baseline gap-1.5">
+          <span className={large ? "text-3xl font-bold tabular-nums tracking-tight" : "text-xl font-bold tabular-nums tracking-tight"}>{amount}</span>
+          <span className="text-sm text-white/55">{unit} left</span>
+        </p>
+        <p className="mt-0.5 truncate text-xs text-white/40">
+          of {formatUnits(usage.total, usage.unit)}
+          {usage.expiresAt ? ` · until ${when(usage.expiresAt)}` : ""}
+        </p>
       </div>
     </div>
   );
@@ -211,19 +251,20 @@ export type TrialInfo = {
 
 
 /** Where the shared free trial stands, shown above a tool the customer is using on it. */
-export function TrialBar({ trial }: { trial: TrialInfo }) {
+export function TrialBar({ trial, large = false }: { trial: TrialInfo; large?: boolean }) {
   const pct = trial.generationsMax ? (trial.generationsLeft / trial.generationsMax) * 100 : 0;
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
-        <span className="font-medium">Free trial</span>
-        <span className="text-muted-foreground">
-          {trial.generationsLeft} of {trial.generationsMax} generations left
-          {trial.expiresAt ? ` · until ${when(trial.expiresAt)}` : ""}
-        </span>
-      </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-        <div className="h-full rounded-full bg-foreground" style={{ width: `${pct}%` }} />
+    <div className="flex items-center gap-4">
+      <Ring pct={pct} size={large ? 76 : 56} stroke={large ? 7 : 6}>
+        {trial.generationsLeft}/{trial.generationsMax}
+      </Ring>
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-white/60">Free trial</p>
+        <p className="flex items-baseline gap-1.5">
+          <span className={large ? "text-3xl font-bold tabular-nums tracking-tight" : "text-xl font-bold tabular-nums tracking-tight"}>{trial.generationsLeft}</span>
+          <span className="text-sm text-white/55">{trial.generationsLeft === 1 ? "generation" : "generations"} left</span>
+        </p>
+        {trial.expiresAt && <p className="mt-0.5 truncate text-xs text-white/40">until {when(trial.expiresAt)}</p>}
       </div>
     </div>
   );

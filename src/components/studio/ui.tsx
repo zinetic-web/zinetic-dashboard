@@ -1,15 +1,16 @@
 "use client";
 
 import * as React from "react";
+import { SparkIcon } from "@/components/spark-icon";
 import {
   LuArrowRight,
   LuCheck,
+  LuChevronDown,
   LuDownload,
   LuFileText,
   LuLoaderCircle,
   LuPlay,
   LuSearch,
-  LuSparkles,
   LuTriangleAlert,
   LuUpload,
   LuUserRound,
@@ -372,53 +373,112 @@ export function SubmitButton({
       disabled={busy || disabled}
       className="zs-btn flex h-13 w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl text-base font-semibold"
     >
-      {busy ? <LuLoaderCircle className="size-5 animate-spin" /> : <LuSparkles className="size-5" />}
+      {busy ? <LuLoaderCircle className="size-5 animate-spin" /> : <SparkIcon className="size-5" />}
       {busy ? (uploading !== null ? `Uploading ${uploading}%` : busyLabel) : children}
       {!busy && <LuArrowRight className="size-4 opacity-80" />}
     </button>
   );
 }
 
-/** Engine choice, one quiet row: a name for one engine, a dropdown for several. */
+/** The usage a run takes from a plan, as a short tag. */
+const usageTag = (e: PublicEngine) => {
+  const m = Number(e.credit_cost) || 1;
+  return m === 1 ? "Standard" : m < 1 ? `${m}x · lighter` : `${m}x · heavier`;
+};
+
+/** A version badge for an engine: its own initial or number on the brand gradient. */
+function EngineMark({ label, active }: { label: string; active?: boolean }) {
+  const m = /v\d[\d.]*|\d[\d.]*/i.exec(label)?.[0]?.replace(/^v/i, "") ?? label.slice(0, 2);
+  return (
+    <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold", active ? "zs-grad-bg text-white shadow-[0_8px_22px_-10px_rgb(124_58_237/0.9)]" : "bg-white/[0.07] text-white/70")}>
+      {m.length > 3 ? m.slice(0, 2) : m}
+    </span>
+  );
+}
+
+/**
+ * Engine choice. One engine is a quiet line. Several are a dropdown whose panel lists each with its
+ * own badge, name, a short line about it and how heavy it is on a plan.
+ */
 export function EnginePicker() {
   const ctx = React.useContext(ToolContext);
+  const [open, setOpen] = React.useState(false);
+  const box = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const away = (e: MouseEvent) => !box.current?.contains(e.target as Node) && setOpen(false);
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", away);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [open]);
+
   if (!ctx || ctx.engines.length === 0) return null;
+  const current = ctx.engines.find((e) => e.key === ctx.key) ?? ctx.engines[0];
 
   if (ctx.engines.length === 1) {
-    const e = ctx.engines[0];
     return (
-      <div className="flex items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2.5 text-sm">
-        <span className="flex items-center gap-2 text-white/70">
-          <LuSparkles className="size-4 text-violet-300" />
-          {e.label}
-        </span>
-        <span className="text-xs text-white/45">{costLabel(e)}</span>
+      <div className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2.5">
+        <EngineMark label={current.label} active />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">{current.label}</p>
+          {current.description && <p className="truncate text-xs text-white/45">{current.description}</p>}
+        </div>
+        <span className="rounded-full bg-white/[0.07] px-2.5 py-1 text-[0.7rem] text-white/60">{usageTag(current)}</span>
       </div>
     );
   }
 
-  const current = ctx.engines.find((e) => e.key === ctx.key) ?? ctx.engines[0];
   return (
-    <div className="flex flex-col gap-1.5">
-      <Select value={current.key} onValueChange={(v) => v && ctx.setKey(v)}>
-        <SelectTrigger className="h-11 w-full rounded-xl border-white/10 bg-white/[0.04]">
-          <span className="mr-1 flex items-center gap-2 text-white/50">
-            <LuSparkles className="size-4 text-violet-300" /> Engine
-          </span>
-          <SelectValue>{current.label}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {ctx.engines.map((e) => (
-            <SelectItem key={e.key} value={e.key}>
-              <span className="flex w-full items-center justify-between gap-6">
-                <span>{e.label}</span>
-                <span className="text-xs text-muted-foreground">{costLabel(e)}</span>
-              </span>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {current.description && <p className="px-1 text-xs text-white/45">{current.description}</p>}
+    <div ref={box} className="relative">
+      <p className="mb-2 text-sm font-semibold">Engine</p>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className={cn("flex w-full cursor-pointer items-center gap-3 rounded-xl border bg-white/[0.04] px-3 py-2.5 text-left transition-colors", open ? "border-violet-400/60" : "border-white/10 hover:border-white/20")}
+      >
+        <EngineMark label={current.label} active />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold">{current.label}</span>
+          {current.description && <span className="block truncate text-xs text-white/45">{current.description}</span>}
+        </span>
+        <span className="hidden rounded-full bg-white/[0.07] px-2.5 py-1 text-[0.7rem] text-white/60 sm:block">{usageTag(current)}</span>
+        <LuChevronDown className={cn("size-4 shrink-0 text-white/50 transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <ul role="listbox" className="absolute top-full right-0 left-0 z-40 mt-2 flex max-h-96 flex-col gap-1 overflow-y-auto rounded-2xl border border-white/10 bg-[#101020] p-1.5 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.9)]">
+          {ctx.engines.map((e) => {
+            const on = e.key === current.key;
+            return (
+              <li key={e.key} role="option" aria-selected={on}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    ctx.setKey(e.key);
+                    setOpen(false);
+                  }}
+                  className={cn("flex w-full cursor-pointer items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors", on ? "bg-violet-500/15" : "hover:bg-white/[0.06]")}
+                >
+                  <EngineMark label={e.label} active={on} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold">{e.label}</span>
+                    {e.description && <span className="line-clamp-2 block text-xs leading-snug text-white/50">{e.description}</span>}
+                  </span>
+                  <span className="shrink-0 rounded-full bg-white/[0.07] px-2.5 py-1 text-[0.7rem] text-white/60">{usageTag(e)}</span>
+                  <span className="flex size-5 shrink-0 items-center justify-center">{on && <LuCheck className="size-4 text-violet-300" />}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

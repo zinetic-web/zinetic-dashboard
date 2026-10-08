@@ -159,7 +159,9 @@ function Group({ id, label, tools, collapsed, query, pathname, onNavigate, open:
   );
 }
 
-function Sidebar({ collapsed, onToggle, onNavigate, mobile = false, open }: { collapsed: boolean; onToggle: () => void; onNavigate: () => void; mobile?: boolean; open: Record<string, boolean> }) {
+type Me = { name: string; email: string; activePlans: number; impersonating: boolean };
+
+function Sidebar({ collapsed, onToggle, onNavigate, mobile = false, open, me }: { collapsed: boolean; onToggle: () => void; onNavigate: () => void; mobile?: boolean; open: Record<string, boolean>; me: Me }) {
   const pathname = usePathname();
   const [query, setQuery] = React.useState("");
   const needle = query.trim().toLowerCase();
@@ -168,16 +170,35 @@ function Sidebar({ collapsed, onToggle, onNavigate, mobile = false, open }: { co
 
   return (
     <div className="flex h-full flex-col">
-      <div className={cn("flex h-16 shrink-0 items-center", rail ? "justify-center" : "px-5")}>
-        <Link href="/studio" onClick={onNavigate} className="flex items-center gap-3">
+      <div className={cn("flex h-16 shrink-0 items-center", rail ? "justify-center" : "justify-between gap-2 px-4")}>
+        <Link href="/studio" onClick={onNavigate} className="flex min-w-0 items-center gap-3">
           <Image src="/brand/logo.png" alt="Zinetic Music" width={899} height={1140} style={{ height: 32, width: "auto" }} />
           {!rail && (
-            <span className="font-heading text-lg font-semibold tracking-tight">
+            <span className="truncate font-heading text-lg font-semibold tracking-tight">
               Zinetic <span className="zs-grad-text">Studio</span>
             </span>
           )}
         </Link>
+        {!rail && !mobile && (
+          <button type="button" onClick={onToggle} aria-label="Collapse sidebar" title="Collapse sidebar (Ctrl+B)" className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/[0.07] hover:text-white">
+            <LuPanelLeftClose className="size-5" />
+          </button>
+        )}
       </div>
+      {rail && (
+        <div className="flex justify-center pb-2">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button type="button" onClick={onToggle} aria-label="Expand sidebar" className="flex size-10 cursor-pointer items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/[0.07] hover:text-white" />
+              }
+            >
+              <LuPanelLeftOpen className="size-5" />
+            </TooltipTrigger>
+            <TooltipContent side="right">Expand sidebar</TooltipContent>
+          </Tooltip>
+        </div>
+      )}
 
       <div className={cn("flex-1 overflow-y-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", rail ? "px-2" : "px-3")}>
         {rail ? (
@@ -227,22 +248,68 @@ function Sidebar({ collapsed, onToggle, onNavigate, mobile = false, open }: { co
         </div>
       </div>
 
-      <div className={cn("shrink-0 border-t border-white/10 py-3", rail ? "px-2" : "px-3")}>
+      <div className={cn("flex shrink-0 flex-col gap-2 border-t border-white/[0.07] py-3", rail ? "px-2" : "px-3")}>
         <Item href="/dashboard/support" label="Support" icon={<LuLifeBuoy />} active={false} collapsed={rail} onNavigate={onNavigate} />
-        {!mobile && (
-          <button
-            type="button"
-            onClick={onToggle}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={cn(
-              "flex h-10 cursor-pointer items-center gap-3 rounded-lg text-[0.9375rem] text-white/45 transition-colors hover:bg-white/[0.06] hover:text-white [&_svg]:size-5",
-              rail ? "mx-auto w-11 justify-center" : "w-full px-3"
-            )}
-          >
-            {collapsed ? <LuPanelLeftOpen /> : <LuPanelLeftClose />}
-            {!rail && <span>Collapse</span>}
-          </button>
-        )}
+        <UserCard me={me} rail={rail} />
+      </div>
+    </div>
+  );
+}
+
+/** Who is signed in, what they have, and the ways to upgrade or leave. */
+function UserCard({ me, rail }: { me: Me; rail: boolean }) {
+  const label = me.name || me.email;
+  const out = (
+    <form action={me.impersonating ? stopImpersonating : signOut}>
+      <button
+        type="submit"
+        aria-label={me.impersonating ? "Stop impersonating" : "Sign out"}
+        title={me.impersonating ? "Stop impersonating" : "Sign out"}
+        className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-xl text-white/55 transition-colors hover:bg-white/10 hover:text-white"
+      >
+        {me.impersonating ? <LuUserRoundX className="size-[1.15rem]" /> : <LuLogOut className="size-[1.15rem]" />}
+      </button>
+    </form>
+  );
+  const avatar = <span className="zs-grad-bg flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold">{label.slice(0, 1).toUpperCase()}</span>;
+
+  if (rail) {
+    return (
+      <div className="flex flex-col items-center gap-1.5">
+        <Tooltip>
+          <TooltipTrigger render={<span className="cursor-default" />}>{avatar}</TooltipTrigger>
+          <TooltipContent side="right">
+            {label} · {me.activePlans} active {me.activePlans === 1 ? "plan" : "plans"}
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger render={<Link href="/studio/plans" aria-label="Upgrade" className="zs-btn flex size-10 items-center justify-center rounded-xl" />}>
+            <LuZap className="size-[1.15rem]" />
+          </TooltipTrigger>
+          <TooltipContent side="right">Upgrade</TooltipContent>
+        </Tooltip>
+        {out}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3">
+      <div className="flex items-center gap-3">
+        {avatar}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">{label}</p>
+          <p className="flex items-center gap-1.5 truncate text-xs text-white/50">
+            <LuZap className={me.activePlans > 0 ? "size-3 text-amber-300" : "size-3 text-white/30"} />
+            {me.activePlans} active {me.activePlans === 1 ? "plan" : "plans"}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Link href="/studio/plans" className="zs-btn flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold">
+          <LuZap className="size-4" /> Upgrade
+        </Link>
+        {out}
       </div>
     </div>
   );
@@ -250,12 +317,10 @@ function Sidebar({ collapsed, onToggle, onNavigate, mobile = false, open }: { co
 
 /* ----------------------------------------------------------------- top bar */
 
-function TopBar({ userName, userEmail, activePlans, impersonating }: { userName: string; userEmail: string; activePlans: number; impersonating: boolean }) {
+function TopBar({ activePlans }: { activePlans: number }) {
   const pathname = usePathname();
   const tool = TOOLS.find((t) => t.href === pathname);
   const title = pathname === "/studio" ? "Home" : pathname === "/studio/library" ? "Library" : (tool?.name ?? "AI Studio");
-  const label = userName || userEmail;
-
   return (
     <header className="sticky top-0 z-20 hidden h-16 items-center justify-between gap-4 border-b border-white/[0.07] bg-[#07070f]/70 px-8 backdrop-blur-xl lg:flex">
       <div className="flex items-center gap-2.5 text-sm">
@@ -269,21 +334,6 @@ function TopBar({ userName, userEmail, activePlans, impersonating }: { userName:
           <span className="font-semibold tabular-nums">{activePlans}</span>
           <span className="text-white/55">{activePlans === 1 ? "active plan" : "active plans"}</span>
         </Link>
-        <Link href="/studio/plans" className="zs-btn flex h-10 items-center rounded-xl px-5 text-sm font-semibold">
-          Upgrade
-        </Link>
-        <form action={impersonating ? stopImpersonating : signOut} className="flex items-center gap-2 rounded-xl bg-white/[0.05] py-1 pr-1.5 pl-1.5 ring-1 ring-white/10">
-          <span className="zs-grad-bg flex size-8 items-center justify-center rounded-full text-xs font-semibold">{label.slice(0, 1).toUpperCase()}</span>
-          <span className="hidden max-w-40 truncate text-sm xl:block">{label}</span>
-          <button
-            type="submit"
-            aria-label={impersonating ? "Stop impersonating" : "Sign out"}
-            title={impersonating ? "Stop impersonating" : "Sign out"}
-            className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-white/55 hover:bg-white/10 hover:text-white"
-          >
-            {impersonating ? <LuUserRoundX className="size-4" /> : <LuLogOut className="size-4" />}
-          </button>
-        </form>
       </div>
     </header>
   );
@@ -310,6 +360,7 @@ export function StudioShell({
   const [open, setOpen] = React.useState(false);
   const [collapsed, setCollapsed] = useFlag("studio-sidebar-collapsed");
   const close = () => setOpen(false);
+  const me: Me = { name: userName, email: userEmail, activePlans, impersonating };
 
   // Ctrl or Cmd + B collapses the sidebar, the same shortcut other editors use
   React.useEffect(() => {
@@ -331,7 +382,7 @@ export function StudioShell({
           collapsed ? "w-[4.5rem]" : "w-72"
         )}
       >
-        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} onNavigate={close} open={openTools} />
+        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} onNavigate={close} open={openTools} me={me} />
       </aside>
 
       <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/10 bg-[#090913]/90 px-4 backdrop-blur lg:hidden">
@@ -356,13 +407,13 @@ export function StudioShell({
             <button type="button" aria-label="Close" onClick={close} className="absolute top-3.5 right-3 z-10 flex size-9 cursor-pointer items-center justify-center rounded-lg hover:bg-white/10">
               <LuX className="size-5" />
             </button>
-            <Sidebar collapsed={false} onToggle={close} onNavigate={close} mobile open={openTools} />
+            <Sidebar collapsed={false} onToggle={close} onNavigate={close} mobile open={openTools} me={me} />
           </div>
         </div>
       )}
 
       <main className={cn("transition-[padding] duration-200", collapsed ? "lg:pl-[4.5rem]" : "lg:pl-72")}>
-        <TopBar userName={userName} userEmail={userEmail} activePlans={activePlans} impersonating={impersonating} />
+        <TopBar activePlans={activePlans} />
         {impersonating && (
           <p className="bg-amber-500/15 px-4 py-2 text-center text-xs text-amber-200">You are viewing this dashboard as a customer.</p>
         )}

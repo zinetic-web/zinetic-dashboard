@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { LuChevronDown, LuDices, LuRectangleHorizontal, LuRectangleVertical, LuSparkles, LuX } from "react-icons/lu";
+import { SparkIcon } from "@/components/spark-icon";
+import { LuChevronDown, LuDices, LuRectangleHorizontal, LuRectangleVertical, LuX } from "react-icons/lu";
 import { AvatarLibrary, HeyGenVoiceLibrary, StylePicker, type AvatarChoice } from "@/components/studio/heygen-pickers";
 import type { VoiceChoice } from "@/components/studio/voice-library";
 import { useJob } from "@/components/studio/use-job";
@@ -90,7 +91,7 @@ export function PromptVideoForm({ initialPrompt = "" }: { initialPrompt?: string
               value={orientation}
               onChange={setOrientation}
               options={[
-                { value: "auto", label: "Let it decide", icon: <LuSparkles className="size-5" /> },
+                { value: "auto", label: "Let it decide", icon: <SparkIcon className="size-5" /> },
                 { value: "landscape", label: "16:9", icon: <LuRectangleHorizontal className="size-5" /> },
                 { value: "portrait", label: "9:16", icon: <LuRectangleVertical className="size-5" /> },
               ]}

@@ -55,13 +55,13 @@ export async function ToolPage({
   // what is left on the plan (or the trial), shown beside the page title
   const limit =
     status.active && usages.length > 0 ? (
-      <div className="flex flex-col gap-4 rounded-xl border bg-card p-4">
+      <div className="zs-card flex flex-col gap-4 p-4">
         {usages.map((u) => (
           <UsageBar key={u.service} usage={u} compact={usages.length === 1} />
         ))}
       </div>
     ) : trial.active ? (
-      <div className="rounded-xl border bg-card p-4">
+      <div className="zs-card p-4">
         <TrialBar trial={trial} />
       </div>
     ) : null;

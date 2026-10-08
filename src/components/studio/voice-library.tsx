@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { SparkIcon } from "@/components/spark-icon";
 import {
   LuBookOpen,
   LuCheck,
@@ -14,7 +15,6 @@ import {
   LuSearch,
   LuSlidersHorizontal,
   LuSmartphone,
-  LuSparkles,
   LuTv,
   LuUsers,
   LuX,
@@ -53,7 +53,7 @@ const LANGUAGES: [string, string][] = [
 const USE_CASES: { id: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "conversational", label: "Conversational", icon: LuMessageCircle },
   { id: "narrative_story", label: "Narration", icon: LuBookOpen },
-  { id: "characters_animation", label: "Characters", icon: LuSparkles },
+  { id: "characters_animation", label: "Characters", icon: SparkIcon },
   { id: "social_media", label: "Social media", icon: LuSmartphone },
   { id: "informative_educational", label: "Educational", icon: LuGraduationCap },
   { id: "advertisement", label: "Advertisement", icon: LuMegaphone },
