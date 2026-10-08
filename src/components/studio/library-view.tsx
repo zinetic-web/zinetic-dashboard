@@ -2,12 +2,28 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { LuCopy, LuFileText, LuSearch } from "react-icons/lu";
+import {
+  LuArrowDownUp,
+  LuAudioLines,
+  LuClapperboard,
+  LuCopy,
+  LuDownload,
+  LuEllipsis,
+  LuFileText,
+  LuLayoutGrid,
+  LuList,
+  LuPause,
+  LuPlay,
+  LuRotateCw,
+  LuSearch,
+  LuTriangleAlert,
+} from "react-icons/lu";
 import { toast } from "sonner";
 import { LocalTime } from "@/components/local-time";
-import { AudioPlayer } from "@/components/studio/audio-player";
 import { VideoPlayer } from "@/components/studio/video-player";
 import { ProcessingPanel } from "@/components/studio/processing";
+import { LandscapeThumb, fmtDuration, twoWords, useDuration, waveFor } from "@/components/studio/media-bits";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { TOOLS } from "@/lib/studio/tools";
 import { cn } from "@/lib/utils";
 
@@ -20,26 +36,26 @@ export type LibraryRow = {
   result: { text?: string } | null;
   error: string | null;
   created_at: string;
+  input?: { voiceName?: string } | null;
 };
 
 const KIND_TOOL: Record<string, string> = { sfx: "sound-effects", "translation-lipsync": "video-translation" };
 const toolOf = (kind: string) => TOOLS.find((t) => t.id === (KIND_TOOL[kind] ?? kind));
 
-type Category = "audio" | "video" | "text";
-const CATEGORIES: { id: Category; label: string }[] = [
-  { id: "audio", label: "Voice & audio" },
+type Type = "audio" | "video" | "text";
+const TYPES: { id: Type; label: string }[] = [
+  { id: "audio", label: "Audio" },
   { id: "video", label: "Video" },
   { id: "text", label: "Transcripts" },
 ];
 
-function categoryOf(r: LibraryRow): Category {
+function typeOf(r: LibraryRow): Type {
   if (r.kind === "transcribe") return "text";
   if (r.mime_type?.startsWith("video")) return "video";
   if (r.mime_type?.startsWith("audio")) return "audio";
   return toolOf(r.kind)?.group === "video" ? "video" : "audio";
 }
 
-// how long each kind of long run usually takes, shown until the provider reports a stage
 const USUALLY: Record<string, string> = {
   "prompt-video": "Usually 6 to 13 minutes",
   "avatar-video": "Usually 2 to 6 minutes",
@@ -50,198 +66,438 @@ const USUALLY: Record<string, string> = {
 };
 
 /** Prompts are saved as the title and can be full of markdown. Show them as one plain line. */
-const plain = (t: string | null) => (t ?? "").replace(/[#*_`>~|]+/g, " ").replace(/\s+/g, " ").trim() || "Untitled";
+const plain = (t: string | null) => (t ?? "").replace(/\[[^\]]*\]/g, " ").replace(/[#*_`>~|"]+/g, " ").replace(/\s+/g, " ").trim() || "Untitled";
 
-function CardHead({ r }: { r: LibraryRow }) {
+function useIsClient() {
+  return React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+}
+
+function dayLabel(iso: string, now: Date) {
+  const d = new Date(iso);
+  const start = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((start(now) - start(d)) / 86_400_000);
+  return days <= 0 ? "Today" : days === 1 ? "Yesterday" : days < 7 ? "Last 7 days" : "Earlier";
+}
+
+/* ------------------------------------------------------------------ actions */
+
+function RowMenu({ r, text }: { r: LibraryRow; text?: string }) {
+  const [open, setOpen] = React.useState(false);
+  const box = React.useRef<HTMLDivElement>(null);
   const tool = toolOf(r.kind);
-  const Icon = tool?.icon ?? LuFileText;
+  React.useEffect(() => {
+    if (!open) return;
+    const away = (e: MouseEvent) => !box.current?.contains(e.target as Node) && setOpen(false);
+    document.addEventListener("mousedown", away);
+    return () => document.removeEventListener("mousedown", away);
+  }, [open]);
+  const item = "flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-left text-sm text-white/80 hover:bg-white/[0.07]";
   return (
-    <div className="flex items-start gap-3">
-      <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md [&_svg]:size-4", tool?.accent ?? "from-slate-500 to-slate-600")}>
-        <Icon />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="line-clamp-1 text-sm font-medium" title={plain(r.title)}>
-          {plain(r.title)}
-        </p>
-        <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-          {tool?.name ?? r.kind} · <LocalTime iso={r.created_at} />
-        </p>
-      </div>
+    <div ref={box} className="relative">
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-label="More" aria-expanded={open} className="flex size-8 cursor-pointer items-center justify-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+        <LuEllipsis className="size-4" />
+      </button>
+      {open && (
+        <div className="absolute right-0 bottom-full z-30 mb-1 w-48 rounded-lg border border-white/10 bg-[#101020] p-1 shadow-[0_18px_40px_-16px_rgb(0_0_0/0.9)]">
+          {r.status === "done" && r.mime_type && (
+            <a href={`/api/studio/files/${r.id}`} download className={item}>
+              <LuDownload className="size-4" /> Download
+            </a>
+          )}
+          {text && (
+            <button
+              type="button"
+              className={item}
+              onClick={() => {
+                void navigator.clipboard.writeText(text);
+                toast.success("Copied");
+                setOpen(false);
+              }}
+            >
+              <LuCopy className="size-4" /> Copy text
+            </button>
+          )}
+          {tool?.href && (
+            <Link href={tool.href} className={item}>
+              <LuRotateCw className="size-4" /> Make another
+            </Link>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-function Card({ r }: { r: LibraryRow }) {
-  const src = `/api/studio/files/${r.id}`;
-  const cat = categoryOf(r);
+/* -------------------------------------------------------------------- cards */
+
+type Play = { playing: string | null; progress: number; toggle: (r: LibraryRow) => void; watch: (r: LibraryRow) => void };
+
+function Card({ r, play }: { r: LibraryRow; play: Play }) {
+  const type = typeOf(r);
+  const tool = toolOf(r.kind);
+  const done = r.status === "done";
+  const src = done && r.mime_type ? `/api/studio/files/${r.id}` : null;
+  const dur = useDuration(src, type === "video" ? "video" : "audio");
+  const on = play.playing === r.id;
+  const Kind = type === "video" ? LuClapperboard : type === "text" ? LuFileText : LuAudioLines;
+  const sub = r.input?.voiceName || tool?.name || "";
+  const bars = React.useMemo(() => waveFor(r.id, 40), [r.id]);
+
   return (
-    <li>
-      <article className={cn("zs-card flex h-full flex-col gap-3.5 p-4 transition-colors hover:border-violet-400/30", r.status === "failed" && "border-red-400/30")}>
-        <CardHead r={r} />
-        {r.status === "processing" && <ProcessingPanel id={r.id} createdAt={r.created_at} kind={cat === "audio" ? "audio" : "video"} hint={USUALLY[r.kind]} />}
-        {r.status === "done" && r.mime_type?.startsWith("audio") && <AudioPlayer compact src={src} seed={r.id} name="audio.mp3" />}
-        {r.status === "done" && r.mime_type?.startsWith("video") && <VideoPlayer compact src={src} name="video.mp4" />}
-        {r.status === "done" && r.kind === "transcribe" && r.result?.text && (
-          <div className="flex flex-col gap-2">
-            <p className="line-clamp-5 text-sm leading-relaxed text-muted-foreground">{r.result.text}</p>
+    <article className="group zs-card flex flex-col overflow-hidden rounded-xl transition-colors hover:border-violet-400/35">
+      {r.status === "processing" ? (
+        <div className="p-3">
+          <ProcessingPanel id={r.id} createdAt={r.created_at} kind={type === "video" ? "video" : "audio"} hint={USUALLY[r.kind]} />
+        </div>
+      ) : (
+        <div className="relative aspect-video overflow-hidden bg-black/40">
+          {type === "video" && src ? (
+            <video src={`${src}#t=0.1`} preload="metadata" muted playsInline className="absolute inset-0 size-full object-cover" />
+          ) : type === "audio" && done ? (
+            <LandscapeThumb id={r.id} className="transition-transform duration-500 group-hover:scale-105" />
+          ) : r.status === "failed" ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-red-500/10 text-red-300">
+              <LuTriangleAlert className="size-8" />
+            </div>
+          ) : (
+            <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-white/[0.05] to-transparent p-4 text-sm leading-relaxed text-white/60">
+              <p className="line-clamp-5">{r.result?.text ?? ""}</p>
+            </div>
+          )}
+          {(src || r.status === "failed") && <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/35" />}
+
+          <span className="absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[0.7rem] font-medium text-white backdrop-blur">
+            <Kind className="size-3.5 text-violet-300" /> {type === "video" ? "Video" : type === "text" ? "Transcript" : "Audio"}
+          </span>
+          {dur !== null && <span className="absolute top-2.5 right-2.5 rounded-full bg-black/55 px-2 py-1 text-[0.7rem] font-medium tabular-nums text-white backdrop-blur">{fmtDuration(dur)}</span>}
+
+          {src && (type === "audio" || type === "video") && (
             <button
               type="button"
-              onClick={() => {
-                void navigator.clipboard.writeText(r.result?.text ?? "");
-                toast.success("Copied");
-              }}
-              className="flex w-fit cursor-pointer items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              onClick={() => (type === "video" ? play.watch(r) : play.toggle(r))}
+              aria-label={type === "video" ? "Watch" : on ? "Pause" : "Play"}
+              className={cn(
+                "absolute top-1/2 left-1/2 flex size-14 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-white text-black shadow-xl transition-all",
+                on ? "scale-100 opacity-100" : "scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100 focus-visible:opacity-100"
+              )}
             >
-              <LuCopy className="size-3.5" /> Copy text
+              {on ? <LuPause className="size-6" /> : <LuPlay className="size-6 translate-x-0.5" />}
             </button>
-          </div>
-        )}
-        {r.status === "failed" && (
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            <span className="font-medium text-destructive">Failed.</span> {r.error ?? "This run did not finish."} Nothing was used from your plan.
+          )}
+          {type === "audio" && src && (
+            <div aria-hidden className="absolute inset-x-3 bottom-2.5 flex h-6 items-end gap-[2px]">
+              {bars.map((h, i) => (
+                <span key={i} className={cn("flex-1 rounded-full", on && (i + 0.5) / bars.length <= play.progress ? "bg-violet-300" : "bg-white/45")} style={{ height: `${h * 100}%` }} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 px-3.5 py-3">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold" title={plain(r.title)}>
+            {twoWords(r.title)}
           </p>
+          <p className="truncate text-xs text-white/45">
+            {r.status === "failed" ? <span className="text-red-300">Failed. Nothing was used from your plan.</span> : r.status === "processing" ? "In progress" : sub}
+            {r.status === "done" && (
+              <>
+                {" · "}
+                <LocalTime iso={r.created_at} mode="day" />
+              </>
+            )}
+          </p>
+        </div>
+        {src && (
+          <a href={src} download aria-label="Download" className="flex size-8 shrink-0 items-center justify-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+            <LuDownload className="size-4" />
+          </a>
         )}
-      </article>
+        <RowMenu r={r} text={r.result?.text} />
+      </div>
+    </article>
+  );
+}
+
+function ListRow({ r, play }: { r: LibraryRow; play: Play }) {
+  const type = typeOf(r);
+  const tool = toolOf(r.kind);
+  const done = r.status === "done";
+  const src = done && r.mime_type ? `/api/studio/files/${r.id}` : null;
+  const dur = useDuration(src, type === "video" ? "video" : "audio");
+  const on = play.playing === r.id;
+  const bars = React.useMemo(() => waveFor(r.id, 36), [r.id]);
+  const Kind = type === "video" ? LuClapperboard : type === "text" ? LuFileText : LuAudioLines;
+
+  return (
+    <li className="px-3 py-2.5">
+      <div className="flex items-center gap-3">
+        <div className="relative h-11 w-16 shrink-0 overflow-hidden rounded-md bg-black/40">
+          {type === "video" && src ? (
+            <video src={`${src}#t=0.1`} preload="metadata" muted playsInline className="absolute inset-0 size-full object-cover" />
+          ) : type === "audio" && done ? (
+            <LandscapeThumb id={r.id} width={200} />
+          ) : (
+            <div className="flex size-full items-center justify-center bg-white/[0.05] text-white/35">
+              <Kind className="size-5" />
+            </div>
+          )}
+          {src && (type === "audio" || type === "video") && (
+            <button
+              type="button"
+              onClick={() => (type === "video" ? play.watch(r) : play.toggle(r))}
+              aria-label={type === "video" ? "Watch" : on ? "Pause" : "Play"}
+              className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/35 text-white transition-colors hover:bg-black/50"
+            >
+              {on ? <LuPause className="size-4" /> : <LuPlay className="size-4 translate-x-px" />}
+            </button>
+          )}
+        </div>
+        <div className="min-w-0 flex-1 sm:flex-none sm:basis-44">
+          <p className="truncate text-sm font-semibold" title={plain(r.title)}>
+            {twoWords(r.title)}
+          </p>
+          <p className="truncate text-xs text-white/45">{r.status === "failed" ? <span className="text-red-300">Failed</span> : r.status === "processing" ? "In progress" : r.input?.voiceName || tool?.name || ""}</p>
+        </div>
+        <span className="hidden w-24 shrink-0 items-center gap-1.5 text-xs text-white/55 md:flex">
+          <Kind className="size-3.5 text-violet-300" /> {type === "video" ? "Video" : type === "text" ? "Transcript" : "Audio"}
+        </span>
+        {type === "audio" && src ? (
+          <div aria-hidden className="hidden h-6 min-w-0 flex-1 items-center gap-[2px] lg:flex">
+            {bars.map((h, i) => (
+              <span key={i} className={cn("flex-1 rounded-full", on && (i + 0.5) / bars.length <= play.progress ? "bg-violet-400" : "bg-white/20")} style={{ height: `${h * 100}%` }} />
+            ))}
+          </div>
+        ) : (
+          <div className="hidden flex-1 lg:block" />
+        )}
+        <span className="w-10 shrink-0 text-right text-xs tabular-nums text-white/55">{fmtDuration(dur)}</span>
+        <span className="hidden w-16 shrink-0 text-right text-xs text-white/45 sm:block">
+          <LocalTime iso={r.created_at} mode="day" />
+        </span>
+        {src ? (
+          <a href={src} download aria-label="Download" className="flex size-8 shrink-0 items-center justify-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+            <LuDownload className="size-4" />
+          </a>
+        ) : (
+          <span className="size-8 shrink-0" />
+        )}
+        <RowMenu r={r} text={r.result?.text} />
+      </div>
+      {r.status === "processing" && (
+        <div className="mt-2 pl-[4.75rem]">
+          <ProcessingPanel id={r.id} createdAt={r.created_at} kind={type === "video" ? "video" : "audio"} hint={USUALLY[r.kind]} />
+        </div>
+      )}
     </li>
   );
 }
 
-function Grid({ rows }: { rows: LibraryRow[] }) {
-  return (
-    <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {rows.map((r) => (
-        <Card key={r.id} r={r} />
-      ))}
-    </ul>
-  );
-}
+/* --------------------------------------------------------------------- page */
 
-function Section({ title, count, children }: { title: React.ReactNode; count: number; children: React.ReactNode }) {
-  return (
-    <section className="flex flex-col gap-3">
-      <h2 className="flex items-baseline gap-2 text-base font-semibold">
-        {title}
-        <span className="rounded-full bg-white/[0.07] px-2 py-0.5 text-xs font-normal text-white/55">{count}</span>
-      </h2>
-      {children}
-    </section>
-  );
-}
+const selectClass = "h-10 cursor-pointer rounded-xl border border-white/10 bg-[#0e0e1a] px-3 text-sm text-white outline-none focus:border-violet-400/60";
 
-/** Everything a customer has made: what is still being made first, then each kind of result under its own heading. */
+/** Everything a customer has made: a toolbar that stays put, results grouped by day, as a grid or a list. */
 export function LibraryView({ rows }: { rows: LibraryRow[] }) {
-  const [category, setCategory] = React.useState<Category | "all">("all");
+  const ready = useIsClient();
+  const [type, setType] = React.useState<Type | "all">("all");
   const [tool, setTool] = React.useState("");
   const [q, setQ] = React.useState("");
+  const [oldest, setOldest] = React.useState(false);
+  const [view, setView] = React.useState<"grid" | "list">("grid");
+  const [watching, setWatching] = React.useState<LibraryRow | null>(null);
+
+  const audio = React.useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = React.useState<string | null>(null);
+  const [progress, setProgress] = React.useState(0);
+  React.useEffect(() => () => audio.current?.pause(), []);
+
+  const play: Play = {
+    playing,
+    progress,
+    watch: (r) => {
+      audio.current?.pause();
+      setPlaying(null);
+      setWatching(r);
+    },
+    toggle: (r) => {
+      audio.current?.pause();
+      if (playing === r.id) return setPlaying(null);
+      const a = new Audio(`/api/studio/files/${r.id}`);
+      a.ontimeupdate = () => setProgress(a.duration ? a.currentTime / a.duration : 0);
+      a.onended = () => {
+        setPlaying((p) => (p === r.id ? null : p));
+        setProgress(0);
+      };
+      audio.current = a;
+      setProgress(0);
+      void a.play().catch(() => setPlaying(null));
+      setPlaying(r.id);
+    },
+  };
 
   const needle = q.trim().toLowerCase();
-  const inScope = rows.filter(
-    (r) =>
-      (category === "all" || categoryOf(r) === category) &&
-      (!tool || (toolOf(r.kind)?.id ?? r.kind) === tool) &&
-      (!needle || plain(r.title).toLowerCase().includes(needle) || (toolOf(r.kind)?.name ?? "").toLowerCase().includes(needle))
-  );
-  const working = inScope.filter((r) => r.status === "processing");
-  const finished = inScope.filter((r) => r.status !== "processing");
-  const count = (c: Category | "all") => rows.filter((r) => c === "all" || categoryOf(r) === c).length;
+  const filtered = rows
+    .filter(
+      (r) =>
+        (type === "all" || typeOf(r) === type) &&
+        (!tool || (toolOf(r.kind)?.id ?? r.kind) === tool) &&
+        (!needle || plain(r.title).toLowerCase().includes(needle) || (toolOf(r.kind)?.name ?? "").toLowerCase().includes(needle) || (r.input?.voiceName ?? "").toLowerCase().includes(needle))
+    )
+    .sort((a, b) => (oldest ? 1 : -1) * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
 
-  const toolsHere = Array.from(new Set(rows.filter((r) => category === "all" || categoryOf(r) === category).map((r) => toolOf(r.kind)?.id ?? r.kind)))
+  const working = filtered.filter((r) => r.status === "processing");
+  const finished = filtered.filter((r) => r.status !== "processing");
+  const count = (t: Type | "all") => rows.filter((r) => t === "all" || typeOf(r) === t).length;
+  const toolsHere = Array.from(new Set(rows.map((r) => toolOf(r.kind)?.id ?? r.kind)))
     .map((id) => TOOLS.find((t) => t.id === id))
     .filter((t): t is NonNullable<typeof t> => Boolean(t));
 
-  const tabs: { id: Category | "all"; label: string }[] = [{ id: "all", label: "All" }, ...CATEGORIES];
+  const now = new Date();
+  const groups: [string, LibraryRow[]][] = [];
+  for (const r of finished) {
+    const label = dayLabel(r.created_at, now);
+    const g = groups.find(([l]) => l === label);
+    if (g) g[1].push(r);
+    else groups.push([label, [r]]);
+  }
+
+  const body = (list: LibraryRow[]) =>
+    view === "grid" ? (
+      <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {list.map((r) => (
+          <li key={r.id}>
+            <Card r={r} play={play} />
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <div className="zs-card overflow-visible rounded-lg">
+        <ul className="divide-y divide-white/[0.07]">
+          {list.map((r) => (
+            <ListRow key={r.id} r={r} play={play} />
+          ))}
+        </ul>
+      </div>
+    );
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex flex-col gap-6">
+      <div className="sticky top-16 z-10 -mx-4 flex flex-col gap-3 border-b border-white/[0.06] bg-[#07070f]/80 px-4 py-3 backdrop-blur-xl sm:-mx-8 sm:px-8">
+        <div className="flex flex-wrap items-center gap-3">
           <div role="tablist" className="inline-flex rounded-xl bg-white/[0.04] p-1 ring-1 ring-white/10">
-            {tabs.map((t) => (
+            {[{ id: "all" as const, label: "All" }, ...TYPES].map((t) => (
               <button
                 key={t.id}
                 type="button"
                 role="tab"
-                aria-selected={category === t.id}
-                onClick={() => {
-                  setCategory(t.id);
-                  setTool("");
-                }}
-                className={cn("cursor-pointer rounded-lg px-3.5 py-1.5 text-sm transition-colors", category === t.id ? "zs-grad-bg font-medium text-white shadow-[0_6px_20px_-8px_rgb(124_58_237/0.9)]" : "text-white/60 hover:text-white")}
+                aria-selected={type === t.id}
+                onClick={() => setType(t.id)}
+                className={cn("cursor-pointer rounded-lg px-3.5 py-1.5 text-sm transition-colors", type === t.id ? "zs-grad-bg font-medium text-white shadow-[0_6px_20px_-8px_rgb(124_58_237/0.9)]" : "text-white/60 hover:text-white")}
               >
                 {t.label}
-                <span className={cn("ml-1.5 text-xs", category === t.id ? "text-white/75" : "text-white/40")}>{count(t.id)}</span>
+                <span className={cn("ml-1.5 text-xs", type === t.id ? "text-white/75" : "text-white/40")}>{count(t.id)}</span>
               </button>
             ))}
           </div>
-          <div className="relative w-full sm:w-60">
-            <LuSearch className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search"
-              className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pr-3 pl-9 text-sm outline-none placeholder:text-white/35 focus:border-violet-400/50"
-            />
+
+          <div className="relative min-w-44 flex-1 sm:max-w-xs">
+            <LuSearch className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-white/40" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, tool or voice" className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pr-3 pl-9 text-sm outline-none placeholder:text-white/35 focus:border-violet-400/50" />
+          </div>
+
+          <select value={tool} onChange={(e) => setTool(e.target.value)} aria-label="Filter by tool" className={selectClass}>
+            <option value="">All tools</option>
+            {toolsHere.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+
+          <div className="ml-auto flex items-center gap-2">
+            <button type="button" onClick={() => setOldest((v) => !v)} className="flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white/70 transition-colors hover:text-white">
+              <LuArrowDownUp className="size-4" /> {oldest ? "Oldest first" : "Newest first"}
+            </button>
+            <div className="inline-flex rounded-xl bg-white/[0.04] p-1 ring-1 ring-white/10">
+              {(
+                [
+                  ["grid", LuLayoutGrid],
+                  ["list", LuList],
+                ] as const
+              ).map(([id, Icon]) => (
+                <button key={id} type="button" aria-label={`${id} view`} aria-pressed={view === id} onClick={() => setView(id)} className={cn("flex size-8 cursor-pointer items-center justify-center rounded-lg transition-colors", view === id ? "bg-white/15 text-white" : "text-white/45 hover:text-white")}>
+                  <Icon className="size-4" />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-
-        {toolsHere.length > 1 && (
-          <div className="flex flex-wrap items-center gap-2">
-            {toolsHere.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTool(tool === t.id ? "" : t.id)}
-                aria-pressed={tool === t.id}
-                className={cn("cursor-pointer rounded-full border px-3 py-1 text-xs transition-colors", tool === t.id ? "border-violet-400/60 bg-violet-500/15 text-white" : "border-white/10 text-white/55 hover:border-white/20 hover:text-white")}
-              >
-                {t.name}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
-      {working.length > 0 && (
-        <Section
-          title={
-            <span className="flex items-center gap-2">
-              <span className="relative flex size-1.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-violet-400/70" />
-                <span className="relative inline-flex size-1.5 rounded-full bg-violet-400" />
-              </span>
-              In progress
-            </span>
-          }
-          count={working.length}
-        >
-          <Grid rows={working} />
-        </Section>
-      )}
-
-      {(category === "all" ? CATEGORIES : CATEGORIES.filter((c) => c.id === category)).map((c) => {
-        const list = finished.filter((r) => categoryOf(r) === c.id);
-        return list.length === 0 ? null : (
-          <Section key={c.id} title={c.label} count={list.length}>
-            <Grid rows={list} />
-          </Section>
-        );
-      })}
-
-      {inScope.length === 0 && (
-        <div className="rounded-xl border border-dashed py-16 text-center">
-          <p className="text-sm font-medium">{rows.length === 0 ? "Nothing here yet" : "Nothing matches"}</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {rows.length === 0 ? (
-              <>
-                Make something in any <Link href="/studio" className="underline underline-offset-4">tool</Link> and it will land here.
-              </>
-            ) : (
-              "Try a different filter or search."
-            )}
-          </p>
+      {!ready ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="zs-card aspect-[4/3] animate-pulse rounded-xl" />
+          ))}
         </div>
+      ) : (
+        <>
+          {working.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <h2 className="flex items-center gap-2 text-sm font-semibold">
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-violet-400/70" />
+                  <span className="relative inline-flex size-2 rounded-full bg-violet-400" />
+                </span>
+                In progress <span className="rounded-full bg-white/[0.07] px-2 py-0.5 text-xs font-normal text-white/55">{working.length}</span>
+              </h2>
+              {body(working)}
+            </section>
+          )}
+
+          {groups.map(([label, list]) => (
+            <section key={label} className="flex flex-col gap-3">
+              <h2 className="flex items-center gap-2 text-sm font-semibold">
+                {label} <span className="rounded-full bg-white/[0.07] px-2 py-0.5 text-xs font-normal text-white/55">{list.length}</span>
+              </h2>
+              {body(list)}
+            </section>
+          ))}
+
+          {filtered.length === 0 && (
+            <div className="zs-card flex flex-col items-center gap-2 rounded-xl py-16 text-center">
+              <p className="font-medium">{rows.length === 0 ? "Nothing here yet" : "Nothing matches"}</p>
+              <p className="text-sm text-white/50">
+                {rows.length === 0 ? (
+                  <>
+                    Make something in any{" "}
+                    <Link href="/studio" className="underline underline-offset-4">
+                      tool
+                    </Link>{" "}
+                    and it will land here.
+                  </>
+                ) : (
+                  "Try a different filter or search."
+                )}
+              </p>
+            </div>
+          )}
+        </>
       )}
+
+      <Dialog open={Boolean(watching)} onOpenChange={(o) => !o && setWatching(null)}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogTitle className="pr-8 text-base font-semibold">{watching ? plain(watching.title) : ""}</DialogTitle>
+          <DialogDescription className="sr-only">Video player</DialogDescription>
+          {watching && <VideoPlayer src={`/api/studio/files/${watching.id}`} name="video.mp4" />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

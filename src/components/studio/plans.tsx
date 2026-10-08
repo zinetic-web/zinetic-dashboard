@@ -183,13 +183,13 @@ export function Ring({ pct, size = 60, stroke = 6, children }: { pct: number; si
 }
 
 /** What the customer bought for this tool and how much is left: a gauge, the amount, and when it ends. */
-export function UsageBar({ usage, compact = false, large = false }: { usage: PlanUsage; compact?: boolean; large?: boolean }) {
+export function UsageBar({ usage, compact = false, large = false, ringRight = false }: { usage: PlanUsage; compact?: boolean; large?: boolean; ringRight?: boolean }) {
   const pct = usage.total > 0 ? (usage.remaining / usage.total) * 100 : 0;
   const unit = formatUnits(usage.remaining, usage.unit).replace(/^[\d,.]+\s*/, "");
   const amount = formatUnits(usage.remaining, usage.unit).match(/^[\d,.]+/)?.[0] ?? "0";
   return (
-    <div className="flex items-center gap-4">
-      <Ring pct={pct} size={large ? 76 : 56} stroke={large ? 7 : 6} />
+    <div className={ringRight ? "flex flex-row-reverse items-center justify-between gap-4" : "flex items-center gap-4"}>
+      <Ring pct={pct} size={large ? 84 : 56} stroke={large ? 8 : 6} />
       <div className="min-w-0">
         {!compact && <p className="truncate text-xs font-medium text-white/60">{usage.serviceName}</p>}
         <p className="flex items-baseline gap-1.5">

@@ -7,7 +7,7 @@ export default async function LibraryPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("studio_generations")
-    .select("id, kind, title, status, mime_type, result, error, created_at")
+    .select("id, kind, title, status, mime_type, result, error, created_at, input")
     .eq("user_id", user!.id)
     .order("created_at", { ascending: false })
     .limit(200);

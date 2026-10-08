@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 function hash(s: string) {
@@ -9,36 +10,38 @@ function hash(s: string) {
   return h >>> 0;
 }
 
-// sky top, sky bottom, sun, far hills, middle hills, near hills
-const SCENES = [
-  ["#1e1b4b", "#fb923c", "#fde68a", "#4c1d95", "#312e81", "#1e1b4b"],
-  ["#0c4a6e", "#7dd3fc", "#fef3c7", "#0369a1", "#075985", "#0c4a6e"],
-  ["#312e81", "#f9a8d4", "#fef9c3", "#6d28d9", "#4338ca", "#1e1b4b"],
-  ["#134e4a", "#a7f3d0", "#fefce8", "#0f766e", "#115e59", "#064e3b"],
-  ["#1e293b", "#fda4af", "#ffedd5", "#7c3aed", "#4c1d95", "#1e1b4b"],
-  ["#0f172a", "#93c5fd", "#e0f2fe", "#1d4ed8", "#1e3a8a", "#172554"],
+// calm nature and landscape photographs, picked per item so each keeps the same picture
+const STOCK = [
+  "1506905925346-21bda4d32df4",
+  "1469474968028-56623f02e42e",
+  "1441974231531-c6227db76b6e",
+  "1470071459604-3b5ec3a7fe05",
+  "1501785888041-af3ef285b470",
+  "1472214103451-9374bd1c798e",
+  "1500382017468-9049fed747ef",
+  "1433086966358-54859d0ed716",
+  "1426604966848-d7adac402bff",
+  "1447752875215-b2761acb3c5d",
+  "1418065460487-3e41a6c84dc5",
+  "1475924156734-496f6cac6ec1",
+  "1464822759023-fed622ff2c3b",
+  "1507525428034-b723cf961d3e",
+  "1519681393784-d120267933ba",
+  "1494500764479-0c8f2919a3d8",
 ];
 
-/** A clean landscape picture, always the same for the same id, used as a thumbnail. */
-export function LandscapeThumb({ id, className }: { id: string; className?: string }) {
-  const h = hash(id);
-  const [top, bottom, sun, far, mid, near] = SCENES[h % SCENES.length];
-  const gid = `g${h}`;
-  const sx = 40 + (h % 120);
+/** A stock landscape photograph used as a thumbnail, always the same for the same id. The parent must be positioned. */
+export function LandscapeThumb({ id, className, width = 640 }: { id: string; className?: string; width?: number }) {
+  const photo = STOCK[hash(id) % STOCK.length];
   return (
-    <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice" aria-hidden className={cn("block size-full", className)}>
-      <defs>
-        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={top} />
-          <stop offset="1" stopColor={bottom} />
-        </linearGradient>
-      </defs>
-      <rect width="200" height="120" fill={`url(#${gid})`} />
-      <circle cx={sx} cy="52" r="15" fill={sun} opacity="0.92" />
-      <path d={`M0 78 L${30 + (h % 20)} 54 L${62 + (h % 14)} 74 L${96 + (h % 18)} 46 L${140 + (h % 12)} 76 L170 58 L200 74 L200 120 L0 120Z`} fill={far} opacity="0.9" />
-      <path d={`M0 92 L${40 + (h % 16)} 70 L${78 + (h % 12)} 90 L${118 + (h % 14)} 66 L${160 + (h % 10)} 88 L200 72 L200 120 L0 120Z`} fill={mid} />
-      <path d={`M0 106 Q50 90 100 104 T200 100 L200 120 L0 120Z`} fill={near} />
-    </svg>
+    <Image
+      src={`https://images.unsplash.com/photo-${photo}?auto=format&fit=crop&w=${width}&q=70`}
+      alt=""
+      fill
+      unoptimized
+      sizes="(min-width: 1024px) 25vw, 50vw"
+      className={cn("object-cover", className)}
+    />
   );
 }
 
@@ -65,7 +68,7 @@ export const fmtDuration = (s: number | null) => (s === null ? "" : `${Math.floo
 
 /** The first two words of a title, with markdown and stray marks removed. */
 export const twoWords = (t: string | null) => {
-  const clean = (t ?? "").replace(/[#*_`>~|]+/g, " ").replace(/\s+/g, " ").trim();
+  const clean = (t ?? "").replace(/\[[^\]]*\]/g, " ").replace(/[#*_`>~|"]+/g, " ").replace(/\s+/g, " ").trim();
   return clean ? clean.split(" ").slice(0, 2).join(" ") : "Untitled";
 };
 

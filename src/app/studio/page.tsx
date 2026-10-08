@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/server";
 import { GROUPS, TOOLS } from "@/lib/studio/tools";
 import { HomeHero } from "@/components/studio/home-hero";
 import { RecentTile } from "@/components/studio/recent-tile";
-import { cn } from "@/lib/utils";
 
 // The latest things this customer made, streamed in after the rest of Home.
 async function Recent({ userId }: { userId: string }) {
@@ -32,7 +31,7 @@ async function Recent({ userId }: { userId: string }) {
       <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {rows.map((r) => (
           <li key={r.id}>
-            <RecentTile id={r.id} video={Boolean(r.mime_type?.startsWith("video"))} createdAt={r.created_at} />
+            <RecentTile id={r.id} video={Boolean(r.mime_type?.startsWith("video"))} label={TOOLS.find((t) => t.id === (r.kind === "sfx" ? "sound-effects" : r.kind === "translation-lipsync" ? "video-translation" : r.kind))?.name ?? "Creation"} createdAt={r.created_at} />
           </li>
         ))}
       </ul>
@@ -63,7 +62,7 @@ export default async function StudioHome() {
               const Icon = t.icon;
               const body = (
                 <>
-                  <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg [&_svg]:size-5", t.accent)}>
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-violet-300 ring-1 ring-white/10 [&_svg]:size-5">
                     <Icon />
                   </span>
                   <span className="min-w-0 flex-1">
