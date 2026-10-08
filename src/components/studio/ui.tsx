@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Dropdown } from "@/components/studio/dropdown";
 import { SparkIcon } from "@/components/spark-icon";
 import {
   LuArrowRight,
@@ -26,7 +27,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { JobState } from "@/components/studio/use-job";
 import { AudioPlayer } from "@/components/studio/audio-player";
@@ -205,21 +205,7 @@ export function SelectField({
   options: { value: string; label: string }[];
   placeholder?: string;
 }) {
-  const current = options.find((o) => o.value === value);
-  return (
-    <Select value={value} onValueChange={(v) => v && onChange(v)}>
-      <SelectTrigger className="w-full">
-        <SelectValue>{current?.label ?? placeholder ?? "Choose"}</SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((o) => (
-          <SelectItem key={o.value} value={o.value}>
-            {o.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
+  return <Dropdown value={value} onChange={onChange} options={options} placeholder={placeholder ?? "Choose"} />;
 }
 
 /** Blob URL for a picked file, revoked when the file changes or the page unmounts. */

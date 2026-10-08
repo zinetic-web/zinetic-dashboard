@@ -318,7 +318,7 @@ function UserCard({ me, rail }: { me: Me; rail: boolean }) {
 
 /* ----------------------------------------------------------------- top bar */
 
-function TopBar({ activePlans }: { activePlans: number }) {
+function TopBar({ activePlans, me }: { activePlans: number; me: Me }) {
   const pathname = usePathname();
   const tool = TOOLS.find((t) => t.href === pathname);
   const title = pathname === "/studio" ? "Home" : pathname === "/studio/library" ? "Library" : (tool?.name ?? "AI Studio");
@@ -335,6 +335,21 @@ function TopBar({ activePlans }: { activePlans: number }) {
           <span className="font-semibold tabular-nums">{activePlans}</span>
           <span className="text-white/55">{activePlans === 1 ? "active plan" : "active plans"}</span>
         </Link>
+        <Link href="/studio/plans" className="zs-btn flex h-10 items-center gap-2 rounded-xl px-5 text-sm font-semibold">
+          <LuZap className="size-4" /> Upgrade
+        </Link>
+        <form action={me.impersonating ? stopImpersonating : signOut} className="flex items-center gap-2 rounded-xl bg-white/[0.05] py-1 pr-1.5 pl-1.5 ring-1 ring-white/10">
+          <span className="zs-grad-bg flex size-8 items-center justify-center rounded-full text-xs font-semibold">{(me.name || me.email).slice(0, 1).toUpperCase()}</span>
+          <span className="hidden max-w-40 truncate text-sm xl:block">{me.name || me.email}</span>
+          <button
+            type="submit"
+            aria-label={me.impersonating ? "Stop impersonating" : "Sign out"}
+            title={me.impersonating ? "Stop impersonating" : "Sign out"}
+            className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-white/55 hover:bg-white/10 hover:text-white"
+          >
+            {me.impersonating ? <LuUserRoundX className="size-4" /> : <LuLogOut className="size-4" />}
+          </button>
+        </form>
       </div>
     </header>
   );
@@ -414,7 +429,7 @@ export function StudioShell({
       )}
 
       <main className={cn("transition-[padding] duration-200", collapsed ? "lg:pl-[4.5rem]" : "lg:pl-72")}>
-        <TopBar activePlans={activePlans} />
+        <TopBar activePlans={activePlans} me={me} />
         {impersonating && (
           <p className="bg-amber-500/15 px-4 py-2 text-center text-xs text-amber-200">You are viewing this dashboard as a customer.</p>
         )}

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Dropdown } from "@/components/studio/dropdown";
 import { SparkIcon } from "@/components/spark-icon";
 import Image from "next/image";
 import { LuCheck, LuCircleUserRound, LuImage, LuLoaderCircle, LuPlay, LuSearch, LuUserRound, LuWand, LuX } from "react-icons/lu";
@@ -9,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { VoiceAvatar } from "@/components/studio/voice-avatar";
-import { Chip, FilterGroup, VoiceRow, cap, selectClass, usePreview, type Row, type VoiceChoice } from "@/components/studio/voice-library";
+import { Chip, FilterGroup, VoiceRow, cap, usePreview, type Row, type VoiceChoice } from "@/components/studio/voice-library";
 import type { AgentStyle, HeyGenVoice, Look, Page } from "@/lib/studio/heygen";
 
 /* --------------------------------------------------------------- shared bits */
@@ -312,14 +313,7 @@ export function HeyGenVoiceLibrary({ value, onChange }: { value: VoiceChoice | n
               <LuSearch className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name" className="h-10 pl-9" />
             </div>
-            <select className={cn(selectClass, "w-44")} value={language} onChange={(e) => setLanguage(e.target.value)} aria-label="Language">
-              <option value="">Any language</option>
-              {HG_LANGUAGES.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </select>
+            <Dropdown className="w-48" align="right" value={language} onChange={setLanguage} label="Language" placeholder="Any language" options={[{ value: "", label: "Any language" }, ...HG_LANGUAGES.map((l) => ({ value: l, label: l }))]} />
           </div>
           <FilterGroup title="Gender">
             <div className="flex flex-wrap gap-2">

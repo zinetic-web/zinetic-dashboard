@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Dropdown } from "@/components/studio/dropdown";
 import {
   LuBriefcase,
   LuCheck,
@@ -222,24 +223,19 @@ export function MusicForm({ finetunes, initialPrompt = "" }: { finetunes: Finetu
                 {finetunes.length > 0 && (
                   <Field label="Ready-made style" hint={finetuneEngine ? "Uses the Music v2 engine" : undefined}>
                     <div className="flex items-center gap-2">
-                      <select
+                      <Dropdown
+                        className="min-w-0 flex-1"
                         value={finetune}
-                        onChange={(e) => pickFinetune(e.target.value)}
-                        className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-[#0e0e1a] px-3 text-sm text-white outline-none focus:border-violet-400/60"
-                      >
-                        <option value="">None</option>
-                        {Object.entries(byGenre)
-                          .sort(([a], [b]) => a.localeCompare(b))
-                          .map(([genre, list]) => (
-                            <optgroup key={genre} label={genre}>
-                              {list.map((f) => (
-                                <option key={f.id} value={f.id}>
-                                  {f.name}
-                                </option>
-                              ))}
-                            </optgroup>
-                          ))}
-                      </select>
+                        onChange={pickFinetune}
+                        label="Ready-made style"
+                        placeholder="None"
+                        options={[
+                          { value: "", label: "None" },
+                          ...Object.entries(byGenre)
+                            .sort(([x], [y]) => x.localeCompare(y))
+                            .flatMap(([genre, list]) => list.map((f) => ({ value: f.id, label: f.name, group: genre }))),
+                        ]}
+                      />
                       {finetune && (
                         <button type="button" aria-label="Clear style" onClick={() => setFinetune("")} className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-xl text-white/50 hover:bg-white/10 hover:text-white">
                           <LuX className="size-4" />

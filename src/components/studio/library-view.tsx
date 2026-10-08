@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Dropdown } from "@/components/studio/dropdown";
 import Link from "next/link";
 import {
   LuArrowDownUp,
@@ -300,8 +301,6 @@ function ListRow({ r, play }: { r: LibraryRow; play: Play }) {
 
 /* --------------------------------------------------------------------- page */
 
-const selectClass = "h-10 cursor-pointer rounded-xl border border-white/10 bg-[#0e0e1a] px-3 text-sm text-white outline-none focus:border-violet-400/60";
-
 /** Everything a customer has made: a toolbar that stays put, results grouped by day, as a grid or a list. */
 export function LibraryView({ rows }: { rows: LibraryRow[] }) {
   const ready = useIsClient();
@@ -411,14 +410,7 @@ export function LibraryView({ rows }: { rows: LibraryRow[] }) {
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, tool or voice" className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pr-3 pl-9 text-sm outline-none placeholder:text-white/35 focus:border-violet-400/50" />
           </div>
 
-          <select value={tool} onChange={(e) => setTool(e.target.value)} aria-label="Filter by tool" className={selectClass}>
-            <option value="">All tools</option>
-            {toolsHere.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+          <Dropdown className="w-48" value={tool} onChange={setTool} label="Filter by tool" options={[{ value: "", label: "All tools" }, ...toolsHere.map((t) => ({ value: t.id, label: t.name }))]} />
 
           <div className="ml-auto flex items-center gap-2">
             <button type="button" onClick={() => setOldest((v) => !v)} className="flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white/70 transition-colors hover:text-white">

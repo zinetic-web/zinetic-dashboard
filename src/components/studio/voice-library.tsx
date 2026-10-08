@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Dropdown } from "@/components/studio/dropdown";
 import { FaMars, FaVenus } from "react-icons/fa6";
 import { SparkIcon } from "@/components/spark-icon";
 import {
@@ -371,14 +372,7 @@ export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice
   const filters = (
     <div className="flex flex-col gap-6">
       <FilterGroup title="Language">
-        <select className={selectClass} value={language} onChange={(e) => setLanguage(e.target.value)}>
-          <option value="">Any language</option>
-          {LANGUAGES.map(([c, n]) => (
-            <option key={c} value={c}>
-              {n}
-            </option>
-          ))}
-        </select>
+        <Dropdown inline value={language} onChange={setLanguage} label="Language" placeholder="Any language" options={[{ value: "", label: "Any language" }, ...LANGUAGES.map(([c, n]) => ({ value: c, label: n }))]} />
       </FilterGroup>
 
       <FilterGroup title="Use case">
@@ -412,14 +406,7 @@ export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice
       </FilterGroup>
 
       <FilterGroup title="Accent">
-        <select className={selectClass} value={accent} onChange={(e) => setAccent(e.target.value)}>
-          <option value="">Any accent</option>
-          {ACCENTS.map((a) => (
-            <option key={a} value={a}>
-              {cap(a)}
-            </option>
-          ))}
-        </select>
+        <Dropdown inline value={accent} onChange={setAccent} label="Accent" placeholder="Any accent" options={[{ value: "", label: "Any accent" }, ...ACCENTS.map((x) => ({ value: x, label: cap(x) }))]} />
       </FilterGroup>
 
       <FilterGroup title="Quality">
@@ -612,15 +599,7 @@ export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice
                       <LuSearch className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                       <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, mood or style" className="h-10 pl-9" />
                     </div>
-                    <div className="relative">
-                      <select className={cn(selectClass, "w-36 pr-8")} value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort voices">
-                        {SORTS.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <Dropdown className="w-40" align="right" value={sort} onChange={setSort} label="Sort voices" options={SORTS.map((x) => ({ value: x.id, label: x.label }))} />
                     <Button variant="outline" size="sm" className="md:hidden" onClick={() => setFiltersOpen((v) => !v)}>
                       <LuSlidersHorizontal /> Filters{activeFilters ? ` (${activeFilters})` : ""}
                       <LuChevronDown className={cn("transition-transform", filtersOpen && "rotate-180")} />
