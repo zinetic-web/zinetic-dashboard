@@ -56,10 +56,10 @@ export function ToolCard({ id }: { id: string }) {
   };
 
   return live ? (
-    <Link href={tool.href!} onMouseEnter={play} onMouseLeave={stop} onFocus={play} onBlur={stop} className="group zs-card flex h-full flex-col overflow-hidden transition-colors hover:border-violet-400/40">
+    <Link href={tool.href!} onMouseEnter={play} onMouseLeave={stop} onFocus={play} onBlur={stop} className="group zs-card zs-shine flex h-full flex-col overflow-hidden transition-colors hover:border-violet-400/40">
       {inner}
     </Link>
   ) : (
-    <div className="group zs-card flex h-full flex-col overflow-hidden opacity-60">{inner}</div>
+    <div className="group zs-card zs-shine flex h-full flex-col overflow-hidden opacity-60">{inner}</div>
   );
 }
