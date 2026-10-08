@@ -27,7 +27,6 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import type { JobState } from "@/components/studio/use-job";
 import { AudioPlayer } from "@/components/studio/audio-player";
 import { VideoPlayer } from "@/components/studio/video-player";
@@ -115,8 +114,8 @@ export function Field({ label, hint, children }: { label: string; hint?: React.R
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-3">
-        <Label>{label}</Label>
-        {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+        <Label className="text-sm font-semibold">{label}</Label>
+        {hint && <span className="text-right text-xs text-white/45">{hint}</span>}
       </div>
       {children}
     </div>
@@ -143,18 +142,18 @@ export function TextArea({
   placeholder?: string;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <Textarea
+    <div className="overflow-hidden rounded-xl border border-white/10 bg-black/20 transition-colors focus-within:border-violet-400/50">
+      <textarea
         value={value}
         onChange={(e) => onChange(max ? e.target.value.slice(0, max) : e.target.value)}
         rows={rows}
         placeholder={placeholder}
-        className="resize-y"
+        className="w-full resize-none bg-transparent px-4 pt-3.5 pb-2 text-[0.95rem] leading-relaxed text-white outline-none placeholder:text-white/30"
       />
       {max && (
-        <p className="text-right text-xs tabular-nums text-muted-foreground">
+        <div className="flex justify-end border-t border-white/[0.07] px-3 py-1.5 text-xs tabular-nums text-white/40">
           {value.length.toLocaleString()} / {max.toLocaleString()}
-        </p>
+        </div>
       )}
     </div>
   );
@@ -258,28 +257,30 @@ export function FileDrop({
         const f = e.dataTransfer.files?.[0];
         if (f) onFile(f);
       }}
-      className={cn("rounded-lg border border-dashed p-4 transition-colors", over ? "border-primary bg-primary/5" : "bg-muted/20")}
+      className={cn("rounded-xl border border-dashed p-4 transition-all", over ? "border-violet-400 bg-violet-500/10" : file ? "border-white/15 bg-white/[0.03]" : "border-white/15 bg-white/[0.02] hover:border-violet-400/50")}
     >
       <input ref={ref} type="file" accept={accept} hidden onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
       {file ? (
         <div className="flex items-center gap-3">
-          <LuFileText className="size-5 shrink-0 text-muted-foreground" />
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-200">
+            <LuFileText className="size-5" />
+          </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{file.name}</p>
-            <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+            <p className="text-xs text-white/45">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
           </div>
-          <Button variant="ghost" size="icon-sm" onClick={() => onFile(null)} aria-label="Remove file">
-            <LuX />
-          </Button>
+          <button type="button" onClick={() => onFile(null)} aria-label="Remove file" className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+            <LuX className="size-4" />
+          </button>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-3 py-2 text-center">
-          <LuUpload className="size-5 text-muted-foreground" />
-          <p className="text-xs text-muted-foreground">{hint}</p>
-          <Button variant="outline" size="sm" onClick={() => ref.current?.click()}>
-            Choose file
-          </Button>
-        </div>
+        <button type="button" onClick={() => ref.current?.click()} className="flex w-full cursor-pointer flex-col items-center gap-2.5 py-3 text-center">
+          <span className="zs-grad-bg flex size-11 items-center justify-center rounded-full text-white shadow-[0_8px_24px_-10px_rgb(124_58_237/0.9)]">
+            <LuUpload className="size-5" />
+          </span>
+          <span className="text-sm font-medium">Drop a file here, or click to choose</span>
+          <span className="max-w-xs text-xs text-white/45">{hint}</span>
+        </button>
       )}
     </div>
   );

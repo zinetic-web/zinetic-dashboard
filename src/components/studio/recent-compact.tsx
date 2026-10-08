@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { LuArrowRight, LuDownload, LuPause, LuPlay } from "react-icons/lu";
+import { LuArrowRight, LuDownload, LuFileText, LuPause, LuPlay } from "react-icons/lu";
 import { LocalTime } from "@/components/local-time";
 import { RunMeter } from "@/components/studio/processing";
 import { cn } from "@/lib/utils";
@@ -48,34 +48,45 @@ export function CompactRecent({ rows }: { rows: Row[] }) {
         {rows.map((r) => {
           const done = r.status === "done";
           const on = playing === r.id;
+          const audio = done && Boolean(r.mime_type?.startsWith("audio"));
+          const video = done && Boolean(r.mime_type?.startsWith("video"));
           return (
             <li key={r.id} className="zs-card px-3.5 py-3 transition-colors hover:border-violet-400/30 hover:bg-white/[0.04]">
               <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => toggle(r)}
-                  disabled={!done}
-                  aria-label={on ? "Pause" : "Play"}
-                  className={cn(
-                    "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-all disabled:cursor-default",
-                    done ? (on ? "zs-grad-bg text-white" : "bg-white/[0.07] text-white hover:bg-white/15") : "bg-white/[0.04] text-white/25"
-                  )}
-                >
-                  {on ? <LuPause className="size-4" /> : <LuPlay className="size-4 translate-x-px" />}
-                </button>
+                {video ? (
+                  <Link href="/studio/library" aria-label="Open in Library" className="relative block h-11 w-[4.75rem] shrink-0 overflow-hidden rounded-lg bg-black/40">
+                    <video src={`/api/studio/files/${r.id}#t=0.1`} preload="metadata" muted playsInline className="size-full object-cover" />
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/25 text-white">
+                      <LuPlay className="size-4" />
+                    </span>
+                  </Link>
+                ) : audio ? (
+                  <button
+                    type="button"
+                    onClick={() => toggle(r)}
+                    aria-label={on ? "Pause" : "Play"}
+                    className={cn("flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-all", on ? "zs-grad-bg text-white" : "bg-white/[0.07] text-white hover:bg-white/15")}
+                  >
+                    {on ? <LuPause className="size-4" /> : <LuPlay className="size-4 translate-x-px" />}
+                  </button>
+                ) : (
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/[0.05] text-white/35">
+                    <LuFileText className="size-4" />
+                  </span>
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{plain(r.title)}</p>
                   <p className="truncate text-xs text-white/45">
                     {r.status === "failed" ? <span className="text-red-300">Failed</span> : r.status === "processing" ? "In progress" : <LocalTime iso={r.created_at} mode="short" />}
                   </p>
                 </div>
-                {done && (
+                {(audio || video) && (
                   <a href={`/api/studio/files/${r.id}`} download aria-label="Download" className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/10 hover:text-white">
                     <LuDownload className="size-4" />
                   </a>
                 )}
               </div>
-              {r.status === "processing" && <RunMeter id={r.id} createdAt={r.created_at} className="mt-2 pl-12" />}
+              {r.status === "processing" && <RunMeter id={r.id} createdAt={r.created_at} className="mt-2 pl-[3.25rem]" />}
             </li>
           );
         })}

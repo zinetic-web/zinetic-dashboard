@@ -40,7 +40,7 @@ export async function ToolPage({
 }) {
   const tool = TOOLS.find((t) => t.id === toolId)!;
   // pages that show their recent runs in the column under the result
-  const compact = toolId === "voice";
+  const compact = true;
   const { user } = await getDashboardSession();
   const [engineList, rows, trial] = await Promise.all([enabledEngines(toolId), user ? entitlementRows(user.id) : Promise.resolve([]), trialInfo(user?.id ?? null)]);
   const engines = engineList.map(toPublic);
