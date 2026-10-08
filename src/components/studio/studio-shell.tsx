@@ -160,8 +160,8 @@ function Sidebar({ collapsed, onToggle, onNavigate, mobile = false, open, me }: 
         <Link href="/studio" onClick={onNavigate} className="flex min-w-0 items-center gap-3">
           <Image src="/brand/logo.png" alt="Zinetic Music" width={899} height={1140} style={{ height: 32, width: "auto" }} />
           {!rail && (
-            <span className="truncate font-heading text-lg font-semibold tracking-tight">
-              Zinetic <span className="zs-grad-text">Studio</span>
+            <span className="truncate font-heading text-base font-semibold tracking-tight">
+              Zinetic <span className="zs-grad-text">AI Studio</span>
             </span>
           )}
         </Link>
@@ -376,7 +376,7 @@ function TopBar({ activePlans, me }: { activePlans: number; me: Me }) {
   return (
     <header className="sticky top-0 z-20 hidden h-16 items-center justify-between gap-4 border-b border-white/[0.07] bg-[#07070f]/70 px-8 backdrop-blur-xl lg:flex">
       <div className="flex items-center gap-2.5 text-sm">
-        <span className="text-white/45">AI Studio</span>
+        <span className="text-white/45">Zinetic AI Studio</span>
         <span className="text-white/20">/</span>
         <span className="font-medium">{title}</span>
       </div>
@@ -447,7 +447,7 @@ export function StudioShell({
         </button>
         <Link href="/studio" className="flex items-center gap-2">
           <Image src="/brand/logo.png" alt="" width={899} height={1140} style={{ height: 24, width: "auto" }} />
-          <span className="font-heading text-sm font-semibold">AI Studio</span>
+          <span className="font-heading text-sm font-semibold">Zinetic AI Studio</span>
         </Link>
         <form action={impersonating ? stopImpersonating : signOut} className="ml-auto">
           <button type="submit" aria-label="Sign out" className="flex size-9 cursor-pointer items-center justify-center rounded-full text-white/60 hover:bg-white/10 hover:text-white">
