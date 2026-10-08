@@ -388,10 +388,11 @@ const usageTag = (e: PublicEngine) => {
 
 /** A version badge for an engine: its own initial or number on the brand gradient. */
 function EngineMark({ label, active }: { label: string; active?: boolean }) {
-  const m = /v\d[\d.]*|\d[\d.]*/i.exec(label)?.[0]?.replace(/^v/i, "") ?? label.slice(0, 2);
+  const n = /\d[\d.]*/.exec(label)?.[0];
+  const text = n ? `V${n}` : label.slice(0, 2).toUpperCase();
   return (
-    <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold", active ? "zs-grad-bg text-white shadow-[0_8px_22px_-10px_rgb(124_58_237/0.9)]" : "bg-white/[0.07] text-white/70")}>
-      {m.length > 3 ? m.slice(0, 2) : m}
+    <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl font-bold", text.length > 3 ? "text-[0.7rem]" : "text-sm", active ? "zs-grad-bg text-white shadow-[0_8px_22px_-10px_rgb(124_58_237/0.9)]" : "bg-white/[0.07] text-white/70")}>
+      {text}
     </span>
   );
 }
@@ -559,7 +560,15 @@ export function Output({
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="font-heading text-lg">{tool.group === "video" ? "Generated video" : "Generated audio"}</CardTitle>
-          <Badge variant={s.variant}>{s.label}</Badge>
+          <span
+            className={cn(
+              "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium",
+              state.phase === "done" ? "bg-emerald-500/15 text-emerald-300" : state.phase === "error" ? "bg-red-500/15 text-red-300" : state.phase === "working" ? "bg-violet-500/15 text-violet-200" : "bg-white/[0.07] text-white/55"
+            )}
+          >
+            <span className={cn("size-1.5 rounded-full", state.phase === "done" ? "bg-emerald-400" : state.phase === "error" ? "bg-red-400" : state.phase === "working" ? "animate-pulse bg-violet-300" : "bg-white/35")} />
+            {s.label === "Ready" ? "Ready" : s.label}
+          </span>
         </div>
         <CardDescription>
           {state.phase === "working" ? (working ?? "You can leave this page, it will be in your Library when done.") : state.phase === "idle" ? idle : " "}

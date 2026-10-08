@@ -2,12 +2,13 @@
 
 import * as React from "react";
 
-type Mode = "datetime" | "short" | "date";
+type Mode = "datetime" | "short" | "date" | "day";
 
 const OPTIONS: Record<Mode, Intl.DateTimeFormatOptions> = {
   datetime: { dateStyle: "medium", timeStyle: "short" },
   short: { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" },
   date: { day: "numeric", month: "short", year: "numeric" },
+  day: { day: "numeric", month: "short" },
 };
 
 const noop = () => () => {};

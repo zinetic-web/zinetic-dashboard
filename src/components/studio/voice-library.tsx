@@ -1,11 +1,14 @@
 "use client";
 
 import * as React from "react";
+import { FaMars, FaVenus } from "react-icons/fa6";
 import { SparkIcon } from "@/components/spark-icon";
 import {
   LuBookOpen,
   LuCheck,
   LuChevronDown,
+  LuChevronLeft,
+  LuChevronRight,
   LuGraduationCap,
   LuLoaderCircle,
   LuMegaphone,
@@ -68,6 +71,9 @@ const SORTS = [
   { id: "cloned_by_count", label: "Most saved" },
   { id: "created_date", label: "Newest" },
 ];
+
+/** male or female, read from a voice description such as "female · en · american". */
+export const genderOf = (meta?: string | null): "male" | "female" | null => (/\bfemale\b/i.test(meta ?? "") ? "female" : /\bmale\b/i.test(meta ?? "") ? "male" : null);
 
 export const cap = (s?: string | null) => (s ? s.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()) : "");
 const compact = (n: number) => (n >= 1e9 ? `${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : String(n));
@@ -221,6 +227,8 @@ export function VoiceRow({
  */
 export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice | null; onChange: (v: VoiceChoice) => void; defaults: VoiceChoice[] }) {
   const [open, setOpen] = React.useState(false);
+  const strip = React.useRef<HTMLDivElement>(null);
+  const drag = React.useRef<{ x: number; left: number; moved: boolean } | null>(null);
   const [tab, setTab] = React.useState<Tab>("explore");
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const [q, setQ] = React.useState("");
@@ -473,39 +481,89 @@ export function VoiceLibrary({ value, onChange, defaults }: { value: VoiceChoice
         if (!o) preview.stop();
       }}
     >
-      <div className="flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {[...(value && !defaults.some((d) => d.id === value.id) ? [value] : []), ...defaults].slice(0, 7).map((v) => {
-          const on = value?.id === v.id;
-          return (
-            <button
-              key={v.id}
-              type="button"
-              onClick={() => onChange(v)}
-              aria-pressed={on}
-              className={cn(
-                "flex w-[7.25rem] shrink-0 cursor-pointer flex-col items-center gap-2 rounded-2xl border px-2 py-3.5 text-center transition-all",
-                on ? "border-violet-400/70 bg-violet-500/15 shadow-[0_8px_26px_-12px_rgb(124_58_237/0.8)]" : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
-              )}
-            >
-              <VoiceAvatar id={v.id} size={56} />
-              <span className="w-full truncate text-sm font-medium">{v.name.split(" - ")[0]}</span>
-              <span className="w-full truncate text-[0.7rem] text-white/45">{v.meta || "Voice"}</span>
-            </button>
-          );
-        })}
-        <DialogTrigger
-          render={
-            <button
-              type="button"
-              className="flex w-[7.25rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-2 py-3.5 text-center text-white/60 transition-colors hover:border-violet-400/50 hover:text-white"
-            />
-          }
+      <div className="group/strip relative">
+        <div
+          ref={strip}
+          onPointerDown={(e) => {
+            if (e.pointerType !== "mouse" || !strip.current) return;
+            drag.current = { x: e.clientX, left: strip.current.scrollLeft, moved: false };
+          }}
+          onPointerMove={(e) => {
+            const d = drag.current;
+            if (!d || !strip.current) return;
+            const dx = e.clientX - d.x;
+            if (Math.abs(dx) > 4) {
+              d.moved = true;
+              strip.current.scrollLeft = d.left - dx;
+            }
+          }}
+          onPointerUp={() => setTimeout(() => (drag.current = null), 0)}
+          onPointerLeave={() => (drag.current = null)}
+          onClickCapture={(e) => {
+            if (drag.current?.moved) {
+              e.stopPropagation();
+              e.preventDefault();
+            }
+          }}
+          className="flex cursor-grab gap-2.5 overflow-x-auto scroll-smooth pb-1 [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
         >
-          <span className="flex size-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.04]">
-            <LuSearch className="size-5" />
-          </span>
-          <span className="text-sm font-medium">Browse all</span>
-        </DialogTrigger>
+          {[...(value && !defaults.some((d) => d.id === value.id) ? [value] : []), ...defaults].slice(0, 12).map((v) => {
+            const on = value?.id === v.id;
+            const g = genderOf(v.meta);
+            return (
+              <button
+                key={v.id}
+                type="button"
+                onClick={() => onChange(v)}
+                aria-pressed={on}
+                className={cn(
+                  "flex w-[7.25rem] shrink-0 cursor-pointer select-none flex-col items-center gap-2 rounded-2xl border px-2 py-3.5 text-center transition-all",
+                  on ? "border-violet-400/70 bg-violet-500/15 shadow-[0_8px_26px_-12px_rgb(124_58_237/0.8)]" : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
+                )}
+              >
+                <VoiceAvatar id={v.id} size={56} />
+                <span className="w-full truncate text-sm font-medium">{v.name.split(" - ")[0]}</span>
+                {g ? (
+                  <span className={cn("flex items-center gap-1 text-[0.72rem]", g === "female" ? "text-pink-300" : "text-sky-300")}>
+                    {g === "female" ? <FaVenus className="size-3.5" /> : <FaMars className="size-3.5" />}
+                    {g === "female" ? "Female" : "Male"}
+                  </span>
+                ) : (
+                  <span className="text-[0.72rem] text-white/40">Voice</span>
+                )}
+              </button>
+            );
+          })}
+          <DialogTrigger
+            render={
+              <button
+                type="button"
+                className="flex w-[7.25rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-2 py-3.5 text-center text-white/60 transition-colors hover:border-violet-400/50 hover:text-white"
+              />
+            }
+          >
+            <span className="flex size-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.04]">
+              <LuSearch className="size-5" />
+            </span>
+            <span className="text-sm font-medium">Browse all</span>
+          </DialogTrigger>
+        </div>
+        <button
+          type="button"
+          aria-label="Scroll left"
+          onClick={() => strip.current?.scrollBy({ left: -280 })}
+          className="absolute top-1/2 -left-3 hidden size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-[#12121f]/95 text-white shadow-lg backdrop-blur transition-colors hover:bg-white/15 group-hover/strip:flex"
+        >
+          <LuChevronLeft className="size-4" />
+        </button>
+        <button
+          type="button"
+          aria-label="Scroll right"
+          onClick={() => strip.current?.scrollBy({ left: 280 })}
+          className="absolute top-1/2 -right-3 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-[#12121f]/95 text-white shadow-lg backdrop-blur transition-colors hover:bg-white/15"
+        >
+          <LuChevronRight className="size-4" />
+        </button>
       </div>
       <DialogTrigger
         render={

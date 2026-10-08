@@ -1,88 +1,152 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
-import { LuArrowRight } from "react-icons/lu";
+import { useRouter } from "next/navigation";
+import { LuAudioLines, LuClapperboard, LuMusic } from "react-icons/lu";
+import { SparkIcon } from "@/components/spark-icon";
+import { AuthBackdrop } from "@/components/auth-backdrop";
 import { cn } from "@/lib/utils";
-import { TOOLS, type StudioTool } from "@/lib/studio/tools";
-import { MediaBg } from "@/components/studio/media";
 
-const FEATURED = ["music", "avatar-video", "voice", "video-translation"]
-  .map((id) => TOOLS.find((t) => t.id === id)!)
-  .filter(Boolean);
+const TARGETS = [
+  {
+    id: "video",
+    label: "Video",
+    icon: LuClapperboard,
+    href: "/studio/prompt-video",
+    param: "prompt",
+    ideas: ["A cinematic shot of a city at night, neon lights and rain", "A calm promo for a new lo-fi album release", "A friendly welcome video for new subscribers", "Explain how music royalties work, in simple words"],
+  },
+  {
+    id: "voice",
+    label: "Voice",
+    icon: LuAudioLines,
+    href: "/studio/voice",
+    param: "text",
+    ideas: ["Welcome to the show, I am so glad you are here", "Turn this script into a warm, natural voiceover", "Read my story aloud in a calm narrator voice", "Say it in Bengali, with a friendly tone"],
+  },
+  {
+    id: "music",
+    label: "Music",
+    icon: LuMusic,
+    href: "/studio/music",
+    param: "prompt",
+    ideas: ["A warm lo-fi beat with soft piano and vinyl crackle", "Upbeat Bengali pop with dhol and a catchy chorus", "A dark cinematic trap track with heavy 808s", "A gentle acoustic ballad about coming home"],
+  },
+];
 
-export function HomeHero({ name, art }: { name: string; art: Record<string, StudioTool["media"]> }) {
-  const [i, setI] = React.useState(0);
+/** Types a line, holds it, deletes it, then types the next, as a placeholder. */
+function useTypewriter(lines: string[], paused: boolean) {
+  const [text, setText] = React.useState("");
   React.useEffect(() => {
-    const t = setInterval(() => setI((n) => (n + 1) % FEATURED.length), 6500);
-    return () => clearInterval(t);
-  }, []);
-  const tool = FEATURED[i];
-  const Icon = tool.icon;
+    if (paused) return;
+    let line = 0;
+    let n = 0;
+    let deleting = false;
+    let t: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      const full = lines[line];
+      if (!deleting) {
+        n++;
+        setText(full.slice(0, n));
+        if (n === full.length) {
+          deleting = true;
+          t = setTimeout(tick, 1700);
+          return;
+        }
+        t = setTimeout(tick, 38);
+      } else {
+        n -= 2;
+        if (n <= 0) {
+          n = 0;
+          setText("");
+          deleting = false;
+          line = (line + 1) % lines.length;
+          t = setTimeout(tick, 350);
+          return;
+        }
+        setText(full.slice(0, n));
+        t = setTimeout(tick, 16);
+      }
+    };
+    t = setTimeout(tick, 400);
+    return () => clearTimeout(t);
+  }, [lines, paused]);
+  return text;
+}
+
+/** The top of Home: a moving backdrop, the question, and one box that sends the idea to the right tool. */
+export function HomeHero({ name }: { name: string }) {
+  const router = useRouter();
+  const [target, setTarget] = React.useState(TARGETS[0]);
+  const [text, setText] = React.useState("");
+  const typed = useTypewriter(target.ideas, text.length > 0);
+
+  function go(e: React.FormEvent) {
+    e.preventDefault();
+    const q = text.trim() ? `?${target.param}=${encodeURIComponent(text.trim().slice(0, 2000))}` : "";
+    router.push(`${target.href}${q}`);
+  }
 
   return (
-    <section className="relative isolate h-full overflow-hidden rounded-[1.75rem] bg-zinc-900 ring-1 ring-white/10">
-      <AnimatePresence mode="sync">
-        <motion.div
-          key={tool.id}
-          initial={{ opacity: 0, scale: 1.06 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1 }}
-          className="absolute inset-0 -z-10"
-        >
-          <MediaBg media={art[tool.id] ?? tool.media} />
-        </motion.div>
-      </AnimatePresence>
-      <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-black/90 via-black/55 to-transparent" />
-      <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-black/60 to-transparent" />
+    <section className="relative isolate overflow-hidden rounded-[2rem] border border-white/10 bg-[#07070f]">
+      <AuthBackdrop variant="studio" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-[#07070f]/70 via-[#07070f]/45 to-[#07070f]/85" />
 
-      <div className="flex h-full min-h-[24rem] flex-col justify-end gap-6 p-7 sm:p-10">
+      <div className="relative z-10 flex flex-col items-center gap-8 px-5 py-14 text-center sm:px-10 sm:py-20">
         <div>
-          <p className="text-sm text-white/70">{name ? `Welcome back, ${name.split(" ")[0]}` : "Welcome back"}</p>
-          <h1 className="mt-2 max-w-2xl font-heading text-4xl leading-[1.05] font-bold text-balance sm:text-5xl">
-            What will you <span className="zl-serif zl-grad-text">create</span> today?
+          <p className="text-sm text-white/60">{name ? `Welcome back, ${name}` : "Welcome back"}</p>
+          <h1 className="mt-3 text-balance text-5xl leading-[1.05] font-medium tracking-tight sm:text-6xl lg:text-7xl">
+            <span className="zl-serif">What will you </span>
+            <span className="zl-serif zs-grad-text pr-1">create</span>
+            <span className="zl-serif"> today?</span>
           </h1>
         </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={tool.id}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.4 }}
-            className="flex flex-wrap items-center gap-4"
-          >
-            <span className={cn("flex size-11 items-center justify-center rounded-xl bg-gradient-to-br shadow-lg [&_svg]:size-5", tool.accent)}>
-              <Icon />
-            </span>
-            <div className="mr-2">
-              <p className="font-semibold">{tool.name}</p>
-              <p className="text-sm text-white/65">{tool.blurb}</p>
+        <form onSubmit={go} className="flex w-full max-w-3xl flex-col gap-4 rounded-3xl border border-white/15 bg-[#0b0b16]/75 p-4 text-left shadow-[0_30px_80px_-30px_rgb(124_58_237/0.55)] backdrop-blur-xl sm:p-5">
+          <div className="flex items-start gap-3">
+            <SparkIcon className="mt-3.5 size-5 shrink-0 text-violet-300" />
+            <div className="relative w-full">
+              {!text && (
+                <span aria-hidden className="pointer-events-none absolute top-3 left-0 text-base text-white/40">
+                  {typed}
+                  <span className="ml-px inline-block h-[1.1em] w-px translate-y-0.5 animate-pulse bg-white/60" />
+                </span>
+              )}
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={2}
+                aria-label="What will you create"
+                className="min-h-16 w-full resize-none bg-transparent py-3 text-base text-white outline-none"
+              />
             </div>
-            <Link
-              href={tool.href!}
-              className="group inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-sm font-semibold text-black transition-transform hover:scale-[1.03]"
-            >
-              Try it now
-              <LuArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </motion.div>
-        </AnimatePresence>
-
-        <div className="flex gap-2">
-          {FEATURED.map((t, n) => (
-            <button
-              key={t.id}
-              type="button"
-              aria-label={t.name}
-              onClick={() => setI(n)}
-              className={cn("h-1 cursor-pointer rounded-full transition-all", n === i ? "w-10 bg-white" : "w-4 bg-white/35")}
-            />
-          ))}
-        </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              {TARGETS.map((t) => {
+                const on = t.id === target.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTarget(t)}
+                    aria-pressed={on}
+                    className={cn(
+                      "flex h-10 cursor-pointer items-center gap-2 rounded-xl border px-4 text-sm transition-all",
+                      on ? "border-violet-400/70 bg-violet-500/20 text-white" : "border-white/10 bg-white/[0.04] text-white/65 hover:border-white/25 hover:text-white"
+                    )}
+                  >
+                    <t.icon className="size-4" />
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+            <button type="submit" className="zs-btn flex h-11 cursor-pointer items-center gap-2 rounded-xl px-6 text-sm font-semibold">
+              <SparkIcon className="size-4" /> Generate
+            </button>
+          </div>
+        </form>
       </div>
     </section>
   );

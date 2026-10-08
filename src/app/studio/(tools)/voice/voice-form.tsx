@@ -107,6 +107,7 @@ export function VoiceForm({ voices, initialText = "" }: { voices: Voice[]; initi
                     engine: eng.key,
                     text,
                     voiceId: voice?.id,
+                    voiceName: voice?.name.split(" - ")[0],
                     language: language || undefined,
                     settings: touched ? settings : undefined,
                   }),

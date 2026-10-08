@@ -145,9 +145,10 @@ export function AudioPlayer({
     setSpeed(n);
     if (ref.current) ref.current.playbackRate = SPEEDS[n];
   };
+  const pct = progress * 100;
 
   return (
-    <div className={cn("rounded-xl border bg-card", compact ? "p-3" : "p-4", off && "select-none")}>
+    <div className={cn("rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] to-transparent", compact ? "p-3" : "p-4 sm:p-5", off && "select-none")}>
       {!off && (
         <audio
           ref={ref}
@@ -185,26 +186,23 @@ export function AudioPlayer({
         }
         onPointerUp={() => (dragging.current = false)}
         onPointerLeave={() => setHover(null)}
-        className={cn("relative flex touch-none items-center gap-[3px]", compact ? "h-14" : "h-20", off ? "cursor-default" : "cursor-pointer", busy && "animate-pulse")}
+        className={cn("relative flex touch-none items-center gap-[3px]", compact ? "h-16" : "h-24", off ? "cursor-default" : "cursor-pointer", busy && "animate-pulse")}
       >
         {bars.map((h, i) => {
           const done = !off && (i + 0.5) / bars.length <= progress;
           return (
             <span
               key={i}
-              className={cn(
-                "flex-1 rounded-full transition-[height,background-color] duration-300",
-                off ? "bg-muted-foreground/15" : done ? "bg-foreground" : "bg-muted-foreground/30"
-              )}
+              className={cn("flex-1 rounded-full transition-[background-color] duration-200", off ? "bg-white/[0.09]" : done ? "bg-gradient-to-t from-violet-500 to-blue-400" : "bg-violet-500/40")}
               style={{ height: `${h * 100}%` }}
             />
           );
         })}
         {!off && hover !== null && (
           <>
-            <span aria-hidden className="pointer-events-none absolute inset-y-0 w-px bg-foreground/40" style={{ left: `${hover * 100}%` }} />
+            <span aria-hidden className="pointer-events-none absolute inset-y-0 w-px bg-white/40" style={{ left: `${hover * 100}%` }} />
             {duration > 0 && (
-              <span className="pointer-events-none absolute -top-5 -translate-x-1/2 rounded bg-foreground px-1.5 py-0.5 text-[0.65rem] tabular-nums text-background" style={{ left: `${hover * 100}%` }}>
+              <span className="pointer-events-none absolute -top-6 -translate-x-1/2 rounded bg-white px-1.5 py-0.5 text-[0.65rem] font-medium tabular-nums text-black" style={{ left: `${hover * 100}%` }}>
                 {fmt(hover * duration)}
               </span>
             )}
@@ -212,48 +210,62 @@ export function AudioPlayer({
         )}
       </div>
 
-      <div className="mt-3 flex items-center gap-2.5">
+      <div className="mt-4 flex items-center gap-3">
         <button
           type="button"
           onClick={toggle}
           disabled={off}
           aria-label={playing ? "Pause" : "Play"}
-          className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-85 disabled:cursor-default disabled:bg-muted disabled:text-muted-foreground disabled:hover:opacity-100"
-        >
-          {playing ? <LuPause className="size-4" /> : <LuPlay className="size-4 translate-x-px" />}
-        </button>
-        <span className="text-xs tabular-nums text-muted-foreground">
-          <span className="font-medium text-foreground">{off ? "0:00" : fmt(time)}</span> / {off || !duration ? "0:00" : fmt(duration)}
-        </span>
-        <div className="ml-auto flex items-center gap-1">
-          <button
-            type="button"
-            onClick={cycleSpeed}
-            disabled={off}
-            aria-label="Playback speed"
-            className="h-7 min-w-9 cursor-pointer rounded-md px-2 text-xs tabular-nums text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-default disabled:opacity-50"
-          >
-            {SPEEDS[speed]}x
-          </button>
-          <button
-            type="button"
-            onClick={() => setMuted((m) => !m)}
-            disabled={off}
-            aria-label={muted ? "Unmute" : "Mute"}
-            className="flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-default disabled:opacity-50"
-          >
-            {muted ? <LuVolumeX className="size-4" /> : <LuVolume2 className="size-4" />}
-          </button>
-          {off ? (
-            <span aria-hidden className="flex size-7 items-center justify-center rounded-md text-muted-foreground opacity-50">
-              <LuDownload className="size-4" />
-            </span>
-          ) : (
-            <a href={src} download={name} aria-label="Download" className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-              <LuDownload className="size-4" />
-            </a>
+          className={cn(
+            "flex shrink-0 cursor-pointer items-center justify-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 disabled:cursor-default disabled:bg-white/[0.07] disabled:text-white/30 disabled:hover:scale-100",
+            off ? "" : "zs-grad-bg shadow-[0_10px_28px_-10px_rgb(124_58_237/0.95)]",
+            compact ? "size-10" : "size-12"
           )}
-        </div>
+        >
+          {playing ? <LuPause className="size-5" /> : <LuPlay className="size-5 translate-x-px" />}
+        </button>
+        <span className="shrink-0 text-xs tabular-nums text-white/55">
+          <span className="text-white">{off ? "0:00" : fmt(time)}</span> / {off || !duration ? "0:00" : fmt(duration)}
+        </span>
+        <input
+          type="range"
+          min={0}
+          max={duration || 1}
+          step={0.01}
+          value={time}
+          disabled={off}
+          onChange={(e) => seekTo(Number(e.target.value) / (duration || 1))}
+          aria-label="Seek"
+          className="zs-range min-w-0 flex-1"
+          style={{ backgroundImage: "linear-gradient(90deg, #7c3aed, #3b82f6), linear-gradient(rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.1))", backgroundSize: `${pct}% 100%, 100% 100%`, backgroundRepeat: "no-repeat" }}
+        />
+        <button
+          type="button"
+          onClick={() => setMuted((m) => !m)}
+          disabled={off}
+          aria-label={muted ? "Unmute" : "Mute"}
+          className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-default disabled:opacity-40"
+        >
+          {muted ? <LuVolumeX className="size-[1.15rem]" /> : <LuVolume2 className="size-[1.15rem]" />}
+        </button>
+        {off ? (
+          <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white/60 opacity-40">
+            <LuDownload className="size-[1.15rem]" />
+          </span>
+        ) : (
+          <a href={src} download={name} aria-label="Download" className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/10 hover:text-white">
+            <LuDownload className="size-[1.15rem]" />
+          </a>
+        )}
+        <button
+          type="button"
+          onClick={cycleSpeed}
+          disabled={off}
+          aria-label="Playback speed"
+          className="h-9 min-w-11 shrink-0 cursor-pointer rounded-lg border border-white/10 bg-white/[0.04] px-2.5 text-sm font-medium tabular-nums text-white/85 transition-colors hover:bg-white/10 disabled:cursor-default disabled:opacity-40"
+        >
+          {SPEEDS[speed]}x
+        </button>
       </div>
     </div>
   );

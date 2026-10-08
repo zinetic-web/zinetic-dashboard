@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { serifFont } from "@/components/landing/fonts";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -375,7 +376,7 @@ export function StudioShell({
   }, [setCollapsed]);
 
   return (
-    <div className="zl zs dark min-h-screen text-white">
+    <div className={`zl zs dark ${serifFont.variable} min-h-screen text-white`}>
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-30 hidden border-r border-white/[0.07] bg-[#090913]/85 backdrop-blur-xl transition-[width] duration-200 lg:block",
