@@ -31,17 +31,17 @@ export function ToolCard({ id }: { id: string }) {
           <Image src={tool.media.src} alt="" fill unoptimized sizes="(min-width: 1024px) 30vw, 50vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
         )}
         <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#0e0e1a] via-transparent to-black/20" />
-        <span className="absolute top-3 left-3 flex size-9 items-center justify-center rounded-xl bg-black/45 text-white ring-1 ring-white/15 backdrop-blur [&_svg]:size-[1.1rem]">
-          <Icon />
-        </span>
         {!live && <span className="absolute top-3 right-3 rounded-full bg-black/50 px-2 py-0.5 text-[0.65rem] text-white/70 backdrop-blur">Soon</span>}
       </div>
-      <div className="flex items-start gap-3 p-4">
+      <div className="flex items-center gap-3.5 p-4">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-violet-300 ring-1 ring-white/10 [&_svg]:size-5">
+          <Icon />
+        </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium">{tool.name}</span>
           <span className="mt-0.5 line-clamp-2 block text-xs leading-relaxed text-white/50">{tool.blurb}</span>
         </span>
-        {live && <LuArrowRight className="mt-1 size-4 shrink-0 text-white/30 transition-all group-hover:translate-x-0.5 group-hover:text-white" />}
+        {live && <LuArrowRight className="size-4 shrink-0 text-white/30 transition-all group-hover:translate-x-0.5 group-hover:text-white" />}
       </div>
     </>
   );
