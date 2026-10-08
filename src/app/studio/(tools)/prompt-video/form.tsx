@@ -107,11 +107,11 @@ export function PromptVideoForm({ initialPrompt = "" }: { initialPrompt?: string
               value={seconds}
               onChange={setSeconds}
               options={[
-                { value: "15", label: "15 seconds" },
-                { value: "30", label: "30 seconds" },
-                { value: "45", label: "45 seconds" },
-                { value: "60", label: "1 minute" },
-                { value: "90", label: "90 seconds" },
+                { value: "15", label: "15 sec" },
+                { value: "30", label: "30 sec" },
+                { value: "45", label: "45 sec" },
+                { value: "60", label: "1 min" },
+                { value: "90", label: "90 sec" },
               ]}
             />
           </Field>

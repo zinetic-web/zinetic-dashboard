@@ -514,7 +514,9 @@ function Placeholder({ busy }: { busy: boolean }) {
     return (
       <div className="grid grid-cols-3 gap-3">
         {[0, 1, 2].map((i) => (
-          <VideoPlayer key={i} vertical compact disabled busy={busy} />
+          <div key={i} className={cn("flex aspect-[9/16] items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.03]", busy && "animate-pulse")}>
+            <LuPlay className="size-6 text-white/20" />
+          </div>
         ))}
       </div>
     );
@@ -607,12 +609,12 @@ export function DownloadLink({ id, name }: { id: string; name: string }) {
 /** Empty frame for a photo, for the avatar creator. */
 export function ImageFrame({ src }: { src: string | null }) {
   return (
-    <div className="flex aspect-[3/4] max-h-96 w-full max-w-72 items-center justify-center overflow-hidden rounded-xl border bg-muted/30">
+    <div className="flex aspect-[3/4] max-h-96 w-full max-w-72 items-center justify-center overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.03]">
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt="" className="size-full object-cover" />
       ) : (
-        <LuUserRound className="size-10 text-muted-foreground/40" />
+        <LuUserRound className="size-10 text-white/20" />
       )}
     </div>
   );

@@ -3,7 +3,6 @@
 import * as React from "react";
 import { postForm } from "@/components/studio/upload";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { EnginePicker, Field, FileDrop, ImageFrame, SubmitButton, TextInput, useEngine, useObjectUrl, Workspace } from "@/components/studio/ui";
@@ -61,11 +60,14 @@ export function CreatorForm() {
         </>
       }
       output={
-        <Card>
+        <Card className="zs-card border-0 bg-transparent ring-0">
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
-              <CardTitle className="text-base">Preview</CardTitle>
-              <Badge variant={done ? "default" : "outline"}>{done ? "Saved" : preview ? "Ready" : "Waiting"}</Badge>
+              <CardTitle className="font-heading text-lg">Preview</CardTitle>
+              <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${done ? "bg-emerald-500/15 text-emerald-300" : preview ? "bg-violet-500/15 text-violet-200" : "bg-white/[0.07] text-white/55"}`}>
+                <span className={`size-1.5 rounded-full ${done ? "bg-emerald-400" : preview ? "bg-violet-300" : "bg-white/35"}`} />
+                {done ? "Saved" : preview ? "Ready" : "Waiting"}
+              </span>
             </div>
             <CardDescription>Your photo appears here. Saved avatars show up in Avatar video under Yours.</CardDescription>
           </CardHeader>
