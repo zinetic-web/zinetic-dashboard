@@ -78,6 +78,6 @@ export function waveFor(id: string, count: number) {
   return Array.from({ length: count }, (_, i) => {
     h = Math.imul(h ^ (h >>> 15), 2246822507) + i;
     const r = ((h >>> 0) % 1000) / 1000;
-    return 0.2 + r * 0.8 * (0.45 + 0.55 * Math.sin((i / count) * Math.PI));
+    return Math.round((0.2 + r * 0.8 * (0.45 + 0.55 * Math.sin((i / count) * Math.PI))) * 1000) / 1000;
   });
 }

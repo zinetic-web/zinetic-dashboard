@@ -88,7 +88,7 @@ export function ToolHeader({ aside }: { aside?: React.ReactNode }) {
 /** The controls on the left, the result on the right. Stacks on small screens. */
 export function Workspace({ form, output }: { form: React.ReactNode; output: React.ReactNode }) {
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,32rem)_minmax(0,1fr)]">
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,32rem)_minmax(0,1fr)]">
       <div className="zs-card flex flex-col gap-6 p-5 sm:p-6">{form}</div>
       {/* the result stays in view beside the controls while the page scrolls */}
       <div className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-20">
@@ -357,7 +357,7 @@ export function SubmitButton({
 /** The usage a run takes from a plan, as a short tag. */
 const usageTag = (e: PublicEngine) => {
   const m = Number(e.credit_cost) || 1;
-  return m === 1 ? "Standard" : m < 1 ? `${m}x · lighter` : `${m}x · heavier`;
+  return m === 1 ? "Standard" : m < 1 ? `Goes ${Math.round((1 / m) * 10) / 10}x further` : `Uses ${Math.round(m * 10) / 10}x more`;
 };
 
 /** A version badge for an engine: its own initial or number on the brand gradient. */
@@ -410,7 +410,7 @@ export function EnginePicker() {
 
   return (
     <div ref={box} className="relative">
-      <p className="mb-2 text-sm font-semibold">Engine</p>
+      <p className="mb-2 text-sm font-semibold">Version</p>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

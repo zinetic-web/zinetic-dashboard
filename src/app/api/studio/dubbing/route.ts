@@ -24,13 +24,14 @@ export async function POST(request: Request) {
   const lipsync = form.get("lipsync") !== "false" && z.authz.engine.features.includes("lipsync");
   const mode = form.get("mode") === "precision" ? "precision" : "speed";
   const speakers = Number(form.get("speakers")) || undefined;
-  const job = await startTranslation({ provider: z.authz.engine.provider, file, language, lipsync, mode, speakers: speakers && speakers >= 1 && speakers <= 10 ? Math.trunc(speakers) : undefined });
+  const dubbing = { version: z.authz.engine.key === "v2" ? ("v2" as const) : ("v1" as const), watermark: z.authz.engine.options?.watermark === true };
+  const job = await startTranslation({ provider: z.authz.engine.provider, file, language, lipsync, mode, speakers: speakers && speakers >= 1 && speakers <= 10 ? Math.trunc(speakers) : undefined, dubbing });
   if (!job.ok) {
     await refundAuthz(z.authz);
     return fail(job.error, 502);
   }
 
   // processing rows are finished by /api/studio/jobs/[id]
-  const g = await begin(auth.userId, "dubbing", job.provider, file.name, { filename: file.name, targetLang: language, lipsync }, job.jobId, z.authz);
+  const g = await begin(auth.userId, "dubbing", job.provider, file.name, { filename: file.name, targetLang: language, lipsync, version: dubbing.version, watermark: dubbing.watermark }, job.jobId, z.authz);
   return NextResponse.json({ id: g.id });
 }

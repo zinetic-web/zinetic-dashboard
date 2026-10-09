@@ -16,6 +16,7 @@ async function Recent({ userId }: { userId: string }) {
     .select("id, kind, title, status, mime_type, created_at")
     .eq("user_id", userId)
     .eq("status", "done")
+    .neq("kind", "speech-agent")
     .order("created_at", { ascending: false })
     .limit(4);
   const rows = data ?? [];

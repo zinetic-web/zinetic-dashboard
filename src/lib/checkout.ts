@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validateSslcommerzTransaction } from "@/lib/sslcommerz";
-import { SERVICES, isComingSoon } from "@/lib/landing-services";
+import { SERVICES, isComingSoon, resolvePlan } from "@/lib/landing-services";
 import { CHECK_PRICE, PRICING_PLANS } from "@/lib/pricing-plans";
 import { grantEntitlement } from "@/lib/studio/entitlements";
 import { studioService } from "@/lib/studio/services";
@@ -25,7 +25,8 @@ export function productFor(serviceId: string): CheckoutProduct {
 export function quote(serviceId: string, planName: string) {
   if (isComingSoon(serviceId)) return null;
   const service = SERVICES.find((s) => s.id === serviceId);
-  const tier = service?.tiers.find((t) => t.name === planName);
+  const resolved = service ? resolvePlan(service, planName) : null;
+  const tier = resolved?.tier;
   if (!service || !tier) return null;
 
   const bundle = serviceId === "mcn-checker" ? PRICING_PLANS.find((p) => p.label === tier.name) : undefined;
@@ -33,6 +34,10 @@ export function quote(serviceId: string, planName: string) {
   return {
     service,
     tier,
+    /** what the order stores: the tier name, plus the version when it is not the first */
+    plan: planName,
+    /** "Starter · Eleven v4 Turbo" */
+    label: resolved!.label,
     usdPrice: tier.price,
     usdCredit,
     bdtAmount: Math.round(tier.price * RATE * 100) / 100,

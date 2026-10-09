@@ -1,7 +1,7 @@
 import type { IconType } from "react-icons";
 import { SparkIcon } from "@/components/spark-icon";
 import { MEDIA } from "@/lib/landing-services";
-import { PiEraserBold, PiFileTextBold, PiFilmSlateBold, PiMagicWandBold, PiMicrophoneBold, PiMusicNotesBold, PiScissorsBold, PiSmileyBold, PiSpeakerHighBold, PiTranslateBold, PiUserCircleBold, PiVideoCameraBold, PiWaveSineBold, PiWaveformBold } from "react-icons/pi";
+import { PiHeadsetBold, PiEraserBold, PiFileTextBold, PiFilmSlateBold, PiMagicWandBold, PiMicrophoneBold, PiMusicNotesBold, PiScissorsBold, PiSmileyBold, PiSpeakerHighBold, PiTranslateBold, PiUserCircleBold, PiVideoCameraBold, PiWaveSineBold, PiWaveformBold } from "react-icons/pi";
 
 export type ToolGroup = "audio" | "video";
 
@@ -32,6 +32,7 @@ export const TOOLS: StudioTool[] = [
   { id: "voice-changer", name: "Voice changer", blurb: "Re-voice a recording and keep its timing and emotion.", group: "audio", icon: PiMicrophoneBold, href: "/studio/voice-changer", kinds: ["voice-changer"], media: { type: "video", src: MEDIA.purpleMic }, accent: "from-violet-500 to-fuchsia-500" },
   { id: "sound-effects", name: "Sound effects", blurb: "Describe a sound: ambience, impacts, seamless loops.", group: "audio", icon: PiSpeakerHighBold, href: "/studio/sound-effects", kinds: ["sfx"], media: { type: "video", src: MEDIA.concertLights }, accent: "from-amber-500 to-orange-600" },
   { id: "music", name: "Music generator", blurb: "Describe a song and get a finished track back.", group: "audio", icon: PiMusicNotesBold, href: "/studio/music", kinds: ["music"], media: { type: "video", src: MEDIA.djDeck }, accent: "from-pink-500 to-purple-600" },
+  { id: "speech-engine", name: "Speech Engine", blurb: "Design a voice agent and talk to it, live.", group: "audio", icon: PiHeadsetBold, href: "/studio/speech-engine", kinds: ["speech-engine"], media: { type: "video", src: MEDIA.podcastB }, accent: "from-violet-500 to-blue-500" },
   { id: "transcribe", name: "Speech to text", blurb: "Transcripts with speakers and timestamps.", group: "audio", icon: PiFileTextBold, href: "/studio/transcribe", kinds: ["transcribe"], media: { type: "video", src: MEDIA.podcastA }, accent: "from-sky-500 to-blue-600" },
   { id: "audio-cleaner", name: "Audio cleaner", blurb: "Remove noise and isolate the voice.", group: "audio", icon: PiWaveSineBold, href: "/studio/audio-cleaner", kinds: ["audio-cleaner"], media: { type: "video", src: MEDIA.studioSession }, accent: "from-emerald-500 to-teal-600" },
   { id: "dubbing", name: "Dubbing", blurb: "Dub audio or video into another language.", group: "audio", icon: PiTranslateBold, href: "/studio/dubbing", kinds: ["dubbing"], media: { type: "video", src: MEDIA.videoEditing }, accent: "from-indigo-500 to-blue-500" },

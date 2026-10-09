@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { startDubbing } from "@/lib/studio/elevenlabs";
+import { startDubbing, startDubbingV2 } from "@/lib/studio/elevenlabs";
 import { ASSET_LIMIT_MB, translateVideo, uploadAsset, type MediaSource } from "@/lib/studio/heygen";
 import { saveFile, signedUrl, usesR2 } from "@/lib/studio/storage";
 
@@ -35,9 +35,16 @@ export async function startTranslation(opts: {
   mode?: "speed" | "precision";
   /** HeyGen only: how many people speak, when auto-detection gets it wrong */
   speakers?: number;
+  /** ElevenLabs only: the dubbing version and, for v1, whether the result carries a watermark */
+  dubbing?: { version: "v1" | "v2"; watermark: boolean };
 }): Promise<TranslationJob> {
   if (opts.provider === "elevenlabs") {
-    const r = await startDubbing({ file: opts.file, filename: opts.file.name, targetLang: opts.language });
+    if (opts.dubbing?.version === "v2") {
+      const r = await startDubbingV2({ file: opts.file, filename: opts.file.name, targetLang: opts.language });
+      // the job id says which flow to poll
+      return r.ok ? { ok: true, provider: "elevenlabs", jobId: `v2:${r.projectId}` } : r;
+    }
+    const r = await startDubbing({ file: opts.file, filename: opts.file.name, targetLang: opts.language, watermark: opts.dubbing?.watermark });
     return r.ok ? { ok: true, provider: "elevenlabs", jobId: r.dubbingId } : r;
   }
   if (opts.provider === "heygen") {

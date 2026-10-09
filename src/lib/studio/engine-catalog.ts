@@ -10,7 +10,7 @@ export type ProviderId = "elevenlabs" | "heygen" | "local";
 export const PROVIDERS: Record<ProviderId, { name: string; services: string[] }> = {
   elevenlabs: {
     name: "ElevenLabs",
-    services: ["voice", "voice-changer", "sound-effects", "music", "transcribe", "audio-cleaner", "dubbing", "video-translation"],
+    services: ["voice", "voice-changer", "sound-effects", "music", "transcribe", "audio-cleaner", "dubbing", "video-translation", "speech-engine"],
   },
   heygen: {
     name: "HeyGen",

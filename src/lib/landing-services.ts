@@ -10,6 +10,17 @@ export type Tier = {
   perks?: string[];
 };
 
+/** One version (model) of a service. Plans cost the same on every version, what they give differs. */
+export type ServiceVersion = {
+  /** the engine key in AI Studio */
+  id: string;
+  label: string;
+  note?: string;
+  /** how much of the plan's base unit one unit of this version uses (Turbo: 0.5, so it goes twice as far) */
+  factor: number;
+  tiers: Tier[];
+};
+
 export type Service = {
   id: string;
   category: ServiceCategory;
@@ -17,8 +28,33 @@ export type Service = {
   blurb: string;
   features: string[];
   cta: string;
+  /** the plans of the default version */
   tiers: Tier[];
+  /** services that come in several versions: pick one, then the plans change */
+  versions?: ServiceVersion[];
 };
+
+/** "Starter" for the default version, "Starter~v4-turbo" for another. This is what an order stores. */
+export const planKey = (tier: string, versionId?: string | null) => (versionId ? `${tier}~${versionId}` : tier);
+export const splitPlanKey = (key: string): { tier: string; version: string | null } => {
+  const i = key.indexOf("~");
+  return i < 0 ? { tier: key, version: null } : { tier: key.slice(0, i), version: key.slice(i + 1) };
+};
+
+/** Finds what a plan key means for a service: the tier, the version it was bought on and that version's factor. */
+export function resolvePlan(service: Service, key: string): { tier: Tier; version: ServiceVersion | null; factor: number; label: string } | null {
+  const { tier: tierName, version: versionId } = splitPlanKey(key);
+  if (!versionId || !service.versions) {
+    const tier = service.tiers.find((t) => t.name === tierName);
+    if (!tier) return null;
+    const def = service.versions?.[0] ?? null;
+    return { tier, version: def, factor: def?.factor ?? 1, label: def ? `${tier.name} · ${def.label}` : tier.name };
+  }
+  const version = service.versions.find((v) => v.id === versionId);
+  const tier = version?.tiers.find((t) => t.name === tierName);
+  if (!version || !tier) return null;
+  return { tier, version, factor: version.factor, label: `${tier.name} · ${version.label}` };
+}
 
 export const CATEGORIES: { id: ServiceCategory; label: string; short: string }[] = [
   { id: "music", label: "Music", short: "Music" },
@@ -106,6 +142,10 @@ const three = (
   { name: "Pro", price: c, period, quota: qc },
 ];
 
+/** Starter, Creator and Pro for one version, with the same perks as the service's base plans. */
+const plans = (rows: [number, string][], period: Tier["period"] = null, perks: string[][] = []): Tier[] =>
+  (["Starter", "Creator", "Pro"] as const).map((name, i) => ({ name, price: rows[i][0], period, quota: rows[i][1], perks: perks[i] }));
+
 const mcnTiers: Tier[] = [
   { name: "Single Check", price: CHECK_PRICE, quota: "1 Credit" },
   ...PRICING_PLANS.map((plan) => ({
@@ -160,11 +200,7 @@ export const SERVICES: Service[] = [
     blurb: "Describe a song and get vocals, instrumentals and a finished track back.",
     features: ["Vocal & instrumental generation", "Prompt-to-music", "Download generated audio", "Generation history"],
     cta: "Generate Music",
-    tiers: [
-      { name: "Starter", price: 8.49, period: "month", quota: "20 generations", perks: ["Vocal & instrumental", "Prompt-to-music", "Audio download"] },
-      { name: "Creator", price: 16.99, period: "month", quota: "60 generations", perks: ["Everything in Starter", "Generation history"] },
-      { name: "Pro", price: 25.49, period: "month", quota: "120 generations", perks: ["All Creator features", "Priority generation", "Generation history"] },
-    ],
+    tiers: plans([[6.9, "40 minutes"], [24.7, "147 minutes"], [108.9, "660 minutes"]], "month", [["Vocal & instrumental", "Prompt-to-music", "Audio download"], ["Everything in Starter", "Generation history"], ["All Creator features", "Priority generation", "Generation history"]]),
   },
   {
     id: "voice-generator",
@@ -173,7 +209,15 @@ export const SERVICES: Service[] = [
     blurb: "Turn any script into natural speech, in multiple voices and languages.",
     features: ["Text to natural AI voice", "Multiple voices", "Multiple languages", "MP3 download", "Generation history"],
     cta: "Generate Voice",
-    tiers: three([4.99, 17.99, 83.99], ["30,000 characters", "120,000 characters", "600,000 characters"], "month"),
+    tiers: plans([[6.9, "75,000 characters"], [24.64, "275,000 characters"], [108.9, "1,237,500 characters"]], "month"),
+    versions: [
+      { id: "v4", label: "Eleven v4", note: "Most expressive. $0.08 per 1K characters.", factor: 1, tiers: plans([[6.9, "75,000 characters"], [24.64, "275,000 characters"], [108.9, "1,237,500 characters"]], "month") },
+      { id: "v4-turbo", label: "Eleven v4 Turbo", note: "Fast and light, goes twice as far.", factor: 0.5, tiers: plans([[6.9, "150,000 characters"], [24.64, "550,000 characters"], [108.9, "2,475,000 characters"]], "month") },
+      { id: "v3", label: "Eleven v3", note: "Dramatic delivery with audio tags.", factor: 1, tiers: plans([[6.9, "75,000 characters"], [24.64, "275,000 characters"], [108.95, "1,238,000 characters"]], "month") },
+      { id: "v3-conversational", label: "Eleven v3 Conversational", note: "Natural, lower cost. Goes twice as far.", factor: 0.5, tiers: plans([[6.9, "150,000 characters"], [24.64, "550,000 characters"], [108.9, "2,475,000 characters"]], "month") },
+      { id: "v1", label: "Multilingual v2", note: "Steady narration in 29 languages.", factor: 1, tiers: plans([[6.9, "75,000 characters"], [24.64, "275,000 characters"], [108.95, "1,238,000 characters"]], "month") },
+      { id: "flash", label: "Flash / Turbo", note: "Real-time speed. Goes twice as far.", factor: 0.5, tiers: plans([[6.9, "150,000 characters"], [24.64, "550,000 characters"], [108.9, "2,475,000 characters"]], "month") },
+    ],
   },
   {
     id: "voice-changer",
@@ -182,7 +226,7 @@ export const SERVICES: Service[] = [
     blurb: "Re-voice a recording while keeping its timing and emotion intact.",
     features: ["Upload audio", "Select target voice", "Voice-to-voice conversion", "Preserves timing & emotion", "Download converted audio"],
     cta: "Change Voice",
-    tiers: three([5.99, 12.99, 42.49], ["30 minutes", "100 minutes", "500 minutes"]),
+    tiers: plans([[6.9, "50 minutes"], [24.6, "183 minutes"], [108.9, "825 minutes"]]),
   },
   {
     id: "sound-effects",
@@ -191,7 +235,7 @@ export const SERVICES: Service[] = [
     blurb: "Type the sound you need. Ambience, cinematic hits and seamless loops.",
     features: ["Text-to-sound effects", "Ambient sounds", "Cinematic effects", "Loop generation", "Audio download"],
     cta: "Generate Sound",
-    tiers: three([3.99, 10.99, 33.99], ["25 generations", "100 generations", "500 generations"]),
+    tiers: plans([[6.9, "150 generations"], [24.64, "605 generations"], [108.9, "3,000 generations"]]),
   },
   {
     id: "speech-to-text",
@@ -200,7 +244,20 @@ export const SERVICES: Service[] = [
     blurb: "Accurate transcripts with speakers and timestamps, from audio or video.",
     features: ["Upload audio/video", "AI transcription", "Multiple languages", "Speaker detection", "Timestamps", "Transcript download"],
     cta: "Transcribe Audio",
-    tiers: three([3.99, 11.99, 33.99], ["5 hours", "25 hours", "100 hours"]),
+    tiers: plans([[6.84, "27 hours"], [24.64, "100 hours"], [108.9, "450 hours"]]),
+    versions: [
+      { id: "v2", label: "Scribe v2", note: "Files and recordings. $0.22 per hour.", factor: 1, tiers: plans([[6.84, "27 hours"], [24.64, "100 hours"], [108.9, "450 hours"]]) },
+      { id: "realtime", label: "Scribe v2 Realtime", note: "Live transcription as you speak. $0.39 per hour.", factor: 1.773, tiers: plans([[6.73, "15 hours"], [24.47, "56 hours"], [108.97, "254 hours"]]) },
+    ],
+  },
+  {
+    id: "speech-engine",
+    category: "voice",
+    name: "Speech Engine",
+    blurb: "Talk to a voice agent you design. It listens, thinks and answers out loud in real time.",
+    features: ["Design your own voice agent", "Pick its voice and language", "Talk to it live", "Conversation history"],
+    cta: "Talk to an Agent",
+    tiers: plans([[6.9, "75 minutes"], [24.64, "275 minutes"], [108.95, "1,238 minutes"]], "month"),
   },
   {
     id: "audio-cleaner",
@@ -209,7 +266,7 @@ export const SERVICES: Service[] = [
     blurb: "Strip background noise and isolate the voice. Studio sound from a phone recording.",
     features: ["Upload audio", "Background noise removal", "Voice isolation", "Clean audio download"],
     cta: "Clean Audio",
-    tiers: three([5.99, 12.99, 39.99], ["30 minutes", "100 minutes", "500 minutes"]),
+    tiers: plans([[6.9, "50 minutes"], [24.6, "183 minutes"], [108.9, "825 minutes"]]),
   },
   {
     id: "dubbing",
@@ -218,7 +275,12 @@ export const SERVICES: Service[] = [
     blurb: "Translate and dub audio or video while keeping the original speaker's voice and timing.",
     features: ["Audio/video upload", "AI translation & dubbing", "Multiple languages", "Preserves speaker voice & timing", "Download dubbed content"],
     cta: "Start Dubbing",
-    tiers: three([12.99, 32.99, 84.99], ["10 minutes", "30 minutes", "100 minutes"]),
+    tiers: plans([[6.9, "12 minutes"], [24.64, "44 minutes"], [108.9, "198 minutes"]]),
+    versions: [
+      { id: "v1", label: "Dubbing v1 · No watermark", note: "Clean output. $0.50 per minute.", factor: 1, tiers: plans([[6.9, "12 minutes"], [24.64, "44 minutes"], [108.9, "198 minutes"]]) },
+      { id: "v1-watermark", label: "Dubbing v1 · With watermark", note: "Marked output, lower cost. $0.33 per minute.", factor: 0.66, tiers: plans([[6.84, "18 minutes"], [24.77, "67 minutes"], [108.9, "300 minutes"]]) },
+      { id: "v2", label: "Dubbing v2", note: "Keeps voice and emotion. 90+ languages. $2.20 per minute.", factor: 4.4, tiers: plans([[7.59, "3 minutes"], [24.64, "10 minutes"], [108.9, "45 minutes"]]) },
+    ],
   },
   {
     id: "avatar-video",

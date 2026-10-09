@@ -4,7 +4,7 @@ import * as React from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { LuArrowRight, LuCheck, LuGift, LuShieldCheck } from "react-icons/lu";
 import { Reveal, SectionHeading } from "@/components/landing/primitives";
-import { CATEGORIES, isComingSoon, servicesIn, type ServiceCategory } from "@/lib/landing-services";
+import { CATEGORIES, isComingSoon, planKey, servicesIn, type ServiceCategory } from "@/lib/landing-services";
 import { cn } from "@/lib/utils";
 import { PriceBlock } from "@/components/landing/currency";
 import { ComingSoonButton, ZButton } from "@/components/landing/button";
@@ -63,16 +63,22 @@ export function PricingSection({ trial }: { trial: TrialRules }) {
   const services = servicesIn(category);
   const [serviceId, setServiceId] = React.useState(services[0].id);
   const service = services.find((s) => s.id === serviceId) ?? services[0];
+  // a service sold in versions: pick one, and the plans below show what each gives on it
+  const [versionId, setVersionId] = React.useState<string | null>(null);
+  const versionIndex = Math.max(0, service.versions?.findIndex((v) => v.id === versionId) ?? 0);
+  const version = service.versions?.[versionIndex] ?? null;
+  const tiers = (version?.tiers ?? service.tiers).map((t, i) => ({ ...t, perks: t.perks ?? service.tiers[i]?.perks }));
+  const keyFor = (name: string) => planKey(name, versionIndex === 0 ? null : version?.id);
 
   function pickCategory(c: ServiceCategory) {
     setCategory(c);
     setServiceId(servicesIn(c)[0].id);
   }
 
-  const featuredIndex = service.tiers.length === 3 ? 1 : service.tiers.length > 3 ? 2 : -1;
+  const featuredIndex = tiers.length === 3 ? 1 : tiers.length > 3 ? 2 : -1;
   // every AI Studio service also has the shared free trial, shown as the first plan
   const showTrial = trial.enabled && Boolean(studioService(service.id));
-  const cardCount = service.tiers.length + (showTrial ? 1 : 0);
+  const cardCount = tiers.length + (showTrial ? 1 : 0);
 
   return (
     <section id="pricing" className="scroll-mt-24 px-5 py-24 sm:py-32">
@@ -149,6 +155,28 @@ export function PricingSection({ trial }: { trial: TrialRules }) {
               <p className="max-w-xl text-(--zl-muted)">{service.blurb}</p>
             </div>
 
+            {service.versions && version && (
+              <div className="mb-8 flex flex-col items-center gap-3">
+                <p className="text-xs font-semibold tracking-[0.14em] text-(--zl-muted) uppercase">Version</p>
+                <div className="flex max-w-4xl flex-wrap justify-center gap-2">
+                  {service.versions.map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setVersionId(v.id)}
+                      className={cn(
+                        "zl-chip rounded-full border px-3.5 py-1.5 text-sm",
+                        v.id === version.id ? "border-[#ff3d86] text-(--zl-text)" : "border-(--zl-line) text-(--zl-muted) hover:text-(--zl-text)"
+                      )}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+                {version.note && <p className="text-sm text-(--zl-muted)">{version.note}</p>}
+              </div>
+            )}
+
             <div
               className={cn(
                 "grid gap-5",
@@ -181,7 +209,7 @@ export function PricingSection({ trial }: { trial: TrialRules }) {
                   </div>
                 </div>
               )}
-              {service.tiers.map((tier, i) => {
+              {tiers.map((tier, i) => {
                 const featured = i === featuredIndex;
                 return (
                   <div
@@ -214,7 +242,7 @@ export function PricingSection({ trial }: { trial: TrialRules }) {
                     <div className="mt-auto pt-8">
                       {isComingSoon(service.id) ? <ComingSoonButton className="w-full" /> : (
 <ZButton
-                        href={`/checkout?service=${service.id}&plan=${encodeURIComponent(tier.name)}`}
+                        href={`/checkout?service=${service.id}&plan=${encodeURIComponent(keyFor(tier.name))}`}
                         variant={featured ? "primary" : "solid"}
                         className="w-full"
                       >

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { composeMusic, listFinetunes } from "@/lib/studio/elevenlabs";
-import { authorize, begin, fail, failGeneration, finishWithFile, refundAuthz, requireStudioUser } from "@/lib/studio/run";
+import { authorize, begin, fail, failGeneration, finishWithFile, minutesOf, refundAuthz, requireStudioUser } from "@/lib/studio/run";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     finetuneId = b.finetuneId;
   }
 
-  const z = await authorize(auth.userId, "music", b?.engine, { chars: prompt.length, seconds }, "Music generator", 1);
+  const z = await authorize(auth.userId, "music", b?.engine, { chars: prompt.length, seconds }, "Music generator", minutesOf(seconds));
   if ("error" in z) return z.error;
   if (finetuneId && !z.authz.engine.features.includes("finetunes")) {
     await refundAuthz(z.authz);

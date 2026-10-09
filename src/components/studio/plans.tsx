@@ -8,6 +8,7 @@ import { PiLockSimpleBold } from "react-icons/pi";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dropdown } from "@/components/studio/dropdown";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -48,34 +49,7 @@ export function PlanPicker({ options }: { options: PlanOption[] }) {
   return (
     <div className="flex flex-col gap-5">
       {options.map((o) => (
-        <div key={o.service} className="flex flex-col gap-3">
-          {options.length > 1 && <p className="text-sm font-medium">{o.serviceName}</p>}
-          <div className="grid gap-3 sm:grid-cols-3">
-            {o.tiers.map((t) => {
-              const id = `${o.service}:${t.name}`;
-              return (
-                <Card key={t.name} size="sm">
-                  <CardHeader>
-                    <CardTitle className="text-base">{t.name}</CardTitle>
-                    <CardDescription>{t.amount}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-3">
-                    <div>
-                      <p className="font-heading text-2xl font-semibold">${t.usd}</p>
-                      <p className="text-xs text-muted-foreground">
-                        ৳{t.bdt.toLocaleString("en-US")} · {t.validity ? `valid ${t.validity}` : "never expires"}
-                      </p>
-                    </div>
-                    <Button onClick={() => buy(o.service, t.name)} disabled={!agreed || busy !== null} className="w-full">
-                      {busy === id && <LuLoaderCircle className="animate-spin" />}
-                      {busy === id ? "Opening payment" : "Buy"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
+        <ServicePlanCards key={o.service} option={o} showName={options.length > 1} agreed={agreed} busy={busy} onBuy={buy} />
       ))}
 
       <label className="flex cursor-pointer items-start gap-2.5 text-xs leading-relaxed text-muted-foreground">
@@ -101,6 +75,52 @@ export function PlanPicker({ options }: { options: PlanOption[] }) {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+    </div>
+  );
+}
+
+/** One service's plans. A service sold in several versions first asks which version, then shows what each plan gives on it. */
+function ServicePlanCards({ option: o, showName, agreed, busy, onBuy }: { option: PlanOption; showName: boolean; agreed: boolean; busy: string | null; onBuy: (service: string, plan: string) => void }) {
+  const [versionId, setVersionId] = React.useState(o.versions?.[0]?.id ?? "");
+  const version = o.versions?.find((v) => v.id === versionId) ?? o.versions?.[0] ?? null;
+  const tiers = version?.tiers ?? o.tiers;
+  return (
+    <div className="flex flex-col gap-3">
+      {(showName || version) && (
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          {showName && <p className="text-sm font-medium">{o.serviceName}</p>}
+          {o.versions && version && (
+            <div className="flex w-full max-w-xs flex-col gap-1.5 sm:ml-auto">
+              <span className="text-xs text-white/55">Version</span>
+              <Dropdown value={version.id} onChange={setVersionId} label="Version" options={o.versions.map((v) => ({ value: v.id, label: v.label }))} />
+            </div>
+          )}
+        </div>
+      )}
+      {version?.note && <p className="text-xs text-white/50">{version.note}</p>}
+      <div className="grid gap-3 sm:grid-cols-3">
+        {tiers.map((t) => {
+          const id = `${o.service}:${t.key}`;
+          return (
+            <div key={t.key} className="zs-card flex flex-col gap-4 p-4">
+              <div>
+                <p className="font-heading text-base font-semibold">{t.name}</p>
+                <p className="text-sm text-white/60">{t.amount}</p>
+              </div>
+              <div>
+                <p className="font-heading text-2xl font-semibold tabular-nums">${t.usd}</p>
+                <p className="text-xs text-white/45">
+                  ৳{t.bdt.toLocaleString("en-US")} · {t.validity ? `valid ${t.validity}` : "never expires"}
+                </p>
+              </div>
+              <Button onClick={() => onBuy(o.service, t.key)} disabled={!agreed || busy !== null} className="mt-auto w-full">
+                {busy === id && <LuLoaderCircle className="animate-spin" />}
+                {busy === id ? "Opening payment" : "Buy"}
+              </Button>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

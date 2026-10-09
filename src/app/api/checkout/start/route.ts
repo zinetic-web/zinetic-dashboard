@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     user_id: userId,
     email,
     service: q.service.id,
-    plan: q.tier.name,
+    plan: q.plan,
     product: q.product,
     usd_price: q.usdPrice,
     usd_credit: q.usdCredit,
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     amount: q.bdtAmount,
     customerName: fullName,
     customerEmail: email,
-    productName: `${q.service.name} ${q.tier.name}`,
+    productName: `${q.service.name} ${q.label}`,
     urls: {
       success: `${appUrl}/api/payments/checkout/success`,
       fail: `${appUrl}/api/payments/checkout/fail`,

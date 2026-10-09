@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { LuArrowRight, LuCheck, LuEye, LuEyeOff, LuLoaderCircle, LuLock, LuX } from "react-icons/lu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FromPrice, PriceBlock, useCurrency } from "@/components/landing/currency";
-import { CATEGORIES, SERVICES, isComingSoon, servicesIn, type ServiceCategory, type Tier } from "@/lib/landing-services";
+import { CATEGORIES, SERVICES, isComingSoon, planKey, servicesIn, splitPlanKey, type Service, type ServiceCategory, type Tier } from "@/lib/landing-services";
 import { studioService } from "@/lib/studio/services";
 import { USD_TO_BDT_RATE, formatBdt, formatMoney, formatUsd, periodSuffix } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -52,8 +52,10 @@ export function CheckoutForm({
 }) {
   const startService = SERVICES.find((s) => s.id === initialService) ?? SERVICES[0];
   const [serviceId, setServiceId] = React.useState(startService.id);
+  const startKey = splitPlanKey(initialPlan);
+  const [versionId, setVersionId] = React.useState<string | null>(startService.versions?.find((v) => v.id === startKey.version)?.id ?? null);
   const [planName, setPlanName] = React.useState(
-    initialPlan === TRIAL_PLAN && trial.enabled && studioService(startService.id) ? TRIAL_PLAN : (startService.tiers.find((t) => t.name === initialPlan)?.name ?? startService.tiers[0].name)
+    initialPlan === TRIAL_PLAN && trial.enabled && studioService(startService.id) ? TRIAL_PLAN : (startService.tiers.find((t) => t.name === startKey.tier)?.name ?? startService.tiers[0].name)
   );
   const [category, setCategory] = React.useState<ServiceCategory>(startService.category);
   const [agreed, setAgreed] = React.useState(false);
@@ -79,8 +81,13 @@ export function CheckoutForm({
           perks: ["No card required", "One shared allowance for every service", "A limited test, not the full plan"],
         }
       : null;
-  const tiers = trialTier ? [trialTier, ...service.tiers] : service.tiers;
-  const tier = tiers.find((t) => t.name === planName) ?? service.tiers[0];
+  const versionIndex = Math.max(0, service.versions?.findIndex((v) => v.id === versionId) ?? 0);
+  const version = service.versions?.[versionIndex] ?? null;
+  const versionTiers = (version?.tiers ?? service.tiers).map((t, i) => ({ ...t, perks: t.perks ?? service.tiers[i]?.perks }));
+  const tiers = trialTier ? [trialTier, ...versionTiers] : versionTiers;
+  const tier = tiers.find((t) => t.name === planName) ?? versionTiers[0];
+  // what the order stores: the plan, plus the version when it is not the first
+  const orderPlan = tier.name === TRIAL_PLAN ? tier.name : planKey(tier.name, versionIndex === 0 ? null : version?.id);
   const isTrial = tier.name === TRIAL_PLAN && tier.price === 0;
   const soon = isComingSoon(service.id);
   const amount = formatMoney(tier.price, currency);
@@ -94,6 +101,7 @@ export function CheckoutForm({
     setCategory(c);
     const first = servicesIn(c)[0];
     setServiceId(first.id);
+    setVersionId(null);
     setPlanName(first.tiers[0].name);
     syncUrl(first.id, first.tiers[0].name);
   }
@@ -101,13 +109,20 @@ export function CheckoutForm({
   function pickService(id: string) {
     const s = SERVICES.find((x) => x.id === id)!;
     setServiceId(id);
+    setVersionId(null);
     setPlanName(s.tiers[0].name);
     syncUrl(id, s.tiers[0].name);
   }
 
   function pickPlan(name: string) {
     setPlanName(name);
-    syncUrl(serviceId, name);
+    syncUrl(serviceId, name === TRIAL_PLAN ? name : planKey(name, versionIndex === 0 ? null : version?.id));
+  }
+
+  function pickVersion(sv: Service, id: string) {
+    setVersionId(id);
+    const i = sv.versions?.findIndex((v) => v.id === id) ?? 0;
+    syncUrl(sv.id, planKey(tier.name === TRIAL_PLAN ? sv.tiers[0].name : tier.name, i === 0 ? null : id));
   }
 
   // the form only collects details, the order is placed from the payment window
@@ -167,7 +182,7 @@ export function CheckoutForm({
       const res = await fetch("/api/checkout/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...draft, service: service.id, plan: tier.name, agreed }),
+        body: JSON.stringify({ ...draft, service: service.id, plan: orderPlan, agreed }),
       });
       const json = (await res.json().catch(() => ({}))) as { gatewayPageUrl?: string; error?: string };
       if (!res.ok || !json.gatewayPageUrl) {
@@ -259,6 +274,26 @@ export function CheckoutForm({
               );
             })}
           </ul>
+
+          {service.versions && version && (
+            <div className="mt-12">
+              <p className={fieldLabel}>Version of {service.name}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {service.versions.map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => pickVersion(service, v.id)}
+                    aria-pressed={v.id === version.id}
+                    className={cn("rounded-full border px-4 py-2 text-sm transition-colors", v.id === version.id ? "border-[#ff3d86] bg-white/[0.06] text-white" : "border-white/15 text-white/55 hover:border-white/30 hover:text-white")}
+                  >
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+              {version.note && <p className="mt-3 text-sm text-white/45">{version.note}</p>}
+            </div>
+          )}
 
           <div className="mt-12">
             <p className={fieldLabel}>Plan for {service.name}</p>

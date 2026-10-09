@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { SERVICES } from "@/lib/landing-services";
+import { SERVICES, resolvePlan } from "@/lib/landing-services";
 import { STUDIO_SERVICES, parseQuota, servicesForTool, validityDays, type Unit } from "@/lib/studio/services";
 
 export type EntitlementRow = {
@@ -96,11 +96,14 @@ export async function grantEntitlement(opts: {
   note?: string;
 }): Promise<{ error: string | null }> {
   const svc = STUDIO_SERVICES.find((s) => s.id === opts.service);
-  const tier = SERVICES.find((s) => s.id === opts.service)?.tiers.find((t) => t.name === opts.plan);
+  const service = SERVICES.find((s) => s.id === opts.service);
+  const resolved = service ? resolvePlan(service, opts.plan) : null;
+  const tier = resolved?.tier;
   if (!svc) return { error: "That service is not part of AI Studio." };
 
+  // a plan bought on a cheaper or costlier version is stored in the service's base unit, so one pool serves every version
   const parsed = tier ? parseQuota(opts.service, tier) : null;
-  const amount = opts.amount ?? parsed?.amount;
+  const amount = opts.amount ?? (parsed ? Math.round(parsed.amount * (resolved?.factor ?? 1) * 1000) / 1000 : undefined);
   if (!amount || amount <= 0) return { error: "Enter how much to grant." };
 
   const days = opts.days !== undefined ? opts.days : tier ? validityDays(tier.period) : null;
@@ -109,7 +112,7 @@ export async function grantEntitlement(opts: {
   const { error } = await createAdminClient().from("studio_entitlements").insert({
     user_id: opts.userId,
     service: opts.service,
-    plan: opts.plan,
+    plan: resolved?.label ?? opts.plan,
     unit: svc.unit,
     quota: amount,
     expires_at: expires,

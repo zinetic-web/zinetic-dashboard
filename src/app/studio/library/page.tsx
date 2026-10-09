@@ -9,6 +9,7 @@ export default async function LibraryPage() {
     .from("studio_generations")
     .select("id, kind, title, status, mime_type, result, error, created_at, input")
     .eq("user_id", user!.id)
+    .neq("kind", "speech-agent")
     .order("created_at", { ascending: false })
     .limit(200);
   const rows = (data ?? []) as LibraryRow[];

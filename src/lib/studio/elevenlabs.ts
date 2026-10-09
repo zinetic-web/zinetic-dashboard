@@ -288,11 +288,24 @@ export function isolateAudio(opts: { audio: Blob; filename: string }) {
   return audioCall(`${BASE}/audio-isolation`, { method: "POST", body: form });
 }
 
+export type Entity = { text: string; type: string; start?: number; end?: number };
+
 export type Transcript = {
   language: string;
   text: string;
   words: { text: string; start: number; end: number; speaker?: string }[];
+  /** names, places, numbers and other things found in the speech, when entity detection was asked for */
+  entities?: Entity[];
 };
+
+/** The kinds of things Scribe can pick out of speech. "all" asks for every kind. */
+export const ENTITY_KINDS = [
+  { value: "all", label: "Everything" },
+  { value: "pii", label: "Personal details" },
+  { value: "phi", label: "Health details" },
+  { value: "pci", label: "Payment details" },
+  { value: "offensive_language", label: "Offensive language" },
+] as const;
 
 export async function transcribe(opts: {
   file: Blob;
@@ -300,16 +313,22 @@ export async function transcribe(opts: {
   language?: string;
   diarize?: boolean;
   modelId?: string;
+  /** words and names the speech is likely to contain, so they are spelled right (up to 1,000) */
+  keyterms?: string[];
+  /** which kinds of entity to find, or "all" */
+  entities?: string[];
 }): Promise<Ok<{ transcript: Transcript }> | Fail> {
   const k = key();
   if (!k) return NOT_CONFIGURED;
   const form = new FormData();
   form.append("file", opts.file, opts.filename);
-  form.append("model_id", opts.modelId ?? "scribe_v1");
+  form.append("model_id", opts.modelId ?? "scribe_v2");
   form.append("timestamps_granularity", "word");
   form.append("tag_audio_events", "false");
   if (opts.diarize) form.append("diarize", "true");
   if (opts.language) form.append("language_code", opts.language);
+  for (const term of opts.keyterms ?? []) form.append("keyterms", term);
+  for (const e of opts.entities ?? []) form.append("entity_detection", e);
   try {
     const res = await fetch(`${BASE}/speech-to-text`, { method: "POST", headers: { "xi-api-key": k }, body: form });
     if (!res.ok) return { ok: false, error: await readError(res) };
@@ -317,7 +336,11 @@ export async function transcribe(opts: {
       language_code?: string;
       text: string;
       words?: { text: string; start: number; end: number; type: string; speaker_id?: string }[];
+      entities?: { text?: string; entity_type?: string; type?: string; start_time?: number; end_time?: number; start?: number; end?: number }[];
     };
+    const entities = (j.entities ?? [])
+      .map((e) => ({ text: String(e.text ?? ""), type: String(e.entity_type ?? e.type ?? ""), start: e.start_time ?? e.start, end: e.end_time ?? e.end }))
+      .filter((e) => e.text);
     return {
       ok: true,
       transcript: {
@@ -326,8 +349,23 @@ export async function transcribe(opts: {
         words: (j.words ?? [])
           .filter((w) => w.type === "word")
           .map((w) => ({ text: w.text, start: w.start, end: w.end, speaker: w.speaker_id })),
+        ...(opts.entities?.length ? { entities } : {}),
       },
     };
+  } catch {
+    return { ok: false, error: "Could not reach ElevenLabs." };
+  }
+}
+
+/** A short-lived token that lets the browser open a live transcription session without ever seeing our key. */
+export async function realtimeScribeToken(): Promise<Ok<{ token: string }> | Fail> {
+  const k = key();
+  if (!k) return NOT_CONFIGURED;
+  try {
+    const res = await fetch(`${BASE}/single-use-token/realtime_scribe`, { method: "POST", headers: { "xi-api-key": k } });
+    if (!res.ok) return { ok: false, error: await readError(res) };
+    const j = (await res.json()) as { token?: string };
+    return j.token ? { ok: true, token: j.token } : { ok: false, error: "ElevenLabs did not return a session token." };
   } catch {
     return { ok: false, error: "Could not reach ElevenLabs." };
   }
@@ -337,6 +375,8 @@ export async function startDubbing(opts: {
   file: Blob;
   filename: string;
   targetLang: string;
+  /** the cheaper version puts a watermark on the result */
+  watermark?: boolean;
 }): Promise<Ok<{ dubbingId: string }> | Fail> {
   const k = key();
   if (!k) return NOT_CONFIGURED;
@@ -345,7 +385,7 @@ export async function startDubbing(opts: {
   form.append("target_lang", opts.targetLang);
   form.append("source_lang", "auto");
   form.append("num_speakers", "0");
-  form.append("watermark", "false");
+  form.append("watermark", opts.watermark ? "true" : "false");
   try {
     const res = await fetch(`${BASE}/dubbing`, { method: "POST", headers: { "xi-api-key": k }, body: form });
     if (!res.ok) return { ok: false, error: await readError(res) };
@@ -373,4 +413,137 @@ export async function dubbingStatus(id: string): Promise<{ status: "processing" 
 
 export function downloadDub(id: string, lang: string) {
   return audioCall(`${BASE}/dubbing/${encodeURIComponent(id)}/audio/${encodeURIComponent(lang)}`, { method: "GET" });
+}
+
+/* ------------------------------------------------------------ dubbing v2 */
+
+/** Dubbing v2 is project based. This makes the project and queues the first language in one call. */
+export async function startDubbingV2(opts: { file: Blob; filename: string; targetLang: string }): Promise<Ok<{ projectId: string }> | Fail> {
+  const k = key();
+  if (!k) return NOT_CONFIGURED;
+  const form = new FormData();
+  form.append("file", opts.file, opts.filename);
+  form.append("model_id", "dubbing_v2");
+  form.append("target_language", opts.targetLang);
+  try {
+    const res = await fetch(`${BASE}/dubbing/project`, { method: "POST", headers: { "xi-api-key": k }, body: form });
+    if (!res.ok) return { ok: false, error: await readError(res) };
+    const j = (await res.json()) as { project_id?: string };
+    return j.project_id ? { ok: true, projectId: j.project_id } : { ok: false, error: "ElevenLabs did not start the dub." };
+  } catch {
+    return { ok: false, error: "Could not reach ElevenLabs." };
+  }
+}
+
+type V2Language = { status?: string; outputs?: { lossless_audio?: string | { url?: string } } };
+
+/** Where a Dubbing v2 project stands, and the signed link to the dubbed audio once it is finished. */
+export async function dubbingV2Status(projectId: string): Promise<{ status: "processing" | "done" | "failed"; url?: string; error?: string }> {
+  const k = key();
+  if (!k) return { status: "failed", error: "ElevenLabs is not configured." };
+  const get = (path: string) => fetch(`${BASE}/dubbing/project/${encodeURIComponent(projectId)}${path}`, { headers: { "xi-api-key": k } });
+  try {
+    const pr = await get("");
+    if (!pr.ok) return { status: "processing" };
+    const project = (await pr.json()) as { status?: string; language_ids?: string[]; error?: { error?: string; message?: string } | string | null };
+    if (project.status === "failed") {
+      const e = project.error;
+      return { status: "failed", error: (typeof e === "string" ? e : (e?.error ?? e?.message)) || "Dubbing failed." };
+    }
+    if (project.status !== "ready") return { status: "processing" };
+
+    const id = project.language_ids?.[0];
+    if (!id) return { status: "processing" };
+    const lr = await get(`/language/${encodeURIComponent(id)}`);
+    if (!lr.ok) return { status: "processing" };
+    const language = (await lr.json()) as V2Language;
+    if (language.status === "failed") return { status: "failed", error: "Dubbing that language failed." };
+    if (language.status !== "completed") return { status: "processing" };
+    const out = language.outputs?.lossless_audio;
+    const url = typeof out === "string" ? out : out?.url;
+    return url ? { status: "done", url } : { status: "processing" };
+  } catch {
+    return { status: "processing" };
+  }
+}
+
+/** Downloads a signed dubbing link right away: it stops working after about an hour. */
+export async function downloadSigned(url: string): Promise<AudioResult> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return { ok: false, error: `Could not download the dub (${res.status}).` };
+    return { ok: true, audio: Buffer.from(await res.arrayBuffer()), mime: res.headers.get("content-type") ?? "audio/wav" };
+  } catch {
+    return { ok: false, error: "Could not download the dub." };
+  }
+}
+
+/* --------------------------------------------------- voice agents (Speech Engine) */
+
+export type AgentConfig = {
+  name: string;
+  voiceId: string;
+  /** what the agent says first */
+  firstMessage: string;
+  /** who the agent is and how it should behave */
+  instructions: string;
+  /** language code such as en, bn, hi */
+  language: string;
+  /** may go past the account's concurrency limit, the extra calls cost twice as much */
+  burst: boolean;
+};
+
+const agentBody = (c: AgentConfig) => ({
+  name: c.name,
+  conversation_config: {
+    agent: { first_message: c.firstMessage, language: c.language, prompt: { prompt: c.instructions } },
+    tts: { voice_id: c.voiceId, model_id: "eleven_flash_v2_5" },
+  },
+  platform_settings: { call_limits: { bursting_enabled: c.burst } },
+});
+
+async function agentCall<T>(path: string, init: RequestInit): Promise<Ok<{ data: T }> | Fail> {
+  const k = key();
+  if (!k) return NOT_CONFIGURED;
+  try {
+    const res = await fetch(`${BASE}${path}`, { ...init, headers: { "xi-api-key": k, "Content-Type": "application/json", ...(init.headers ?? {}) } });
+    if (!res.ok) return { ok: false, error: await readError(res) };
+    const text = await res.text();
+    return { ok: true, data: (text ? JSON.parse(text) : {}) as T };
+  } catch {
+    return { ok: false, error: "Could not reach ElevenLabs." };
+  }
+}
+
+export async function createAgent(c: AgentConfig): Promise<Ok<{ agentId: string }> | Fail> {
+  const r = await agentCall<{ agent_id?: string }>("/convai/agents/create", { method: "POST", body: JSON.stringify(agentBody(c)) });
+  if (!r.ok) return r;
+  return r.data.agent_id ? { ok: true, agentId: r.data.agent_id } : { ok: false, error: "ElevenLabs did not create the agent." };
+}
+
+export async function updateAgent(agentId: string, c: AgentConfig): Promise<{ ok: true } | Fail> {
+  const r = await agentCall(`/convai/agents/${encodeURIComponent(agentId)}`, { method: "PATCH", body: JSON.stringify(agentBody(c)) });
+  return r.ok ? { ok: true } : r;
+}
+
+export async function deleteAgent(agentId: string): Promise<{ ok: true } | Fail> {
+  const r = await agentCall(`/convai/agents/${encodeURIComponent(agentId)}`, { method: "DELETE" });
+  return r.ok ? { ok: true } : r;
+}
+
+/** A one-time link that lets the browser talk to an agent, without ever seeing our key. */
+export async function agentSignedUrl(agentId: string): Promise<Ok<{ url: string }> | Fail> {
+  const r = await agentCall<{ signed_url?: string }>(`/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(agentId)}`, { method: "GET" });
+  if (!r.ok) return r;
+  return r.data.signed_url ? { ok: true, url: r.data.signed_url } : { ok: false, error: "ElevenLabs did not return a conversation link." };
+}
+
+export type ConversationFacts = { seconds: number | null; burst: boolean; status: string | null };
+
+/** What the provider recorded about a finished conversation: how long it really ran and whether it was billed as a burst. */
+export async function conversationFacts(conversationId: string): Promise<ConversationFacts | null> {
+  const r = await agentCall<{ status?: string; metadata?: { call_duration_secs?: number; charging?: { is_burst?: boolean } } }>(`/convai/conversations/${encodeURIComponent(conversationId)}`, { method: "GET" });
+  if (!r.ok) return null;
+  const secs = r.data.metadata?.call_duration_secs;
+  return { seconds: typeof secs === "number" ? secs : null, burst: Boolean(r.data.metadata?.charging?.is_burst), status: r.data.status ?? null };
 }

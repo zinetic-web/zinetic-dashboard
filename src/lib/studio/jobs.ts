@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { dubbingStatus, downloadDub } from "@/lib/studio/elevenlabs";
+import { dubbingStatus, dubbingV2Status, downloadDub, downloadSigned } from "@/lib/studio/elevenlabs";
 import { lipsyncStatus, translateStatus, videoStatus, type JobState } from "@/lib/studio/heygen";
 import { failGeneration, finishWithFile } from "@/lib/studio/run";
 
@@ -66,6 +66,19 @@ export async function advanceJob(row: JobRow): Promise<Advance> {
   };
 
   // dubbing and video translation run on either provider, the row remembers which
+  if (row.provider === "elevenlabs" && row.provider_job_id.startsWith("v2:")) {
+    const s = await dubbingV2Status(row.provider_job_id.slice(3));
+    if (s.status === "failed") return giveUp(s.error ?? "Dubbing failed.");
+    if (s.status === "done" && s.url) {
+      // the link is only good for about an hour, so it is downloaded and stored at once
+      const file = await downloadSigned(s.url);
+      if (!file.ok) return tooLong ? giveUp(file.error) : { status: "processing", stage: "Saving your file" };
+      await finishWithFile(g, file.audio, file.mime);
+      return { status: "done" };
+    }
+    return tooLong ? giveUp("This took much longer than expected and was stopped. Nothing was used from your plan.") : { status: "processing", stage: "Dubbing in progress" };
+  }
+
   if (row.provider === "elevenlabs") {
     const s = await dubbingStatus(row.provider_job_id);
     if (s.status === "failed") return giveUp(s.error ?? "Dubbing failed.");

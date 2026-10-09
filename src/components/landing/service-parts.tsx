@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { LuArrowUpRight, LuCheck, LuPlus } from "react-icons/lu";
+import { LuArrowUpRight, LuPlus } from "react-icons/lu";
 import { AutoVideo, Reveal } from "@/components/landing/primitives";
-import { ComingSoonButton, ZButton } from "@/components/landing/button";
-import { isComingSoon, type Service } from "@/lib/landing-services";
+import type { Service } from "@/lib/landing-services";
 import { SERVICE_PAGES, serviceHref } from "@/lib/service-pages";
-import { FromPrice, PriceBlock } from "@/components/landing/currency";
-import { cn } from "@/lib/utils";
+import { FromPrice } from "@/components/landing/currency";
 
 export function ServiceCard({ service, delay = 0 }: { service: Service; delay?: number }) {
   const page = SERVICE_PAGES[service.id];
@@ -34,63 +32,7 @@ export function ServiceCard({ service, delay = 0 }: { service: Service; delay?: 
   );
 }
 
-export function TierCards({ service }: { service: Service }) {
-  const featuredIndex = service.tiers.length === 3 ? 1 : service.tiers.length > 3 ? 2 : -1;
-  return (
-    <div
-      className={cn(
-        "grid gap-5",
-        service.tiers.length === 2 && "mx-auto max-w-3xl sm:grid-cols-2",
-        service.tiers.length === 3 && "md:grid-cols-3",
-        service.tiers.length > 3 && "sm:grid-cols-2 lg:grid-cols-5"
-      )}
-    >
-      {service.tiers.map((tier, i) => {
-        const featured = i === featuredIndex;
-        return (
-          <Reveal key={tier.name} delay={i * 0.06} className="min-w-0">
-            <div
-              className={cn(
-                "relative flex h-full flex-col rounded-[26px] border p-6",
-                featured ? "border-transparent bg-(--zl-text) text-(--zl-bg)" : "border-(--zl-line) bg-(--zl-surface)"
-              )}
-            >
-              {featured && (
-                <span className="zl-grad-bg absolute -top-3 right-6 rounded-full px-3 py-1 text-xs font-semibold text-white">
-                  Recommended
-                </span>
-              )}
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] opacity-70">{tier.name}</p>
-              <PriceBlock usd={tier.price} period={tier.period} size="xl" className="mt-4" />
-              <p className="mt-1 font-medium">{tier.quota}</p>
-              {tier.perks && (
-                <ul className="mt-5 flex flex-col gap-2 text-sm">
-                  {tier.perks.map((p) => (
-                    <li key={p} className="flex items-start gap-2">
-                      <LuCheck className="mt-0.5 size-4 shrink-0 text-[#ff5b4a]" />
-                      <span className="opacity-85">{p}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <div className="mt-auto pt-8">
-                {isComingSoon(service.id) ? <ComingSoonButton className="w-full" /> : (
-<ZButton
-                  href={`/checkout?service=${service.id}&plan=${encodeURIComponent(tier.name)}`}
-                  variant={featured ? "primary" : "solid"}
-                  className="w-full"
-                >
-                  {service.cta}
-                </ZButton>
-)}
-              </div>
-            </div>
-          </Reveal>
-        );
-      })}
-    </div>
-  );
-}
+export { TierCards } from "@/components/landing/tier-cards";
 
 const FAQ = [
   {
