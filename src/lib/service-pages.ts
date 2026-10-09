@@ -94,6 +94,20 @@ export const SERVICE_PAGES: Record<string, ServicePage> = {
       step("Meeting notes", "Know who said what, and when."),
     ],
   },
+  "speech-engine": {
+    hero: MEDIA.podcastB,
+    tagline: "Design a voice agent, then talk to it live.",
+    steps: [
+      step("Describe your agent", "Give it a name, a voice, a language and instructions on who it is and how it should behave."),
+      step("Start talking", "Press talk and speak. The agent listens, thinks and answers out loud in real time."),
+      step("Keep the transcript", "Every conversation is saved to your Library as a transcript."),
+    ],
+    useCases: [
+      step("Front desk", "A receptionist that answers questions about hours, prices and bookings."),
+      step("Language practice", "A patient tutor to speak with in any language, any time."),
+      step("Sales and support", "Rehearse calls or answer common questions with a consistent voice."),
+    ],
+  },
   "audio-cleaner": {
     hero: MEDIA.studioSinger,
     tagline: "Studio-clean voice from a noisy recording.",
