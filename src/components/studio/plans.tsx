@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation";
 /* ----------------------------------------------------------- plan cards */
 
 /** The plans for one or more services, each with its own Buy button. Used on a locked tool and on My plans. */
-export function PlanPicker({ options }: { options: PlanOption[] }) {
+export function PlanPicker({ options, version }: { options: PlanOption[]; /** the version is chosen outside (in a window header), so the picker does not ask for it */ version?: string }) {
   const [agreed, setAgreed] = React.useState(false);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -49,7 +49,7 @@ export function PlanPicker({ options }: { options: PlanOption[] }) {
   return (
     <div className="flex flex-col gap-5">
       {options.map((o) => (
-        <ServicePlanCards key={o.service} option={o} showName={options.length > 1} agreed={agreed} busy={busy} onBuy={buy} />
+        <ServicePlanCards key={o.service} option={o} showName={options.length > 1} agreed={agreed} busy={busy} onBuy={buy} chosenVersion={version} />
       ))}
 
       <label className="flex cursor-pointer items-start gap-2.5 text-xs leading-relaxed text-muted-foreground">
@@ -80,25 +80,26 @@ export function PlanPicker({ options }: { options: PlanOption[] }) {
 }
 
 /** One service's plans. A service sold in several versions first asks which version, then shows what each plan gives on it. */
-function ServicePlanCards({ option: o, showName, agreed, busy, onBuy }: { option: PlanOption; showName: boolean; agreed: boolean; busy: string | null; onBuy: (service: string, plan: string) => void }) {
+function ServicePlanCards({ option: o, showName, agreed, busy, onBuy, chosenVersion }: { option: PlanOption; showName: boolean; agreed: boolean; busy: string | null; onBuy: (service: string, plan: string) => void; chosenVersion?: string }) {
   const [versionId, setVersionId] = React.useState(o.versions?.[0]?.id ?? "");
-  const version = o.versions?.find((v) => v.id === versionId) ?? o.versions?.[0] ?? null;
+  const version = o.versions?.find((v) => v.id === (chosenVersion ?? versionId)) ?? o.versions?.[0] ?? null;
   const tiers = version?.tiers ?? o.tiers;
   return (
-    <div className="flex flex-col gap-3">
+    <div className="@container flex flex-col gap-3">
       {(showName || version) && (
-        <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-col gap-2 @xl:flex-row @xl:items-center @xl:gap-4">
           {showName && <p className="text-sm font-medium">{o.serviceName}</p>}
-          {o.versions && version && (
-            <div className="flex w-full max-w-xs flex-col gap-1.5 sm:ml-auto">
-              <span className="text-xs text-white/55">Version</span>
-              <Dropdown value={version.id} onChange={setVersionId} label="Version" options={o.versions.map((v) => ({ value: v.id, label: v.label }))} />
-            </div>
+          {o.versions && version && chosenVersion === undefined && (
+            <>
+              <div className="w-full @xl:w-64 @xl:shrink-0">
+                <Dropdown value={version.id} onChange={setVersionId} label="Version" options={o.versions.map((v) => ({ value: v.id, label: v.label }))} />
+              </div>
+              {version.note && <p className="text-xs leading-relaxed text-white/50">{version.note}</p>}
+            </>
           )}
         </div>
       )}
-      {version?.note && <p className="text-xs text-white/50">{version.note}</p>}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 @xl:grid-cols-3">
         {tiers.map((t) => {
           const id = `${o.service}:${t.key}`;
           return (
@@ -108,7 +109,7 @@ function ServicePlanCards({ option: o, showName, agreed, busy, onBuy }: { option
                 <p className="text-sm text-white/60">{t.amount}</p>
               </div>
               <div>
-                <p className="font-heading text-2xl font-semibold tabular-nums">${t.usd}</p>
+                <p className="font-heading text-2xl font-semibold tabular-nums">${t.usd.toFixed(2)}</p>
                 <p className="text-xs text-white/45">
                   ৳{t.bdt.toLocaleString("en-US")} · {t.validity ? `valid ${t.validity}` : "never expires"}
                 </p>
